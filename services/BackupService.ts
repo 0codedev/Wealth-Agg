@@ -1,4 +1,3 @@
-
 import { db } from '../database';
 
 // Keys to backup/restore from LocalStorage
@@ -11,13 +10,13 @@ const STORAGE_KEYS = [
 ];
 
 /**
- * Generates a full JSON dump of IndexedDB and specific LocalStorage keys.
+ * Generates and downloads a JSON snapshot of the DB and LocalStorage.
  */
 export const handleDownloadBackup = async () => {
   try {
     const allData: any = {
       meta: {
-        version: 3, 
+        version: 5,
         timestamp: new Date().toISOString(),
         app: "WealthAggregator"
       },
@@ -26,9 +25,8 @@ export const handleDownloadBackup = async () => {
     };
 
     // 1. Snapshot IndexedDB
-    // Type assertion to 'any' to access internal 'tables' property
-    const tables = (db as any).tables;
-    for (const table of tables) {
+    // @ts-ignore - Accessing Dexie internals to iterate all tables dynamically
+    for (const table of db.tables) {
       const rows = await table.toArray();
       allData.data[table.name] = rows;
     }
@@ -52,91 +50,61 @@ export const handleDownloadBackup = async () => {
     URL.revokeObjectURL(url);
 
   } catch (err) {
-    console.error("Backup Generation Failed:", err);
+    console.error("Backup Export Failed:", err);
     throw new Error("Failed to generate backup file.");
   }
 };
 
 /**
- * THE NUCLEAR OPTION:
- * 1. Locks the Database in a single Transaction.
- * 2. Wipes ALL tables (Table.clear()).
- * 3. Strips 'id' from EVERY row.
- * 4. Regenerates UUIDs for manual-key tables (investments).
- * 5. Bulk Adds clean data.
- * 
- * @param jsonData Parsed JSON object from the backup file
+ * Nuclear Restore:
+ * 1. Atomically wipes DB.
+ * 2. Sanitizes and Inserts new data.
+ * 3. Restores LocalStorage.
  */
-export const restoreBackupData = async (jsonData: any) => {
-  if (!jsonData || !jsonData.data || !jsonData.meta) {
-    throw new Error("Invalid Backup File: Missing data or metadata.");
+export const restoreFromJSON = async (jsonData: any): Promise<void> => {
+  if (!jsonData || !jsonData.data) {
+    throw new Error("Invalid backup file format: Missing 'data' object.");
   }
 
-  // --- ATOMIC TRANSACTION START ---
-  // We lock all tables for Read/Write to ensure a clean wipe and restore.
-  await (db as any).transaction('rw', (db as any).tables, async () => {
-    console.log("NUCLEAR RESTORE: Atomic Transaction Started.");
-    const tables = (db as any).tables;
+  // Transaction guarantees all-or-nothing execution
+  // @ts-ignore
+  await db.transaction('rw', db.tables, async () => {
+    // 1. WIPE EVERYTHING
+    // @ts-ignore
+    await Promise.all(db.tables.map(table => table.clear()));
 
-    // STEP 1: WIPE EVERYTHING
-    // Iterate over actual DB tables to ensure we catch everything defined in schema
-    for (const table of tables) {
-      console.log(`Clearing table: ${table.name}`);
-      await table.clear();
-    }
-
-    // STEP 2: RESTORE & SANITIZE
-    for (const tableName of Object.keys(jsonData.data)) {
+    // 2. RESTORE TABLES
+    const tables = Object.keys(jsonData.data);
+    for (const tableName of tables) {
       const rows = jsonData.data[tableName];
-      const table = (db as any).table(tableName);
+      // @ts-ignore
+      const table = db.table(tableName);
 
-      if (!table) {
-        console.warn(`Skipping unknown table in backup: ${tableName}`);
-        continue;
-      }
+      if (!table || !Array.isArray(rows) || rows.length === 0) continue;
 
-      if (!rows || rows.length === 0) continue;
-
-      // STEP 3: RE-KEYING LOGIC
-      // We strip the old 'id' to prevent KeyConstraintErrors.
+      // 3. SANITIZE ROWS
+      // We strip IDs from auto-increment tables to prevent KeyConstraints
       const sanitizedRows = rows.map((row: any) => {
-        // Destructure to separate 'id' from the rest of the data
-        const { id, ...rest } = row;
-
-        // Special Case: 'investments' table uses a string UUID as Primary Key (not auto-inc).
-        // Since we stripped the old ID, we MUST generate a new one to allow insertion.
-        if (tableName === 'investments') {
-            return {
-                ...rest,
-                id: crypto.randomUUID() // Fresh UUID
-            };
+        // Tables that rely on specific IDs (UUIDs or Date Strings) must keep them
+        if (['investments', 'history', 'daily_reviews'].includes(tableName)) {
+          return row;
         }
-
-        // Special Case: Tables with date-based keys (history, daily_reviews)
-        // These don't rely on 'id' but on 'date'. We keep the rest of the object.
-        // If they accidentally had an 'id' property, it is now stripped.
         
-        // Standard Case: Auto-Increment tables (trades, life_events, etc.)
-        // By returning 'rest' without an ID, Dexie will automatically generate
-        // the next available integer key (e.g., 1, 2, 3...).
+        // For 'trades', 'dividends', etc., let Dexie generate fresh IDs
+        const { id, ...rest } = row;
         return rest;
       });
 
-      // STEP 4: BULK INSERT
-      // We use bulkAdd because we are inserting "new" records (new IDs)
       await table.bulkAdd(sanitizedRows);
-      console.log(`Restored ${sanitizedRows.length} rows to ${tableName}`);
     }
   });
-  // --- ATOMIC TRANSACTION END ---
 
-  // STEP 5: RESTORE LOCALSTORAGE
+  // 4. RESTORE LOCALSTORAGE
   if (jsonData.storage) {
-    console.log("Restoring LocalStorage settings...");
-    Object.entries(jsonData.storage).forEach(([k, v]) => {
-      if (typeof v === 'string') localStorage.setItem(k, v);
+    Object.entries(jsonData.storage).forEach(([key, val]) => {
+      if (typeof val === 'string') {
+        localStorage.setItem(key, val);
+      }
     });
   }
-
-  console.log("NUCLEAR RESTORE: Success.");
 };

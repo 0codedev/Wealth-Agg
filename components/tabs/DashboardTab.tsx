@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, TrendingDown, Target, 
@@ -20,7 +19,7 @@ import { MarketStatus } from '../../hooks/useMarketSentiment';
 import RoutineClock from '../RoutineClock';
 import LoanWidget from '../LoanWidget';
 import { useSettingsStore } from '../../store/settingsStore';
-import { usePortfolio } from '../../hooks/usePortfolio'; // Import directly to get event actions
+import { LifeEvent } from '../../database';
 
 interface DashboardTabProps {
   investments: Investment[];
@@ -39,23 +38,23 @@ interface DashboardTabProps {
   CustomTooltip: any;
   marketVix: number;
   marketStatus: MarketStatus;
+  // Synced Life Events
+  lifeEvents: LifeEvent[];
+  addLifeEvent: (event: Omit<LifeEvent, 'id'>) => Promise<void>;
+  deleteLifeEvent: (id: number) => Promise<void>;
 }
 
 const DashboardTab: React.FC<DashboardTabProps> = ({
   investments, stats, allocationData, assetClassData, platformData, 
   projectionData, isPrivacyMode, isDarkMode, onAddFirstAsset,
   formatCurrency, formatCurrencyPrecise, calculatePercentage,
-  ASSET_CLASS_COLORS, CustomTooltip, marketVix, marketStatus
+  ASSET_CLASS_COLORS, CustomTooltip, marketVix, marketStatus,
+  lifeEvents, addLifeEvent, deleteLifeEvent
 }) => {
-  // Access Life Events from Hook directly (since we can't easily change prop signature without breaking App.tsx)
-  // Note: In a cleaner refactor, we would pass these as props, but this works for "drop-in" upgrade.
-  const { lifeEvents, addLifeEvent, deleteLifeEvent } = usePortfolio();
-
   const [aiInsight, setAiInsight] = useState<{risk: string, tip: string} | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   
   const [showLiability, setShowLiability] = useState(true);
-  const [chartRange, setChartRange] = useState<'1M' | '6M' | '1Y' | 'ALL'>('ALL');
   
   // New States for Life Events
   const [newEventName, setNewEventName] = useState('');
@@ -264,12 +263,6 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                                 formatter={(value: number, name: string) => [formatCurrency(value), name === 'base' ? 'Median' : name === 'bull' ? 'Bull Case' : 'Bear Case']}
                                 labelStyle={{ color: '#94a3b8' }}
                             />
-                            
-                            {/* The "Cone" of Possibility */}
-                            {/* Note: Recharts doesn't strictly support Range Area easily without custom shape, 
-                                but we can simulate by stacking or just showing two areas. 
-                                Better visual: Show Bull Area and Bear Area overlapping 
-                            */}
                             
                             {/* P90 Area */}
                             <Area type="monotone" dataKey="bull" stroke="none" fill="url(#bullRange)" />

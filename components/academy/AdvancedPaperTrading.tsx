@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   TrendingUp, TrendingDown, Activity, RefreshCcw, 
@@ -34,12 +33,15 @@ const TIMEFRAMES = [
 const calculateRSI = (data: any[], period = 14) => {
     if (data.length < period) return data;
     
+    // Create deep copy to ensure immutability
+    const result = data.map(d => ({ ...d }));
+    
     let gains = 0;
     let losses = 0;
 
     // Initial SMA
     for (let i = 1; i <= period; i++) {
-        const change = data[i].close - data[i - 1].close;
+        const change = result[i].close - result[i - 1].close;
         if (change > 0) gains += change;
         else losses += Math.abs(change);
     }
@@ -47,12 +49,11 @@ const calculateRSI = (data: any[], period = 14) => {
     let avgGain = gains / period;
     let avgLoss = losses / period;
 
-    const result = [...data];
-    // Fill first period with null/approx
+    // Fill first period with 50
     for(let k=0; k<=period; k++) result[k].rsi = 50; 
 
-    for (let i = period + 1; i < data.length; i++) {
-        const change = data[i].close - data[i - 1].close;
+    for (let i = period + 1; i < result.length; i++) {
+        const change = result[i].close - result[i - 1].close;
         const gain = change > 0 ? change : 0;
         const loss = change < 0 ? Math.abs(change) : 0;
 
@@ -123,6 +124,7 @@ const AdvancedPaperTrading: React.FC = () => {
   useEffect(() => {
       const interval = setInterval(() => {
           setData(prev => {
+              if (prev.length === 0) return prev;
               const lastCandle = prev[prev.length - 1];
               const newCandle = generateCandle(lastCandle.close, selectedSymbol.vol * timeframe.volMult);
               
@@ -134,8 +136,6 @@ const AdvancedPaperTrading: React.FC = () => {
               
               const newData = [...prev.slice(1), { ...newCandle, ema9, ema20 }];
               
-              // Recalc RSI for last segment (simplified for perf)
-              // Ideally re-run RSI on whole window or rolling window
               const withRsi = calculateRSI(newData);
               
               setLastPrice(newCandle.close);

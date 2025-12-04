@@ -129,7 +129,8 @@ const App: React.FC = () => {
   // --- Core Business Logic (Custom Hooks) ---
   const { 
     investments, stats, allocationData, assetClassData, platformData, projectionData,
-    addInvestment, updateInvestment, deleteInvestment, refreshRecurringInvestments, refreshData
+    addInvestment, updateInvestment, deleteInvestment, refreshRecurringInvestments, refreshData,
+    lifeEvents, addLifeEvent, deleteLifeEvent
   } = usePortfolio();
 
   const { vix, status: marketStatus } = useMarketSentiment();
@@ -347,6 +348,10 @@ const App: React.FC = () => {
                     CustomTooltip={(props: any) => <CustomTooltip {...props} isPrivacyMode={isPrivacyMode} />}
                     marketVix={vix}
                     marketStatus={marketStatus}
+                    // Pass synced Life Event Props
+                    lifeEvents={lifeEvents}
+                    addLifeEvent={addLifeEvent}
+                    deleteLifeEvent={deleteLifeEvent}
                 />
             )}
             
