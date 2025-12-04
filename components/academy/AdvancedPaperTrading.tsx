@@ -147,7 +147,7 @@ const AdvancedPaperTrading: React.FC = () => {
 
   // --- Derived Metrics ---
   const currentCandle = data[data.length - 1] || {};
-  const isGreen = currentCandle.close > currentCandle.open;
+  const isGreen = (currentCandle.close || 0) > (currentCandle.open || 0);
   
   // Transform Data for Recharts Candles (Range Bars)
   const chartData = useMemo(() => {
@@ -201,10 +201,10 @@ const AdvancedPaperTrading: React.FC = () => {
               <div className="bg-slate-900/90 border border-slate-700 p-3 rounded-lg shadow-xl font-mono text-xs backdrop-blur-md z-50">
                   <p className="text-slate-400 mb-2 border-b border-slate-700 pb-1">{d.time}</p>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-                      <span className="text-slate-500">Open</span> <span className={d.open > d.close ? 'text-rose-400' : 'text-emerald-400'}>{d.open.toFixed(2)}</span>
-                      <span className="text-slate-500">High</span> <span className="text-white">{d.high.toFixed(2)}</span>
-                      <span className="text-slate-500">Low</span> <span className="text-white">{d.low.toFixed(2)}</span>
-                      <span className="text-slate-500">Close</span> <span className={d.close > d.open ? 'text-emerald-400' : 'text-rose-400'}>{d.close.toFixed(2)}</span>
+                      <span className="text-slate-500">Open</span> <span className={d.open > d.close ? 'text-rose-400' : 'text-emerald-400'}>{d.open?.toFixed(2)}</span>
+                      <span className="text-slate-500">High</span> <span className="text-white">{d.high?.toFixed(2)}</span>
+                      <span className="text-slate-500">Low</span> <span className="text-white">{d.low?.toFixed(2)}</span>
+                      <span className="text-slate-500">Close</span> <span className={d.close > d.open ? 'text-emerald-400' : 'text-rose-400'}>{d.close?.toFixed(2)}</span>
                       <span className="text-slate-500">Vol</span> <span className="text-amber-400">{d.volume}</span>
                       <span className="text-slate-500">RSI</span> <span className="text-indigo-400">{d.rsi?.toFixed(1)}</span>
                   </div>
