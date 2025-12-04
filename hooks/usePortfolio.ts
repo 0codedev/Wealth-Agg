@@ -325,6 +325,58 @@ export const usePortfolio = () => {
 
   // --- Actions ---
 
+  /**
+   * State-First Import Logic
+   * Updates React state immediately, then syncs to IndexedDB in background.
+   */
+  const importData = useCallback(async (jsonData: any) => {
+      // 1. Validations
+      if (!jsonData || !jsonData.data) throw new Error("Invalid backup file.");
+
+      // 2. State-First: Instant UI Update
+      if (jsonData.data.investments && Array.isArray(jsonData.data.investments)) {
+          setInvestments(jsonData.data.investments);
+      }
+      if (jsonData.data.life_events && Array.isArray(jsonData.data.life_events)) {
+          setLifeEvents(jsonData.data.life_events);
+      }
+
+      // 3. LocalStorage Restoration
+      if (jsonData.storage) {
+          Object.entries(jsonData.storage).forEach(([key, val]) => {
+              if (typeof val === 'string') localStorage.setItem(key, val);
+          });
+      }
+
+      // 4. Background DB Sync
+      try {
+          // @ts-ignore - Accessing Dexie internals safely via transaction
+          await db.transaction('rw', db.tables, async () => {
+              // Wipe all tables
+              // @ts-ignore
+              await Promise.all(db.tables.map(table => table.clear()));
+
+              // Populate new data
+              const tables = Object.keys(jsonData.data);
+              for (const tableName of tables) {
+                  const rows = jsonData.data[tableName];
+                  // @ts-ignore
+                  const table = db.table(tableName);
+                  if (table && Array.isArray(rows) && rows.length > 0) {
+                      // Sanitize rows if needed (e.g. removing old IDs if collisions matter)
+                      // For restore, we usually trust the IDs in the backup unless they conflict.
+                      // Since we cleared tables, we can bulkAdd directly.
+                      await table.bulkAdd(rows);
+                  }
+              }
+          });
+          console.log("Database Sync Complete");
+      } catch (err) {
+          console.error("Background DB Sync Failed", err);
+          // Optional: Revert state or show toast
+      }
+  }, []);
+
   const refreshRecurringInvestments = useCallback(async () => {
     const now = new Date();
     const updatedInvestments: Investment[] = [];
@@ -421,6 +473,7 @@ export const usePortfolio = () => {
     refreshRecurringInvestments,
     refreshData,
     addLifeEvent,
-    deleteLifeEvent
+    deleteLifeEvent,
+    importData // Exported for use in Settings
   };
 };

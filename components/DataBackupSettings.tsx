@@ -1,12 +1,14 @@
+
 import React, { useRef, useState } from 'react';
 import { HardDrive, Download, Upload, Loader2, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import * as BackupService from '../services/BackupService';
 
 interface DataBackupSettingsProps {
   onDataRestored?: () => void;
+  onImport?: (data: any) => Promise<void>;
 }
 
-const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored }) => {
+const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored, onImport }) => {
   const [status, setStatus] = useState<'IDLE' | 'PROCESSING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [message, setMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,27 +41,39 @@ const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored 
     }
 
     setStatus('PROCESSING');
-    setMessage('Wiping Database & Restoring...');
+    setMessage('Reading Backup...');
 
     try {
         const text = await file.text();
         const json = JSON.parse(text);
 
-        // Perform Restore
-        await BackupService.restoreFromJSON(json);
+        // Perform Restore using State-First approach if available
+        if (onImport) {
+            setMessage('Syncing Data...');
+            await onImport(json);
+            setStatus('SUCCESS');
+            setMessage('Data Restored Successfully');
+        } else {
+            // Fallback to legacy method if onImport not provided (though App should provide it)
+            await BackupService.restoreFromJSON(json);
+            setStatus('SUCCESS');
+            setMessage('Restore Complete. Reloading...');
+            setTimeout(() => window.location.reload(), 1500);
+        }
 
-        setStatus('SUCCESS');
-        setMessage('Restore Complete. Rebooting...');
+        // Reset input to allow re-selection
+        if (fileInputRef.current) fileInputRef.current.value = '';
         
-        // Trigger React update if provided (though we reload anyway)
+        // Trigger React update callback if provided
         if (onDataRestored) {
             await onDataRestored();
         }
-
-        // FORCE RELOAD to ensure clean state
+        
+        // Auto-clear success message after delay
         setTimeout(() => {
-            window.location.reload();
-        }, 1500);
+            setStatus('IDLE');
+            setMessage(null);
+        }, 3000);
 
     } catch (err: any) {
         console.error("Restore Error:", err);
@@ -77,7 +91,7 @@ const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored 
         </div>
         {status === 'IDLE' && (
             <span className="text-[9px] text-slate-600 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                System v5.0
+                System v5.1
             </span>
         )}
       </div>

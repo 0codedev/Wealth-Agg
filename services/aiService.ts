@@ -2,11 +2,21 @@
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 
 const getAI = () => {
-  if (!process.env.API_KEY) {
+  // 1. Check Local Storage (Runtime / User Provided)
+  const localKey = localStorage.getItem('gemini-api-key');
+  
+  // 2. Check Environment Variable (Build time)
+  // We check both standard variations just in case
+  const envKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+
+  const apiKey = localKey || envKey;
+
+  if (!apiKey) {
     console.warn("AI Service: API_KEY is missing. AI features will not work.");
-    throw new Error("API Key missing");
+    // We throw to trigger the Error Boundary or catch block in UI
+    throw new Error("API Key missing. Please provide it in settings.");
   }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  return new GoogleGenAI({ apiKey });
 };
 
 // --- Audio Helper Functions (Encoding/Decoding) ---
