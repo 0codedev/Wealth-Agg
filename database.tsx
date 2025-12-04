@@ -1,4 +1,3 @@
-
 import Dexie, { type Table } from 'dexie';
 import { Investment, HistoryEntry } from './types';
 
@@ -103,26 +102,7 @@ export class TradeDatabase extends Dexie {
   constructor() {
     super('WealthAggregatorDB');
     
-    (this as any).version(1).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit' });
-    (this as any).version(2).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup' });
-    (this as any).version(3).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup', dividends: '++id, date, ticker' });
-    (this as any).version(4).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup', dividends: '++id, date, ticker', ipo_applications: '++id, applicantName, ipoName, status, upiHandle' });
-    (this as any).version(5).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup', dividends: '++id, date, ticker', ipo_applications: '++id, applicantName, ipoName, status, upiHandle', investments: 'id, type, platform', history: 'date' });
-    (this as any).version(6).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup', dividends: '++id, date, ticker', ipo_applications: '++id, applicantName, ipoName, status, upiHandle', investments: 'id, type, platform', history: 'date', tax_records: '++id, fy' });
-    (this as any).version(7).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup', dividends: '++id, date, ticker', ipo_applications: '++id, applicantName, ipoName, status, upiHandle', investments: 'id, type, platform', history: 'date', tax_records: '++id, fy' });
-    (this as any).version(8).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup, grade', dividends: '++id, date, ticker', ipo_applications: '++id, applicantName, ipoName, status, upiHandle', investments: 'id, type, platform', history: 'date', tax_records: '++id, fy' });
-    (this as any).version(9).stores({ trades: '++id, ticker, date, direction, moodEntry, moodExit, setup, grade, entryTime', dividends: '++id, date, ticker', ipo_applications: '++id, applicantName, ipoName, status, upiHandle', investments: 'id, type, platform', history: 'date', tax_records: '++id, fy' });
-    (this as any).version(10).stores({
-      trades: '++id, ticker, date, direction, moodEntry, moodExit, setup, grade, entryTime, complianceScore',
-      dividends: '++id, date, ticker',
-      ipo_applications: '++id, applicantName, ipoName, status, upiHandle',
-      investments: 'id, type, platform',
-      history: 'date',
-      tax_records: '++id, fy',
-      strategies: '++id, name',
-      daily_reviews: 'date'
-    });
-    // Version 11: Life Events for Simulator
+    // Schema definition
     (this as any).version(11).stores({
       trades: '++id, ticker, date, direction, moodEntry, moodExit, setup, grade, entryTime, complianceScore',
       dividends: '++id, date, ticker',

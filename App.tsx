@@ -454,11 +454,23 @@ const AuthenticatedApp: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
 // --- APP GATEKEEPER ---
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string | null>(() => {
+    // 1. Try Environment Variables first (Standard Vercel/Vite behavior)
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+        // @ts-ignore
+        return process.env.API_KEY;
+    }
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+        // @ts-ignore
+        const envKey = (import.meta as any).env.VITE_GEMINI_API_KEY || (import.meta as any).env.VITE_API_KEY;
+        if (envKey) return envKey;
+    }
+
+    // 2. Fallback to Local Storage
     try {
         const local = localStorage.getItem('gemini-api-key');
         if (local) return local;
-        // Forced UI: We purposefully removed process.env check here to ensure the 
-        // Key Manager UI always shows on first load if no key is in local storage.
     } catch (e) {
         console.warn("Error accessing storage:", e);
     }

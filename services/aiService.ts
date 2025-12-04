@@ -1,20 +1,34 @@
-
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 
 const getAI = () => {
   let apiKey: string | null | undefined = null;
+  
+  // 1. Try Local Storage (User entered)
   try {
     apiKey = localStorage.getItem('gemini-api-key');
-    if (!apiKey && typeof process !== 'undefined' && process.env) {
-        apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-    }
   } catch (e) {
-    console.warn("AI Service: Error retrieving API key", e);
+    console.warn("AI Service: Error accessing local storage", e);
+  }
+
+  // 2. Try Environment Variables (Safe Access)
+  if (!apiKey) {
+    try {
+      // @ts-ignore
+      if (typeof process !== 'undefined' && process.env) {
+        // @ts-ignore
+        apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+      } 
+      
+      // Fallback for Vite
+      if (!apiKey && typeof import.meta !== 'undefined' && (import.meta as any).env) {
+        apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || (import.meta as any).env.VITE_API_KEY;
+      }
+    } catch (e) {
+      // Ignore env access errors silently
+    }
   }
 
   if (!apiKey) {
-    // We throw to trigger the Error Boundary or catch block in UI, ensuring
-    // we don't return an invalid client instance.
     throw new Error("API Key missing. Please provide it in settings.");
   }
   return new GoogleGenAI({ apiKey });
