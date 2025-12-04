@@ -54,7 +54,7 @@ const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored,
             setStatus('SUCCESS');
             setMessage('Data Restored Successfully');
         } else {
-            // Fallback to legacy method if onImport not provided (though App should provide it)
+            // Fallback (legacy)
             await BackupService.restoreFromJSON(json);
             setStatus('SUCCESS');
             setMessage('Restore Complete. Reloading...');
@@ -128,10 +128,6 @@ const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored,
         </div>
       )}
 
-      {/* 
-          CRITICAL: onClick resets value to allow re-selecting the same file. 
-          This fixes the "Nothing happening" bug.
-      */}
       <input
         type="file"
         ref={fileInputRef}

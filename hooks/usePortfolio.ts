@@ -138,8 +138,6 @@ export const usePortfolio = () => {
         setLifeEvents(currentEvents);
         
         // --- 2. DEFAULTS CHECK ---
-        // Only load defaults if truly empty AND not restoring
-        // This brings back sample data if user wiped everything
         if (currentInvestments.length === 0) {
             if (sessionStorage.getItem('IS_RESTORING') === 'true') return;
 
@@ -202,7 +200,147 @@ export const usePortfolio = () => {
     refreshData();
   }, [refreshData]);
 
-  // --- Calculations (Memoized) ---
+  // --- Actions ---
+
+  /**
+   * State-First Import Logic
+   * Updates React state immediately, then syncs to IndexedDB in background.
+   */
+  const importData = useCallback(async (jsonData: any) => {
+      // 1. Validations
+      if (!jsonData || !jsonData.data) throw new Error("Invalid backup file.");
+
+      // Set Lock
+      sessionStorage.setItem('IS_RESTORING', 'true');
+
+      try {
+          // 2. State-First: Instant UI Update
+          if (jsonData.data.investments && Array.isArray(jsonData.data.investments)) {
+              setInvestments(jsonData.data.investments);
+          }
+          if (jsonData.data.life_events && Array.isArray(jsonData.data.life_events)) {
+              setLifeEvents(jsonData.data.life_events);
+          }
+
+          // 3. LocalStorage Restoration
+          if (jsonData.storage) {
+              Object.entries(jsonData.storage).forEach(([key, val]) => {
+                  if (typeof val === 'string') localStorage.setItem(key, val);
+              });
+          }
+
+          // 4. Background DB Sync
+          // @ts-ignore - Accessing Dexie internals safely via transaction
+          await db.transaction('rw', db.tables, async () => {
+              // Wipe all tables
+              // @ts-ignore
+              await Promise.all(db.tables.map(table => table.clear()));
+
+              // Populate new data
+              const tables = Object.keys(jsonData.data);
+              for (const tableName of tables) {
+                  const rows = jsonData.data[tableName];
+                  // @ts-ignore
+                  const table = db.table(tableName);
+                  if (table && Array.isArray(rows) && rows.length > 0) {
+                      // We sanitize IDs if needed, but here we trust backup
+                      await table.bulkAdd(rows);
+                  }
+              }
+          });
+          
+          console.log("Background Database Sync Complete");
+      } catch (err) {
+          console.error("Background DB Sync Failed", err);
+          // Rollback handled by user via re-import usually, or refresh
+      } finally {
+          sessionStorage.removeItem('IS_RESTORING');
+      }
+  }, []);
+
+  const refreshRecurringInvestments = useCallback(async () => {
+    const now = new Date();
+    const updatedInvestments: Investment[] = [];
+    let hasChanges = false;
+
+    const currentInvs = await db.investments.toArray();
+
+    for (const inv of currentInvs) {
+        if (!inv.recurring?.isEnabled) {
+            updatedInvestments.push(inv);
+            continue;
+        }
+
+        const lastUpdate = new Date(inv.lastUpdated);
+        let periods = 0;
+
+        if (inv.recurring.frequency === RecurringFrequency.DAILY) {
+             const diffTime = now.getTime() - lastUpdate.getTime();
+             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+             if (diffDays > 0) periods = diffDays;
+        } else if (inv.recurring.frequency === RecurringFrequency.MONTHLY) {
+             periods = (now.getFullYear() - lastUpdate.getFullYear()) * 12 + (now.getMonth() - lastUpdate.getMonth());
+             if (now.getDate() < lastUpdate.getDate()) periods--; 
+        }
+
+        if (periods > 0) {
+            const added = periods * inv.recurring.amount;
+            const updatedInv = {
+                ...inv,
+                investedAmount: inv.investedAmount + added,
+                currentValue: inv.currentValue + added,
+                lastUpdated: now.toISOString()
+            };
+            updatedInvestments.push(updatedInv);
+            hasChanges = true;
+        } else {
+            updatedInvestments.push(inv);
+        }
+    }
+
+    if (hasChanges) {
+        await db.investments.bulkPut(updatedInvestments);
+        setInvestments(updatedInvestments);
+    }
+  }, []);
+
+  const addInvestment = useCallback(async (invData: Omit<Investment, 'id'>) => {
+    const entry: Investment = {
+        ...invData,
+        id: crypto.randomUUID(),
+        category: 'PORTFOLIO', 
+        lastUpdated: invData.lastUpdated || new Date().toISOString(),
+    };
+    await db.investments.add(entry);
+    setInvestments(prev => [...prev, entry]);
+  }, []);
+
+  const updateInvestment = useCallback(async (id: string, invData: Partial<Investment>) => {
+    const inv = await db.investments.get(id);
+    if (inv) {
+        const updated = { ...inv, ...invData, lastUpdated: invData.lastUpdated || inv.lastUpdated };
+        await db.investments.put(updated);
+        setInvestments(prev => prev.map(item => item.id === id ? updated : item));
+    }
+  }, []);
+
+  const deleteInvestment = useCallback(async (id: string) => {
+    await db.investments.delete(id);
+    setInvestments(prev => prev.filter(i => i.id !== id));
+  }, []);
+
+  const addLifeEvent = useCallback(async (event: Omit<LifeEvent, 'id'>) => {
+      const id = await db.life_events.add(event as LifeEvent);
+      const newEvent = { ...event, id } as LifeEvent;
+      setLifeEvents(prev => [...prev, newEvent].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  }, []);
+
+  const deleteLifeEvent = useCallback(async (id: number) => {
+      await db.life_events.delete(id);
+      setLifeEvents(prev => prev.filter(e => e.id !== id));
+  }, []);
+
+  // --- Stats & Allocations ---
   const stats = useMemo(() => {
     const totalInvested = investments.reduce((acc, curr) => acc + curr.investedAmount, 0);
     const totalAssets = investments.reduce((acc, curr) => acc + curr.currentValue, 0);
@@ -297,7 +435,7 @@ export const usePortfolio = () => {
                 const dateStr = d.toISOString().split('T')[0];
                 simulatedHistory.push({
                     date: dateStr,
-                    value: currentNetWorth // Flat start
+                    value: currentNetWorth
                 });
             }
             history = simulatedHistory;
@@ -322,143 +460,6 @@ export const usePortfolio = () => {
     updateHistory();
   }, [stats.totalCurrent, lifeEvents]);
 
-
-  // --- Actions ---
-
-  /**
-   * State-First Import Logic
-   * Updates React state immediately, then syncs to IndexedDB in background.
-   */
-  const importData = useCallback(async (jsonData: any) => {
-      // 1. Validations
-      if (!jsonData || !jsonData.data) throw new Error("Invalid backup file.");
-
-      // 2. State-First: Instant UI Update
-      if (jsonData.data.investments && Array.isArray(jsonData.data.investments)) {
-          setInvestments(jsonData.data.investments);
-      }
-      if (jsonData.data.life_events && Array.isArray(jsonData.data.life_events)) {
-          setLifeEvents(jsonData.data.life_events);
-      }
-
-      // 3. LocalStorage Restoration
-      if (jsonData.storage) {
-          Object.entries(jsonData.storage).forEach(([key, val]) => {
-              if (typeof val === 'string') localStorage.setItem(key, val);
-          });
-      }
-
-      // 4. Background DB Sync
-      try {
-          // @ts-ignore - Accessing Dexie internals safely via transaction
-          await db.transaction('rw', db.tables, async () => {
-              // Wipe all tables
-              // @ts-ignore
-              await Promise.all(db.tables.map(table => table.clear()));
-
-              // Populate new data
-              const tables = Object.keys(jsonData.data);
-              for (const tableName of tables) {
-                  const rows = jsonData.data[tableName];
-                  // @ts-ignore
-                  const table = db.table(tableName);
-                  if (table && Array.isArray(rows) && rows.length > 0) {
-                      // Sanitize rows if needed (e.g. removing old IDs if collisions matter)
-                      // For restore, we usually trust the IDs in the backup unless they conflict.
-                      // Since we cleared tables, we can bulkAdd directly.
-                      await table.bulkAdd(rows);
-                  }
-              }
-          });
-          console.log("Database Sync Complete");
-      } catch (err) {
-          console.error("Background DB Sync Failed", err);
-          // Optional: Revert state or show toast
-      }
-  }, []);
-
-  const refreshRecurringInvestments = useCallback(async () => {
-    const now = new Date();
-    const updatedInvestments: Investment[] = [];
-    let hasChanges = false;
-
-    const currentInvs = await db.investments.toArray();
-
-    for (const inv of currentInvs) {
-        if (!inv.recurring?.isEnabled) {
-            updatedInvestments.push(inv);
-            continue;
-        }
-
-        const lastUpdate = new Date(inv.lastUpdated);
-        let periods = 0;
-
-        if (inv.recurring.frequency === RecurringFrequency.DAILY) {
-             const diffTime = now.getTime() - lastUpdate.getTime();
-             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-             if (diffDays > 0) periods = diffDays;
-        } else if (inv.recurring.frequency === RecurringFrequency.MONTHLY) {
-             periods = (now.getFullYear() - lastUpdate.getFullYear()) * 12 + (now.getMonth() - lastUpdate.getMonth());
-             if (now.getDate() < lastUpdate.getDate()) periods--; 
-        }
-
-        if (periods > 0) {
-            const added = periods * inv.recurring.amount;
-            const updatedInv = {
-                ...inv,
-                investedAmount: inv.investedAmount + added,
-                currentValue: inv.currentValue + added,
-                lastUpdated: now.toISOString()
-            };
-            updatedInvestments.push(updatedInv);
-            hasChanges = true;
-        } else {
-            updatedInvestments.push(inv);
-        }
-    }
-
-    if (hasChanges) {
-        await db.investments.bulkPut(updatedInvestments);
-        setInvestments(updatedInvestments);
-    }
-  }, []);
-
-  const addInvestment = useCallback(async (invData: Omit<Investment, 'id'>) => {
-    const entry: Investment = {
-        ...invData,
-        id: crypto.randomUUID(),
-        category: 'PORTFOLIO', 
-        lastUpdated: invData.lastUpdated || new Date().toISOString(),
-    };
-    await db.investments.add(entry);
-    setInvestments(prev => [...prev, entry]);
-  }, []);
-
-  const updateInvestment = useCallback(async (id: string, invData: Partial<Investment>) => {
-    const inv = await db.investments.get(id);
-    if (inv) {
-        const updated = { ...inv, ...invData, lastUpdated: invData.lastUpdated || inv.lastUpdated };
-        await db.investments.put(updated);
-        setInvestments(prev => prev.map(item => item.id === id ? updated : item));
-    }
-  }, []);
-
-  const deleteInvestment = useCallback(async (id: string) => {
-    await db.investments.delete(id);
-    setInvestments(prev => prev.filter(i => i.id !== id));
-  }, []);
-
-  const addLifeEvent = useCallback(async (event: Omit<LifeEvent, 'id'>) => {
-      const id = await db.life_events.add(event as LifeEvent);
-      const newEvent = { ...event, id } as LifeEvent;
-      setLifeEvents(prev => [...prev, newEvent].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-  }, []);
-
-  const deleteLifeEvent = useCallback(async (id: number) => {
-      await db.life_events.delete(id);
-      setLifeEvents(prev => prev.filter(e => e.id !== id));
-  }, []);
-
   return {
     investments,
     stats,
@@ -474,6 +475,6 @@ export const usePortfolio = () => {
     refreshData,
     addLifeEvent,
     deleteLifeEvent,
-    importData // Exported for use in Settings
+    importData
   };
 };

@@ -33,30 +33,30 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ onKeySubmit }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 relative overflow-hidden font-sans selection:bg-cyan-500/30">
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 relative overflow-hidden font-sans selection:bg-indigo-500/30">
       {/* Background Elements matching the app theme */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
       </div>
 
       <div className="relative z-10 w-full max-w-md p-6 animate-in fade-in zoom-in duration-300">
         <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-8 backdrop-blur-xl relative overflow-hidden">
           {/* Top light accent */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-cyan-500"></div>
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
 
           <div className="flex flex-col items-center text-center mb-8 mt-2">
             <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-slate-700 group relative">
-                <div className="absolute inset-0 bg-cyan-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <Lock className="text-cyan-500 group-hover:scale-110 transition-transform duration-300 relative z-10" size={28} />
+                <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <Lock className="text-indigo-500 group-hover:scale-110 transition-transform duration-300 relative z-10" size={28} />
             </div>
             
             <h1 className="text-3xl font-black text-white mb-2 tracking-tight">
               Welcome
             </h1>
             <p className="text-slate-400 text-sm font-medium leading-relaxed">
-              Enter your Gemini API Key to unlock your <br/> <span className="text-cyan-400 font-bold">Wealth Aggregator</span>.
+              Enter your Gemini API Key to unlock your <br/> <span className="text-indigo-400 font-bold">Wealth Aggregator</span>.
             </p>
           </div>
 
@@ -67,7 +67,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ onKeySubmit }) => {
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Key className="text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={18} />
+                  <Key className="text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={18} />
                 </div>
                 <input
                   type="password"
@@ -76,7 +76,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ onKeySubmit }) => {
                     setKeyInput(e.target.value);
                     setError('');
                   }}
-                  className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-xl pl-11 pr-4 py-4 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all placeholder:text-slate-600 shadow-inner"
+                  className="w-full bg-slate-950 border border-slate-800 text-white text-sm rounded-xl pl-11 pr-4 py-4 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-slate-600 shadow-inner"
                   placeholder="Enter your secret API Key"
                   autoFocus
                 />
@@ -91,7 +91,7 @@ const ApiKeyManager: React.FC<ApiKeyManagerProps> = ({ onKeySubmit }) => {
 
             <button
               type="submit"
-              className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] group"
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98] group"
             >
               <span>Save & Continue</span>
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />

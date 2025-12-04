@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, PieChart, Wallet, Plus, 
   ArrowRight, Bot, BookOpen, Eye, EyeOff, 
-  Moon, Sun, ShieldCheck, GraduationCap, Flame, HardDrive, Upload, Download, Loader2, Lock, Settings, LogOut
+  Moon, Sun, ShieldCheck, GraduationCap, Flame, Settings, LogOut, Lock
 } from 'lucide-react';
 import { Investment, CHART_COLORS, ASSET_CLASS_COLORS } from './types';
 
@@ -49,21 +49,6 @@ const formatCurrencyPrecise = (value: number) => {
   }).format(value);
 };
 
-const formatDate = (dateStr: string) => {
-  try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    return new Intl.DateTimeFormat('en-IN', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
-  } catch (e) {
-    return dateStr;
-  }
-};
-
 const calculatePercentage = (part: number, total: number) => {
   if (total === 0) return "0.0";
   return ((part / total) * 100).toFixed(1);
@@ -80,7 +65,7 @@ const PrivacyValue = ({ value, isPrivacyMode, className = "" }: { value: string 
 const CustomTooltip = ({ active, payload, label, isPrivacyMode }: any) => {
   if (active && payload && payload.length) {
     const formattedLabel = label && !isNaN(Date.parse(label)) && typeof label === 'string' && label.includes('-') 
-        ? formatDate(label) 
+        ? new Date(label).toLocaleDateString()
         : label;
     
     return (
@@ -109,13 +94,8 @@ const CustomTooltip = ({ active, payload, label, isPrivacyMode }: any) => {
   return null;
 };
 
-const App: React.FC = () => {
-  // --- Auth State (API Key) ---
-  const [apiKey, setApiKey] = useState<string | null>(() => {
-    // Check both local storage and env var initially
-    return localStorage.getItem('gemini-api-key') || process.env.API_KEY || null;
-  });
-
+// --- AUTHENTICATED APP (Main Logic) ---
+const AuthenticatedApp: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   // --- View State ---
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'advisor' | 'journal' | 'ipo' | 'compliance' | 'academy'>('dashboard');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -135,6 +115,7 @@ const App: React.FC = () => {
   const [isPrivacyMode, setIsPrivacyMode] = useState(false);
 
   // --- Core Business Logic (Custom Hooks) ---
+  // Hooks now run safely because we are inside AuthenticatedApp
   const { 
     investments, stats, allocationData, assetClassData, platformData, projectionData,
     addInvestment, updateInvestment, deleteInvestment, refreshRecurringInvestments, refreshData,
@@ -153,7 +134,7 @@ const App: React.FC = () => {
           setIsSlumpActive(currentLoseStreak >= 3);
       };
       checkSlump();
-  }, [investments]); // Re-check when portfolio changes (often means trade update too)
+  }, [investments]); 
 
   // --- Effects ---
   useEffect(() => {
@@ -167,19 +148,6 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   // --- Handlers ---
-  const handleKeySubmit = (key: string) => {
-    setApiKey(key);
-    // Reload to ensure services pick up the new key if they were lazy loaded
-    window.location.reload();
-  };
-
-  const handleClearKey = () => {
-    if (confirm("Disconnect API Key? You will need to re-enter it to use the app.")) {
-        localStorage.removeItem('gemini-api-key');
-        setApiKey(null);
-    }
-  };
-
   const handleSaveInvestment = (invData: Omit<Investment, 'id'>, id?: string) => {
     if (id) {
         updateInvestment(id, invData);
@@ -222,8 +190,6 @@ const App: React.FC = () => {
       { id: 'compliance', icon: ShieldCheck, label: 'Compliance' },
   ] as const;
 
-  const isCrashProtocol = marketStatus === 'RED';
-
   const getPageTitle = (tab: typeof activeTab) => {
       switch(tab) {
           case 'advisor': return 'AI Financial Advisor';
@@ -248,13 +214,7 @@ const App: React.FC = () => {
       }
   };
 
-  // Logic: Block adding new trades if Slump is active, UNLESS user is in Journal tab (where they resolve it)
   const isTradeBlocked = isSlumpActive && activeTab !== 'journal';
-
-  // --- GATEKEEPER: API KEY CHECK ---
-  if (!apiKey) {
-    return <ApiKeyManager onKeySubmit={handleKeySubmit} />;
-  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -282,7 +242,7 @@ const App: React.FC = () => {
         <div className="mt-auto p-6 border-t border-slate-800 space-y-4">
             
             {/* The Black Box Controls (Backup) */}
-            <DataBackupSettings onDataRestored={refreshData} onImport={importData} />
+            <DataBackupSettings onImport={importData} />
 
             {/* Theme & Privacy Controls & Config */}
             <div className="flex items-center justify-between">
@@ -296,7 +256,7 @@ const App: React.FC = () => {
                     <Settings size={18}/>
                  </button>
                  {/* Reset Key Button */}
-                 <button onClick={handleClearKey} className="p-2 text-slate-500 hover:text-red-400 transition-colors" title="Reset API Key">
+                 <button onClick={onLogout} className="p-2 text-slate-500 hover:text-red-400 transition-colors" title="Disconnect API Key">
                     <LogOut size={18}/>
                  </button>
             </div>
@@ -378,7 +338,6 @@ const App: React.FC = () => {
                     CustomTooltip={(props: any) => <CustomTooltip {...props} isPrivacyMode={isPrivacyMode} />}
                     marketVix={vix}
                     marketStatus={marketStatus}
-                    // Pass synced Life Event Props
                     lifeEvents={lifeEvents}
                     addLifeEvent={addLifeEvent}
                     deleteLifeEvent={deleteLifeEvent}
@@ -414,7 +373,7 @@ const App: React.FC = () => {
             {activeTab === 'ipo' && (
                 <IPOWarRoom 
                     investments={investments} 
-                    onRefresh={refreshData} // Pass the refresh trigger
+                    onRefresh={refreshData}
                 />
             )}
             
@@ -442,7 +401,6 @@ const App: React.FC = () => {
       <button 
         onClick={() => {
             if (isTradeBlocked) {
-                // If blocked, force navigation to journal to resolve it
                 setActiveTab('journal');
                 return;
             }
@@ -491,6 +449,40 @@ const App: React.FC = () => {
       />
     </div>
   );
+};
+
+// --- APP GATEKEEPER ---
+const App: React.FC = () => {
+  const [apiKey, setApiKey] = useState<string | null>(() => {
+    try {
+        const local = localStorage.getItem('gemini-api-key');
+        if (local) return local;
+        // Forced UI: We purposefully removed process.env check here to ensure the 
+        // Key Manager UI always shows on first load if no key is in local storage.
+    } catch (e) {
+        console.warn("Error accessing storage:", e);
+    }
+    return null;
+  });
+
+  const handleKeySubmit = (key: string) => {
+    setApiKey(key);
+    // Reload to ensure services pick up the new key cleanly
+    window.location.reload();
+  };
+
+  const handleLogout = () => {
+    if (confirm("Disconnect API Key? You will need to re-enter it.")) {
+        localStorage.removeItem('gemini-api-key');
+        setApiKey(null);
+    }
+  };
+
+  if (!apiKey) {
+    return <ApiKeyManager onKeySubmit={handleKeySubmit} />;
+  }
+
+  return <AuthenticatedApp onLogout={handleLogout} />;
 };
 
 export default App;
