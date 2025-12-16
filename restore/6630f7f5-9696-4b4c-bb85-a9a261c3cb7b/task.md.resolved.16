@@ -1,0 +1,18 @@
+
+- [x] Connect 'Log New Trade' button in [PsychDashboard.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/PsychDashboard.tsx)
+    - [x] Import [AddTradeModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx#26-487)
+    - [x] Create state `isAddTradeModalOpen`
+    - [x] Update button [onClick](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/Academy.tsx#56-68) handler
+    - [x] Render [AddTradeModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx#26-487) component with correct props
+    - [x] Ensure [loadTrades](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/PsychDashboard.tsx#56-87) is called on save
+- [x] Verify changes
+- [x] Refine [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#12-157) widget
+    - [x] Rename to "Calendar"
+    - [x] Add Toggles: ALL, IPO, DIVIDENDS, BONDS
+    - [x] Add IPO Sub-toggle: Mainboard/SME
+    - [x] Populate IPO data (Mainboard & SME)
+    - [x] Implement filtering logic
+- [x] Refine [DashboardTab](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx#53-331) layout
+    - [x] Move [WealthSimulator](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/WealthSimulator.tsx#15-88) to full-width row
+    - [x] Arrange [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#12-157) and `HeatmapWidget` in 50/50 grid below
+- [x] Verify changes

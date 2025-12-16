@@ -1,0 +1,23 @@
+
+# Goal
+Connect the "Log New Trade" button in the Journal/Psych Dashboard to the [AddTradeModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx#26-487) component so users can actually log new trades.
+
+## User Review Required
+> [!NOTE]
+> This will fix the issue where the button currently opens the Daily Review modal (or does nothing if that modal logic was confused).
+
+## Proposed Changes
+
+### Components
+#### [MODIFY] [PsychDashboard.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/PsychDashboard.tsx)
+- Import [AddTradeModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx#26-487).
+- Add state `isAddTradeModalOpen`.
+- Update "Log New Trade" button [onClick](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/Academy.tsx#56-68).
+- Render `<AddTradeModal />`.
+
+## Verification Plan
+### Manual Verification
+- Click "Log New Trade".
+- Verify [AddTradeModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx#26-487) opens.
+- Save a test trade.
+- Verify trade appears in the list (Analyze/Journal views).

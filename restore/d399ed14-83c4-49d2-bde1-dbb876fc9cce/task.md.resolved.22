@@ -1,0 +1,10 @@
+# Adding Pie and Bar Chart Widgets
+
+- [ ] Locate specific Pie/Bar chart widgets <!-- id: 0 -->
+    - [ ] Inspect [AnomaliesWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/AnomaliesWidget.tsx) <!-- id: 1 -->
+    - [ ] Inspect [BudgetWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/BudgetWidget.tsx) <!-- id: 2 -->
+    - [ ] Inspect [NetWorthTrendWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx) <!-- id: 3 -->
+- [ ] Integrate into [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx) <!-- id:4 -->
+    - [ ] Plan the layout <!-- id: 5 -->
+    - [ ] Implement layout changes <!-- id: 6 -->
+- [ ] Verify <!-- id: 7 -->

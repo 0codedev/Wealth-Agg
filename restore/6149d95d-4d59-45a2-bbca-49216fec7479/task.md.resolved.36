@@ -1,0 +1,52 @@
+# Phase 6: Scalability
+
+## Overview
+Improving app performance for large data sets (10k+ records).
+
+---
+
+## Task 1: Pagination Hook
+**Priority:** HIGH  
+**Status:** [ ] IN PROGRESS
+
+### 1.1 Create hooks/usePagination.ts
+- [ ] Generic pagination hook with page/limit
+- [ ] Support offset and cursor-based pagination
+- [ ] Total count and hasMore tracking
+
+---
+
+## Task 2: Chart Data Optimization
+**Priority:** HIGH  
+**Status:** [ ] NOT STARTED
+
+### 2.1 Create utils/chartOptimization.ts
+- [ ] `downsampleData()` - reduce data points for charts
+- [ ] LTTB algorithm for time-series
+- [ ] Min/max preservation for candlestick
+
+---
+
+## Task 3: Performance Utilities
+**Priority:** MEDIUM  
+**Status:** [ ] NOT STARTED
+
+### 3.1 Create utils/performance.ts
+- [ ] `debounce()` and `throttle()` utilities
+- [ ] Performance timing helpers
+- [ ] Memory usage monitoring
+
+---
+
+## Existing Infrastructure ✅
+- **VirtualizedList** - Already implemented in shared/
+- **Web Worker** - CSV parsing already in worker
+
+---
+
+## Progress Tracker
+| Task | Status |
+|------|--------|
+| usePagination.ts | [ ] |
+| chartOptimization.ts | [ ] |
+| performance.ts | [ ] |

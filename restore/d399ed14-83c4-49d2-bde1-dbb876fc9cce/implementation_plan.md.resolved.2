@@ -1,0 +1,26 @@
+# Restore Additional Spending Widgets
+
+## Goal Description
+The user requested that "other widgets" (like charts and patterns) be restored to the Spending Analytics tab below the main Jupiter Analytics widget. I will integrate the available spending widgets to create a comprehensive dashboard.
+
+## User Review Required
+> [!NOTE]
+> I am adding [MonthlySpendTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/MonthlySpendTrendWidget.tsx#20-106), [SpendingCalendarWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingCalendarWidget.tsx#12-147), [RecurringPatternsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/RecurringPatternsWidget.tsx#6-58), and [ExpenseInsights](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/ExpenseInsights.tsx#9-52). I did not find a standalone "Pie Chart" widget for spending other than what's inside the Jupiter widget or the Asset Allocation on the main dashboard.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx)
+- Import [MonthlySpendTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/MonthlySpendTrendWidget.tsx#20-106), [SpendingCalendarWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingCalendarWidget.tsx#12-147), [RecurringPatternsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/RecurringPatternsWidget.tsx#6-58), [ExpenseInsights](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/ExpenseInsights.tsx#9-52).
+- Update the render method for `activeTab === 'analytics'` to include these widgets in a grid layout below [JupiterAnalyticsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx#33-317).
+
+## Verification Plan
+
+### Automated Tests
+- `npm run dev` should pass.
+
+### Manual Verification
+- Navigate to Spending Analytics tab.
+- Scroll down below the main chart.
+- Verify that the additional widgets (Trend, Calendar, Recurring, Insights) are visible and populated with data.

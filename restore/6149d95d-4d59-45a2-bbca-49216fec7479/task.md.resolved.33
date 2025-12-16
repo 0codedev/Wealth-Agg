@@ -1,0 +1,81 @@
+# Phase 4: Service Layer Refactor
+
+## Overview
+Improving service layer with shared utilities, retry logic, and better configuration.
+
+---
+
+## Task 1: Create Shared Service Utilities
+**Priority:** HIGH  
+**Status:** [x] COMPLETE ✅
+
+### 1.1 Create services/utils/config.ts ✅
+- [x] Centralize API URLs and constants
+- [x] Environment variable management
+- [x] [getGeminiApiKey()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/store/settingsStore.ts#51-60) helper
+
+### 1.2 Create services/utils/retry.ts ✅
+- [x] Implement [withRetry()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/utils/retry.ts#17-69) generic function
+- [x] Configurable retries, delay, backoff
+- [x] [withTimeout()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/utils/retry.ts#113-128) utility
+- [x] Smart error classification
+
+### 1.3 Create services/utils/cache.ts ✅
+- [x] Simple in-memory cache with TTL
+- [x] [withCache()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/utils/cache.ts#78-113) memoization helper
+- [x] [withSWR()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/utils/cache.ts#114-177) stale-while-revalidate pattern
+
+### 1.4 Create services/utils/index.ts ✅
+- [x] Barrel export for all utilities
+
+---
+
+## Task 2: Add Service Types
+**Priority:** MEDIUM  
+**Status:** [x] COMPLETE ✅
+
+### 2.1 Create types/services.types.ts ✅
+- [x] `ServiceResponse<T>` wrapper
+- [x] [ServiceError](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/services.types.ts#19-25) with error codes
+- [x] [createServiceError()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/services.types.ts#43-58) helper
+- [x] Chat and Market data interfaces
+
+---
+
+## Progress Tracker
+| Task | Files | Status |
+|------|-------|--------|
+| config.ts | services/utils/config.ts | ✅ |
+| retry.ts | services/utils/retry.ts | ✅ |
+| cache.ts | services/utils/cache.ts | ✅ |
+| index.ts | services/utils/index.ts | ✅ |
+| Service types | types/services.types.ts | ✅ |
+
+---
+
+## Verification ✅
+- **Build:** Successful (7.11s)
+- **Tests:** 70 passing
+
+---
+
+## Usage Examples
+
+```typescript
+// Retry with exponential backoff
+import { withRetry, withTimeout } from './services/utils';
+
+const data = await withRetry(
+  () => withTimeout(fetch('/api/data'), 5000),
+  { maxRetries: 3, onRetry: (err, n) => console.log(`Retry ${n}`) }
+);
+
+// Caching with SWR pattern
+import { withSWR } from './services/utils';
+
+const fetchStock = withSWR(
+  (ticker: string) => api.getStock(ticker),
+  (ticker) => `stock:${ticker}`,
+  { ttlMs: 60000 }
+);
+```

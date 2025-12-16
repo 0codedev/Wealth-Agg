@@ -1,0 +1,29 @@
+# Interaction Fix & Style Normalization Plan
+
+## Goal Description
+1.  **Fix Bank Statement Parser**: The user reports that clicking "cross markets" (likely referring to the X close button or area outside) might be triggering the file manager. I need to ensure the file input is strictly scoped to the drop zone and doesn't interfere with other UI elements.
+2.  **Normalize Investment Clubs**: Remove the "purplish" gradient from the Investment Clubs widget and apply the standard dark aesthetic to match the rest of the app power features.
+
+## User Review Required
+> [!NOTE]
+> For the file picker, I will ensure the `input type="file"` is strictly contained within the dashed border area.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [GodTierFeatures.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/GodTierFeatures.tsx)
+- **BankStatementParser**:
+    - Verify `input` positioning. If it covers the entire modal or close button, restrict it to the `border-dashed` container.
+- **InvestmentClubsWidget**:
+    - Remove: `bg-gradient-to-br from-indigo-600 to-purple-600` and `text-white`.
+    - Add: `bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800`.
+    - Update Text: Change headings and body text to `slate-900` / `slate-500`.
+    - Update Progress Bar: Change from white/transparent to standard slate/indigo colors.
+    - Update Button: Change from `bg-white/20` to `bg-indigo-600 text-white` (Standard Action Button).
+
+## Verification Plan
+
+### Manual Verification
+1.  **File Import**: Open "Import Bank Statement" modal. Click the "X" (Close) button. Verify it CLOSES the modal and DOES NOT open the file manager.
+2.  **Investment Clubs**: Verify the widget widget looks like the "UPI Spending Tracker" (clean dark card) and not a purple gradient box.

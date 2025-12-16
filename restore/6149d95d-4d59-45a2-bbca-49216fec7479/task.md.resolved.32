@@ -1,0 +1,64 @@
+# Phase 4: Service Layer Refactor
+
+## Overview
+Improving service layer with shared utilities, retry logic, and better configuration.
+
+---
+
+## Task 1: Create Shared Service Utilities
+**Priority:** HIGH  
+**Status:** [ ] IN PROGRESS
+
+### 1.1 Create services/utils/retry.ts
+- [ ] Implement `withRetry()` generic function
+- [ ] Configurable retries, delay, backoff
+
+### 1.2 Create services/utils/config.ts
+- [ ] Centralize API URLs and constants
+- [ ] Environment variable management
+
+### 1.3 Create services/utils/cache.ts  
+- [ ] Simple in-memory cache with TTL
+- [ ] Stale-while-revalidate pattern
+
+---
+
+## Task 2: Improve AI Service
+**Priority:** MEDIUM  
+**Status:** [ ] NOT STARTED
+
+### 2.1 Move API_BASE_URL to config
+- [ ] Use centralized config
+
+### 2.2 Better error handling
+- [ ] Typed error responses
+- [ ] User-friendly error messages
+
+---
+
+## Task 3: Add Service Interfaces
+**Priority:** MEDIUM  
+**Status:** [ ] NOT STARTED
+
+### 3.1 Create types/services.types.ts
+- [ ] Define service method interfaces
+- [ ] Consistent return types
+
+---
+
+## Progress Tracker
+| Task | Status |
+|------|--------|
+| retry.ts | [ ] |
+| config.ts | [ ] |
+| cache.ts | [ ] |
+| AI Service update | [ ] |
+| Service interfaces | [ ] |
+
+---
+
+## Key Files to Create
+- `services/utils/retry.ts`
+- `services/utils/config.ts`
+- `services/utils/cache.ts`
+- `services/utils/index.ts`

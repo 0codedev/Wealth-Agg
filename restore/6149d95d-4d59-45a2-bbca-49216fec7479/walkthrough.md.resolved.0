@@ -1,0 +1,109 @@
+# Phase 1: Foundation Improvements - Walkthrough
+
+## Summary
+Completed all 5 critical foundation improvements from the audit report.
+
+---
+
+## Changes Made
+
+### 1. Security: API Key Hardening ✅
+
+**File**: [aiService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/services/aiService.ts)
+
+**Before (CRITICAL VULNERABILITY)**:
+```typescript
+const DEFAULT_API_KEY = "AIzaSyCLOar4..."; // Hardcoded!
+```
+
+**After**:
+- Removed hardcoded API key entirely
+- Added helpful error message when no key configured
+- Keys now sourced from `localStorage` or `VITE_GEMINI_API_KEY` env variable only
+
+---
+
+### 2. Toast Notification System ✅
+
+**New File**: [ToastProvider.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/ToastProvider.tsx)
+
+**Features**:
+- React Context with [useToast()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx#29-37) hook
+- 4 variants: `toast.success()`, `toast.error()`, `toast.warning()`, `toast.info()`
+- Framer Motion slide-in/fade-out animations
+- Auto-dismiss with configurable duration
+- Dark mode compatible
+
+**Modified**: [index.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/index.tsx) - Wrapped app with `<ToastProvider>`
+
+---
+
+### 3. Alert Replacements ✅
+
+Replaced all 10 native `alert()` calls with toast notifications:
+
+| File | Toast Type |
+|------|------------|
+| [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/PortfolioTab.tsx) | success/info |
+| [Academy.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/Academy.tsx) | warning |
+| [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/AdvisorTab.tsx) | error |
+| [SyndicateTracker.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/SyndicateTracker.tsx) | error |
+| [AddTradeModal.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/AddTradeModal.tsx) | error |
+| [PaperTradingGym.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/academy/PaperTradingGym.tsx) | warning |
+
+---
+
+### 4. Legacy Vault Persistence ✅
+
+**Before**: Beneficiary data stored in `useState` - lost on refresh!
+
+**After**: 
+- Added [Beneficiary](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.tsx#106-113) interface to [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/database.tsx)
+- Added `beneficiaries` table (DB version 14)
+- [LegacyVault.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/LegacyVault.tsx) now uses `useLiveQuery` for reactive IndexedDB state
+- Data survives page refreshes
+
+---
+
+### 5. Loading Skeletons ✅
+
+**New File**: [Skeleton.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/Skeleton.tsx)
+
+**Components**:
+- `<Skeleton />` - Base shimmer element
+- `<Skeleton.Card />` - Dashboard card placeholder
+- `<Skeleton.Text lines={3} />` - Paragraph placeholder
+- `<Skeleton.Circle size={48} />` - Avatar/icon placeholder
+- `<Skeleton.Chart />` - Chart placeholder
+- `<DashboardSkeleton />` - Full dashboard layout
+- `<HoldingsSkeleton />` - Portfolio holdings layout
+
+---
+
+## Testing Instructions
+
+1. **API Key Test**:
+   - Clear localStorage: `localStorage.removeItem('gemini-api-key')`
+   - Navigate to AI Advisor → Try to chat
+   - Expected: Error thrown (check console)
+
+2. **Toast Test**:
+   - Go to Portfolio → Click "Auto-SIP"
+   - Expected: Toast notification appears bottom-right
+
+3. **Legacy Vault Persistence**:
+   - Go to Legacy Vault → Add a beneficiary
+   - Refresh page (F5)
+   - Expected: Beneficiary data persists
+
+---
+
+## Files Changed Summary
+
+| Category | Files |
+|----------|-------|
+| **Security** | [services/aiService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/aiService.ts) |
+| **New Components** | [components/shared/ToastProvider.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx), [components/shared/Skeleton.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/Skeleton.tsx) |
+| **Database** | [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.tsx) (v13 → v14) |
+| **Toast Integration** | [index.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/index.tsx), [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx), [Academy.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/Academy.tsx), [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx), [SyndicateTracker.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/SyndicateTracker.tsx), [AddTradeModal.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx), [PaperTradingGym.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/academy/PaperTradingGym.tsx) |
+| **Persistence** | [components/tabs/LegacyVault.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/LegacyVault.tsx) |

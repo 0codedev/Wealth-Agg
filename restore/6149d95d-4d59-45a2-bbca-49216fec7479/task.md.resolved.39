@@ -1,0 +1,62 @@
+# 🎯 Future Work - 80/20 Priority List
+
+**Principle:** Maximum impact with minimum effort.
+
+---
+
+## 🔴 Priority 1: Quick Bug Fixes
+
+### 1.1 Remove `alert()` in TransactionTimeline ✅
+- **Status:** DONE
+- Replaced with `toast.success()` and added proper date filtering
+
+### 1.2 Remove `alert()` in BankImportModal ✅
+- **Status:** DONE
+- Replaced with `toast.error()`
+
+### 1.3 Remove `alert()` in GodTierFeatures ✅ (x2)
+- **Status:** DONE
+- Replaced voice command alert and file error alert with toasts
+
+---
+
+## 🟠 Priority 2: Organization
+
+### 2.1 Z-Index Constants ✅
+- **Status:** DONE
+- Created [utils/zIndex.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/zIndex.ts) with layering system
+
+---
+
+## 🟡 Remaining Items (Deferred)
+
+### 3.1 Transaction ID Uniqueness
+- **File:** CSV Parser Worker
+- **Issue:** IDs can duplicate on fast imports
+- **Status:** Pending
+
+### 3.2 useCallback Event Handlers
+- **Files:** DashboardTab, PortfolioTab
+- **Status:** Pending
+
+### 3.3 Move Sample Files
+- **Files:** sample_statement.csv, test_api.js
+- **Status:** Pending
+
+### 3.4 ARIA Labels
+- **Status:** Pending
+
+---
+
+## Verification ✅
+- **Build:** Successful
+- **Tests:** 70 passing
+
+---
+
+## Summary
+| Category | Total | Done |
+|----------|-------|------|
+| Bug Fixes | 4 | 4 ✅ |
+| Organization | 1 | 1 ✅ |
+| Deferred | 4 | 0 |

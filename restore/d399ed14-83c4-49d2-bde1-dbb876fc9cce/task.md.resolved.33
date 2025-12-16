@@ -1,0 +1,22 @@
+# Adding Pie and Bar Chart Widgets
+
+- [x] Locate specific Pie/Bar chart widgets <!-- id: 0 -->
+# Adding Pie and Bar Chart Widgets
+
+- [x] Locate specific Pie/Bar chart widgets <!-- id: 0 -->
+    - [x] Inspect [AnomaliesWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/AnomaliesWidget.tsx) <!-- id: 1 -->
+    - [x] Inspect [BudgetWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/BudgetWidget.tsx) <!-- id: 2 -->
+    - [x] Inspect [NetWorthTrendWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx) <!-- id: 3 -->
+    - [ ] Inspect [GodTierFeatures.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/GodTierFeatures.tsx) <!-- id: 3.1 -->
+- [x] Integrate into [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx) <!-- id:4 -->
+    - [x] Plan the layout <!-- id: 5 -->
+    - [ ] Add [BudgetWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/BudgetWidget.tsx#9-75), [UPITrackerWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/GodTierFeatures.tsx#386-435), [CreditCardOptimizer](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/GodTierFeatures.tsx#436-466), [NetWorthTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx#10-136) <!-- id: 6 -->
+    - [ ] Add specific charts <!-- id: 8 -->
+    - [x] Create [CategoryDonutChart.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/CategoryDonutChart.tsx) <!-- id: 9 -->
+    - [x] Create [TopMerchantsBarChart.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/TopMerchantsBarChart.tsx) <!-- id: 10 -->
+    - [x] Integrate into [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx) <!-- id: 11 -->
+- [ ] Add Net Worth Graph with CSV Data <!-- id: 13 -->
+    - [ ] Update [TransactionContext](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx#227-236) to parse Balance history <!-- id: 14 -->
+    - [ ] Update [NetWorthTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx#10-136) to use real data <!-- id: 15 -->
+    - [ ] Insert [NetWorthTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx#10-136) into Hub layout <!-- id: 16 -->
+- [ ] Verify <!-- id: 12 -->

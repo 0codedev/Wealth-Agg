@@ -1,0 +1,148 @@
+# 📊 Transaction File Format Analysis
+
+## Summary
+
+I analyzed 3 files: **Fold CSV**, **Paytm CSV**, and **Paytm PDF**. Here's my structural breakdown and recommendation.
+
+---
+
+## 1. Fold Transactions CSV (`Fold-Transactions-2025-12-06_02-39AM.csv`)
+
+### Structure
+| Column # | Header | Data Type | Example |
+|----------|--------|-----------|---------|
+| 1 | `account_number` | String (masked) | `XXXXXXXXXXXXX5766` |
+| 2 | `card_number` | String (optional) | *(mostly empty)* |
+| 3 | `card_name` | String (optional) | *(mostly empty)* |
+| 4 | `bank_name` | String | `State Bank of India`, `ICICI Bank` |
+| 5 | `txn_timestamp` | ISO 8601 DateTime | `2025-12-04T08:50:36Z` |
+| 6 | `amount` | Number | `19000`, `349`, `15.00` |
+| 7 | `current_balance` | Number | `47695.70` |
+| 8 | `type` | Enum | `CREDIT` / `DEBIT` |
+| 9 | `narration` | String (raw bank text) | `WDL TFR   UPI/DR/694970844644/RELIANCE/CITI/jio@citiba/` |
+| 10 | `reference` | String (optional) | *(mostly empty)* |
+| 11 | `merchant` | String (extracted) | `RELIANCE`, `GULLAKMO`, `Swiggy` |
+| 12 | `category_icon_name` | String | `Phone`, `Gold`, `Swiggy`, `Pizza` |
+| 13 | `category` | String | `Bill`, `Investment`, `Food & Drinks`, `Shopping` |
+| 14 | `notes` | String (optional) | *(mostly empty)* |
+| 15 | `excluded_from_cash_flow` | Boolean | `Yes` / `No` |
+| 16 | `tracking_method` | String | `AA` (Aggregator Sync) |
+
+### Pre-Tagged Categories Found
+- `Investment` (Gold, Mutual Funds, IPO)
+- `Bill` (Phone, Recharge)
+- `Food & Drinks` (Swiggy, Zomato, Take Away, Snacks, Beverages, Pizza)
+- `Shopping` (Electronics, Clothes, Books)
+- `Transport` (Train, Bus)
+- `Entertainment` (Movies)
+- `Services` (Laundry)
+- `Hidden Charges` (Bank fees)
+- `Self Transfer`
+- `Lent`
+- `Interest`
+- `Cashback`
+- `Earnings`
+
+### 🔥 Key Insight: This data is **pre-cleaned and tagged**!
+Fold has already done ML-based categorization. This is **gold** for import.
+
+---
+
+## 2. Paytm UPI Statement CSV (`Paytm_UPI_Statement_08_Dec'24_-_07_Dec'25.csv`)
+
+### Structure
+| Column # | Header | Data Type | Example |
+|----------|--------|-----------|---------|
+| 1 | `Date` | Date (DD/MM/YYYY) | `07/12/2025` |
+| 2 | `Time` | Time (HH:MM:SS) | `16:55:08` |
+| 3 | `Transaction Details` | String | `Paid to Kp East Enterprises` |
+| 4 | `Other Transaction Details (UPI ID or A/c No)` | String | `paytm.s16sata@pty on Paytm` |
+| 5 | `Your Account` | String | `State Bank Of India - 66` |
+| 6 | `Amount` | Signed Number | `-1,050.00` or `+9,000.00` |
+| 7 | `UPI Ref No.` | String | `296323516511` |
+| 8 | `Order ID` | String (optional) | *(mostly empty)* |
+| 9 | `Remarks` | String (optional) | `JIO20BR000CGN8JDX...` |
+| 10 | `Tags` | Emoji-prefixed String | `#🥘 Food`, `#🪙 Investment`, `#🎈 Entertainment` |
+| 11 | `Comment` | String (optional) | *(mostly empty)* |
+
+### Pre-Tagged Categories (Emoji-based)
+- `#🥘 Food`
+- `#🛒 Groceries`
+- `#🎈 Entertainment`
+- `#🛍 Shopping`
+- `#🚕 Commute`
+- `#🚖 Taxi`
+- `#🧾 Recharge`
+- `#🪙 Investment`
+- `#💵 Money Received`
+- `#💵 Money Transfer`
+- `#💵 Transfers`
+- `#🔄 Miscellaneous`
+
+### 🔥 Key Insight: Also pre-tagged with emojis!
+The `Tags` column is perfect for mapping to your app's category system.
+
+---
+
+## 3. Paytm UPI Statement PDF
+
+> [!CAUTION]
+> **PDF is NOT parseable directly.** It's an encoded binary file. To extract data from PDFs, you would need a PDF-parsing library (e.g., `pdf-parse` or a Python tool like `pdfplumber`). This is **complex and error-prone** due to:
+> - Table detection issues
+> - Multi-line wrapping
+> - Font encoding problems
+
+---
+
+## 📌 Recommendation: CSV > PDF
+
+| Criterion | CSV | PDF |
+|-----------|-----|-----|
+| **Parseability** | ⭐⭐⭐⭐⭐ Native JavaScript | ⭐⭐ Requires external library |
+| **Data Integrity** | ⭐⭐⭐⭐⭐ Exact | ⭐⭐ OCR-like issues |
+| **Pre-tagged?** | ✅ Yes (both Fold & Paytm) | ❌ Raw text |
+| **Dev Effort** | Low (~2-3 hours) | High (~10+ hours) |
+| **User Experience** | Simple drag-and-drop | Complex multi-step |
+
+> [!IMPORTANT]
+> **My strong recommendation: Build CSV import first.** 
+> Both Fold and Paytm export to CSV with **pre-tagged categories**, making import trivial. PDF support can be a "Phase 2" feature if truly needed.
+
+---
+
+## 🗺️ Proposed Field Mapping
+
+### Fold CSV → Your App
+| Fold Column | Your Transaction Field |
+|-------------|------------------------|
+| `txn_timestamp` | `date` |
+| `amount` | `amount` (use `type` to determine sign) |
+| `type` | `direction` (`CREDIT` = income, `DEBIT` = expense) |
+| `merchant` | `merchant` |
+| `category` | `category` (direct mapping!) |
+| `bank_name` | `account` |
+| `narration` | `notes` |
+| `excluded_from_cash_flow` | `isExcluded` (filter out self-transfers) |
+
+### Paytm CSV → Your App
+| Paytm Column | Your Transaction Field |
+|--------------|------------------------|
+| `Date` + `Time` | `date` (combine) |
+| `Amount` | `amount` (already signed) |
+| `Transaction Details` | `description` |
+| `Other Transaction Details` | `upiId` |
+| `Tags` | `category` (strip emoji, map) |
+| `Your Account` | `account` |
+| `Remarks` | `notes` |
+
+---
+
+## Next Steps
+
+1. **Add a "Import Transactions" button** in Dashboard/Settings.
+2. **Create a CSV parser utility** that auto-detects format (Fold vs Paytm).
+3. **Map fields to your Transaction schema.**
+4. **Bulk insert into IndexedDB.**
+5. **Display in Spending Timeline / Analytics.**
+
+Shall I proceed with the implementation plan?

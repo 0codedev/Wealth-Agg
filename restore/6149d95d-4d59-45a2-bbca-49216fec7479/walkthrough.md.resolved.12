@@ -1,0 +1,115 @@
+# 🏗️ Phase 1: Critical Architecture Fixes - Walkthrough
+
+## Summary
+Completed 3 of 4 Phase 1 tasks from the architecture audit. Type consolidation deferred to Phase 2.
+
+---
+
+## ✅ Task 1: PsychDashboard Refactoring
+
+### Before/After
+| Metric | Before | After |
+|--------|--------|-------|
+| Lines | 1071 | 702 |
+| File Size | 64KB | 43KB |
+| useMemo hooks | 11 | 6 |
+
+### Changes Made
+**Imports updated:** Added 5 extracted psych components
+```diff
++import {
++    EquityCurveChart,
++    DrawdownChart,
++    ExpectancyEngine,
++    TiltOMeter,
++    SlumpBusterModal
++} from './psych';
+```
+
+**Component usage:** Replaced inline implementations
+- [SlumpBusterModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/psych/SlumpBusterModal.tsx) - 50 lines → 5 lines
+- [EquityCurveChart](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/psych/EquityCurveChart.tsx) - 50 lines → 2 lines
+- [DrawdownChart](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/psych/DrawdownChart.tsx) - 40 lines → 2 lines
+- [ExpectancyEngine](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/psych/ExpectancyEngine.tsx) - 55 lines → 2 lines
+- [TiltOMeter](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/psych/TiltOMeter.tsx) - 45 lines → 2 lines
+
+**Removed dead code:** 6 useMemo blocks totaling ~120 lines
+
+---
+
+## ✅ Task 2: Store Relocation
+
+Moved [gamificationStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/store/gamificationStore.ts) from root to `store/` directory.
+
+> [!NOTE]
+> This file was identified as dead code (no imports found), but relocated for structural consistency.
+
+---
+
+## ⏸️ Task 3: Type Consolidation (Deferred)
+
+Deferred to Phase 2 - requires updating 50+ file imports.
+
+---
+
+## ✅ Task 4: Vitest Testing Setup
+
+### New Files Created
+- [vitest.config.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/vitest.config.ts) - Test configuration
+- [vitest.setup.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/vitest.setup.ts) - jest-dom setup
+- [helpers.test.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/__tests__/helpers.test.ts) - 21 unit tests
+
+### Test Coverage
+
+| Function | Tests | Status |
+|----------|-------|--------|
+| formatCurrency | 4 | ✅ |
+| formatCurrencyPrecise | 1 | ✅ |
+| calculatePercentage | 3 | ✅ |
+| calculateProgress5L | 3 | ✅ |
+| getCountdownToTarget | 2 | ✅ |
+| calculateStreaks | 4 | ✅ |
+| getFiscalYearRange | 4 | ✅ |
+| **Total** | **21** | **✅ All Pass** |
+
+### Run Tests
+```bash
+npm test           # Watch mode
+npm test -- --run  # Single run
+npm run test:coverage  # With coverage report
+```
+
+---
+
+## Verification Results
+
+### Build
+```
+✓ 2819 modules transformed
+✓ built in 12.20s
+```
+
+### Tests
+```
+✓ __tests__/helpers.test.ts (21 tests) 67ms
+Test Files: 1 passed (1)
+Tests: 21 passed (21)
+```
+
+---
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| [PsychDashboard.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/PsychDashboard.tsx) | -369 lines |
+| [package.json](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/package.json) | +2 scripts |
+| gamificationStore.ts | Moved to store/ |
+
+## Files Created
+
+| File | Purpose |
+|------|---------|
+| [vitest.config.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/vitest.config.ts) | Vitest configuration |
+| [vitest.setup.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/vitest.setup.ts) | Test setup |
+| [helpers.test.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/__tests__/helpers.test.ts) | Unit tests |

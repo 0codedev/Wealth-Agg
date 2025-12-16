@@ -1,0 +1,29 @@
+# Walkthrough - Timeline & Spending Hub Upgrades
+
+I have successfully enhanced the Spending capabilities with a new "Fold-like" Spending Hub and a fully featured Timeline view.
+
+## 1. Spending Analytics Hub
+I created a centralized [SpendingAnalyticsHub](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx#14-77) that organizes your spending data into three intuitive tabs, similar to premium finance apps:
+- **Overview**: Your Smart Feed, Widgets, and Spending Summaries.
+- **Timeline**: The new transaction list with powerful filtering.
+- **Analytics**: Detailed charts and heatmaps.
+
+## 2. Timeline Tab Enhancements
+The [TransactionTimeline](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/TransactionTimeline.tsx#31-264) has been completely rebuilt with:
+- **Performance**: Implemented "Load More" virtualization for smooth scrolling of large transaction lists.
+- **Visuals**: 
+    - Transactions are now color-coded (Green for Credit, Red for Debit).
+    - Bank names (SBI, ICICI) are displayed with distinct colored badges/icons.
+- **Grouping**: Transactions are grouped by date with daily "Net Spend" calculations.
+- **Search & Filter**: 
+    - Search by merchant or amount.
+    - Functional Category Filter dropdown.
+
+## 3. Data Integration
+- **Bank Parsing**: Updated the CSV parser to specifically extract `bank_name` from your data files.
+- **Routing**: Integrated the new Hub into the main Dashboard via the "Power Features" grid.
+
+## Verification
+- **Navigation**: Click the "Spending" card in the Power Features section to open the Hub.
+- **Interaction**: Switch to "Timeline" tab to see your transactions grouped by date.
+- **Feature Check**: Verify that "Credit" transactions are green and bank names appear next to merchants.

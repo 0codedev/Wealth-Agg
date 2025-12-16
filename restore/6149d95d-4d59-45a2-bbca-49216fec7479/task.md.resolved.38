@@ -1,0 +1,97 @@
+# 🎯 Future Work - 80/20 Priority List
+
+**Principle:** Maximum impact with minimum effort. Skip complex items.
+
+---
+
+## 🔴 Priority 1: Quick Bug Fixes (< 30 min each)
+
+### 1.1 Remove `alert()` in TransactionTimeline
+- **File:** `components/dashboard/TransactionTimeline.tsx:143`
+- **Issue:** Uses browser `alert()` instead of toast notification
+- **Fix:** Replace with `useToast().toast()`
+- **Time:** 5 minutes
+
+### 1.2 Fix Transaction ID Uniqueness
+- **File:** CSV Parser Worker
+- **Issue:** `'txn_' + Date.now() + '_' + i` can duplicate on fast imports
+- **Fix:** Add UUID or crypto.randomUUID()
+- **Time:** 10 minutes
+
+### 1.3 Date Picker Focus Issue
+- **Issue:** Date inputs may lose focus unexpectedly
+- **Fix:** Check controlled vs uncontrolled component issue
+- **Time:** 15 minutes
+
+---
+
+## 🟠 Priority 2: Performance Quick Wins (< 1 hour each)
+
+### 2.1 Add useCallback to Event Handlers
+- **Files:** DashboardTab, PortfolioTab, PsychDashboard
+- **Issue:** Inline handlers recreated every render
+- **Fix:** Wrap with `useCallback`
+- **Time:** 30 minutes
+
+### 2.2 Memoize Expensive Calculations
+- **Issue:** Some useMemo missing or have incorrect dependencies
+- **Fix:** Review and fix useMemo calls
+- **Time:** 45 minutes
+
+---
+
+## 🟡 Priority 3: Organization (< 30 min each)
+
+### 3.1 Move Sample Files
+- **Files:** [sample_statement.csv](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/sample_statement.csv), [test_api.js](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/test_api.js), [list_models.js](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/list_models.js)
+- **Fix:** Move to `data/` or `scripts/` folder
+- **Time:** 10 minutes
+
+### 3.2 Remove/Organize Extra Files Folder
+- **Issue:** `Extra files/` folder has unclear purpose
+- **Fix:** Delete or add to .gitignore
+- **Time:** 5 minutes
+
+### 3.3 Fix Database Version Comment
+- **File:** [database.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.ts)
+- **Issue:** Comments mention version confusion
+- **Fix:** Update comments to clarify
+- **Time:** 10 minutes
+
+---
+
+## 🟢 Priority 4: User Experience (< 1 hour each)
+
+### 4.1 Add ARIA Labels to Interactive Elements
+- **Issue:** Poor screen reader support
+- **Fix:** Add `aria-label` to buttons, icons
+- **Time:** 45 minutes
+
+### 4.2 Consistent Modal Z-Index
+- **Issue:** Modals have different z-index (50, 100, 1000+)
+- **Fix:** Create z-index constants
+- **Time:** 20 minutes
+
+---
+
+## ❌ Skip For Now (Too Complex)
+
+- Storybook setup (3+ days)
+- E2E tests with Playwright (2+ days)
+- Data archival strategy (complex data decisions)
+- Compound component refactor (extensive changes)
+- Full security audit (requires careful planning)
+
+---
+
+## 📊 Summary
+
+| Priority | Items | Est. Time |
+|----------|-------|-----------|
+| Bug Fixes | 3 | 30 min |
+| Performance | 2 | 1.5 hrs |
+| Organization | 3 | 25 min |
+| UX | 2 | 1 hr |
+| **TOTAL** | **10** | **~3.5 hrs** |
+
+**Expected Impact:** Noticeable improvement in reliability and polish.

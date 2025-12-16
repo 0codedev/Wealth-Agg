@@ -1,0 +1,63 @@
+# Phase 4: Polish - Implementation Plan
+
+## Goal
+Achieve god-tier polish with accessibility, keyboard navigation, onboarding, and export features.
+
+---
+
+## 1. Accessibility Utilities 🎯
+
+### Files to Create
+
+#### [NEW] [useAccessibility.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/hooks/useAccessibility.ts)
+- Screen reader announcements
+- Focus management
+- Reduced motion detection
+
+#### [NEW] [AccessibleComponents.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/AccessibleComponents.tsx)
+- VisuallyHidden component
+- SkipLink for navigation
+- FocusTrap for modals
+
+---
+
+## 2. Keyboard Navigation ⌨️
+
+#### [NEW] [useKeyboardShortcuts.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/hooks/useKeyboardShortcuts.ts)
+- Global shortcuts (Ctrl+K search, Ctrl+N new asset)
+- Tab navigation
+- Modal escape handling
+
+#### [NEW] [KeyboardShortcutsHelp.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/KeyboardShortcutsHelp.tsx)
+- Shortcut reference modal (? key)
+
+---
+
+## 3. Onboarding Flow 🎓
+
+#### [NEW] [OnboardingFlow.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/Onboarding/OnboardingFlow.tsx)
+- Welcome screen
+- Feature highlights
+- First asset setup wizard
+
+#### [NEW] [useOnboarding.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/hooks/useOnboarding.ts)
+- Track onboarding progress
+- Skip/complete handling
+
+---
+
+## 4. Export & Share Features 📤
+
+#### [NEW] [ExportService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/services/ExportService.ts)
+- PDF export
+- Excel export
+- Portfolio sharing (anonymized)
+
+---
+
+## Execution Order
+
+1. **Accessibility utilities** (foundation for others)
+2. **Keyboard shortcuts** (power user feature)
+3. **Onboarding flow** (new user experience)
+4. **Export features** (user value)

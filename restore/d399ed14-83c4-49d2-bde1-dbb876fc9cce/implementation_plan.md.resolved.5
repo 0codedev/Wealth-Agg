@@ -1,0 +1,20 @@
+# Add Telegram Bot Widget to Market Insights
+
+## Goal Description
+The user requested the addition of the "Telegram bought wjet" (Telegram Bot Widget) to the Market Insights section.
+This involves adding the existing [TelegramBot](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/integrations/TelegramBot.tsx#9-193) component to the [MarketInsightsHub](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/MarketInsightsHub.tsx#10-36) and ensuring it receives the necessary `investments` data.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [MarketInsightsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/MarketInsightsHub.tsx)
+- Update [MarketInsightsHubProps](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/MarketInsightsHub.tsx#5-9) to include `investments: Investment[]`.
+- Import [TelegramBot](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/integrations/TelegramBot.tsx#9-193).
+- Add `<TelegramBot investments={investments} />` to the grid layout.
+
+#### [MODIFY] [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx)
+- Pass `investments` prop to `<MarketInsightsHub />`.
+
+## Verification Plan
+- Verify manually that the Telegram Bot widget appears in the Market Insights tab.

@@ -1,0 +1,34 @@
+
+# Goal
+Refactor the Dashboard Tab layout to improve the Wealth Simulator's aspect ratio and enhance the Financial Calendar with IPO data and toggles.
+
+## User Review Required
+> [!NOTE]
+> [WealthSimulator](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/WealthSimulator.tsx#15-88) will be moved to a full-width row above the Calendar/Heatmap widgets to fix the "squished" look.
+> [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#12-157) will be upgraded to support IPOs, Dividends, and Bonds listing.
+
+## Proposed Changes
+
+### Components
+#### [MODIFY] [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/DashboardTab.tsx)
+- Change grid layout for the "Financial Calendar & Insight Row".
+- Move [WealthSimulator](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/WealthSimulator.tsx#15-88) to its own full-width container.
+- Place [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#12-157) and `HeatmapWidget` in a `grid-cols-2` container below it.
+
+#### [MODIFY] [FinancialCalendar.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/dashboard/widgets/FinancialCalendar.tsx)
+- Rename header to "Calendar".
+- Add internal state for active tab: `ALL` | [IPO](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx#32-716) | `DIVIDENDS` | `BONDS`.
+- **New Feature**: Inside [IPO](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx#32-716) tab, add a sub-toggle (pills) for `Mainboard` | `SME`.
+- **New Data**: Add real data for:
+    - **NCDs/Bonds**: IIFL Home Finance, Muthoot Fincorp, Edelweiss, 360 ONE Prime, etc.
+    - **Dividends**: Can Fin Homes, Phoenix Township, TCS (Jan), Angel One (Jan), Havells (Jan).
+    - **IPOs**: Updated list with newly found dates (e.g., Transrail, Unimech, Standard Glass).
+- Render list based on active tab and filters.
+
+## Verification Plan
+### Manual Verification
+- Verify [WealthSimulator](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/WealthSimulator.tsx#15-88) is wide and readable.
+- Verify Calendar widget shows "ALL", "IPO", "DIVIDENDS", "BONDS" toggles.
+- Verify "IPO" tab shows "Mainboard" and "SME" sub-options.
+- Verify clicking "ALL" shows mixed events.
+- Verify clicking "DIVIDENDS" shows the existing portfolio events.

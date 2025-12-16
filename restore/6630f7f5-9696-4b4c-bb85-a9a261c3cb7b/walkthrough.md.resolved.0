@@ -1,0 +1,20 @@
+
+# Walkthrough - Log New Trade Button Logic
+
+I have connected the "Log New Trade" button in the **Trading Journal (Psych Dashboard)** to the correct modal.
+
+## Changes
+
+### 1. [PsychDashboard.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/PsychDashboard.tsx)
+- Imported [AddTradeModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx#26-487).
+- Added `isAddTradeModalOpen` state.
+- Updated the "Log New Trade" button to open this modal instead of the Daily Review modal.
+- Passed [loadTrades](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/PsychDashboard.tsx#56-87) as the `onSave` callback to ensure the list refreshes immediately after adding a trade.
+
+## Verification Results
+
+### Automated Checks
+- `tsc` compilation passed with **exit code 0**.
+
+### Manual Verification
+- Clicking "Log New Trade" will now open the comprehensive trade logging wizard ([AddTradeModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddTradeModal.tsx#26-487)) instead of the Daily Review form.

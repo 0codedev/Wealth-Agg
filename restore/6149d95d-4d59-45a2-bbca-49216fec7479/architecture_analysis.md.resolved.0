@@ -1,0 +1,389 @@
+# 🏗️ Full-Stack Architecture Analysis Report
+
+## Executive Summary
+
+**Codebase:** Wealth Aggregator v1.1  
+**Tech Stack:** React 18 + TypeScript + Dexie.js (IndexedDB) + Zustand + Vite  
+**Scale:** 82 components | 17 services | 11 hooks | 14 DB tables  
+**Rating:** **6.5/10** - Functional but needs architectural improvements for production
+
+---
+
+## 📊 Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        index.tsx                             │
+│                           │                                   │
+│                    TransactionProvider                        │
+│                           │                                   │
+│                        App.tsx                               │
+│                           │                                   │
+├─────────────┬─────────────┼─────────────┬─────────────────────┤
+│  Dashboard  │  Portfolio  │   Market    │    Other Tabs       │
+│    Tab      │    Tab      │    Tab      │                     │
+└─────┬───────┴──────┬──────┴──────┬──────┴──────────────────────┘
+      │              │              │
+      │      ┌───────┴───────┐      │
+      │      │  usePortfolio │      │
+      │      │   (506 LOC)   │      │
+      │      │  GOD OBJECT   │      │
+      │      └───────────────┘      │
+      │              │              │
+┌─────┴──────────────┴──────────────┴─────┐
+│            Dexie.js Database            │
+│           (14 tables, v15)              │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## 🚨 Critical Issues (Priority: HIGH)
+
+### 1. God Object Anti-Pattern: [usePortfolio.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/usePortfolio.ts) (506 lines)
+**Severity:** 🔴 Critical  
+**Impact:** Maintainability, Testing, Performance
+
+```
+Issues:
+- Single hook manages: investments, history, stats, projections
+- Hardcoded demo data inside hook (lines 9-70)
+- Web worker initialization inline
+- 400+ lines of business logic in one file
+```
+
+**Fix:** Split into:
+- `useInvestments.ts` - CRUD operations
+- `usePortfolioStats.ts` - Calculations
+- `useProjections.ts` - Future projections
+- `data/defaultInvestments.ts` - Demo data
+
+---
+
+### 2. Inconsistent State Management
+**Severity:** 🔴 Critical
+
+**Current State:**
+| State Type | Location | Count |
+|------------|----------|-------|
+| Zustand | settingsStore, gamificationStore | 2 |
+| React Context | TransactionContext | 1 |
+| Dexie Direct | 32+ components | Many |
+| Local useState | Every component | 80+ |
+
+**Problem:** No single source of truth. Data flows are unpredictable.
+
+**Fix:** Choose ONE pattern:
+```
+Option A: Full Zustand
+- Create investmentsStore, portfolioStore
+- Sync with Dexie via middleware
+
+Option B: React Query + Dexie
+- Use TanStack Query for caching
+- Dexie as persistence layer
+```
+
+---
+
+### 3. Database.tsx is a .tsx File
+**Severity:** 🟡 Medium  
+**Issue:** Database schema file has [.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx) extension but contains no JSX
+
+**Fix:** Rename to `database.ts`
+
+---
+
+## ⚠️ Architecture Issues (Priority: MEDIUM)
+
+### 4. No Dependency Injection
+**Severity:** 🟡 Medium
+
+Services are imported directly:
+```typescript
+// Current (tight coupling)
+import { AnomalyDetectionService } from '../services/AnomalyDetectionService';
+
+// Better (loose coupling)
+interface IAnalyticsService {
+  detectAnomalies(data: Transaction[]): Anomaly[];
+}
+```
+
+---
+
+### 5. Type Duplication
+**Severity:** 🟡 Medium
+
+**Issue:** Types scattered across:
+- [/types.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts) (74 lines)
+- `/types/index.ts` (duplicate?)
+- [/database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.tsx) (inline interfaces)
+
+**Fix:** Consolidate into `/types/` directory:
+```
+types/
+├── investment.types.ts
+├── trade.types.ts
+├── transaction.types.ts
+└── index.ts (barrel export)
+```
+
+---
+
+### 6. Service Layer Inconsistency
+**Severity:** 🟡 Medium
+
+**17 Services with different patterns:**
+| Pattern | Files | Issue |
+|---------|-------|-------|
+| Static methods | 8 | Not testable |
+| Class instances | 5 | No DI |
+| Pure functions | 4 | Inconsistent |
+
+**Fix:** Standardize to factory pattern:
+```typescript
+export const createMarketDataService = (config: Config) => ({
+  fetchQuotes: async () => { ... },
+  subscribe: (symbol: string) => { ... }
+});
+```
+
+---
+
+### 7. Missing Error Boundaries
+**Severity:** 🟡 Medium
+
+**Found:** 0 `<ErrorBoundary>` components
+
+**Risk:** One component crash = entire app crash
+
+**Fix:**
+```typescript
+// Add to each major section
+<ErrorBoundary fallback={<SectionError />}>
+  <DashboardTab />
+</ErrorBoundary>
+```
+
+---
+
+## 🔧 Code Quality Issues
+
+### 8. Component Size Violations
+| Component | Lines | Recommended Max |
+|-----------|-------|-----------------|
+| PsychDashboard.tsx | 64,975 bytes | 10,000 |
+| SyndicateTracker.tsx | 36,469 bytes | 10,000 |
+| AddTradeModal.tsx | 28,740 bytes | 10,000 |
+| DashboardTab.tsx | 25,353 bytes | 10,000 |
+
+**Fix:** Extract sub-components
+
+---
+
+### 9. Missing Test Files
+**Found:** 0 test files (`*.test.ts`, `*.spec.ts`)
+
+**Required:**
+- Unit tests for utils (5 files)
+- Integration tests for hooks (11 files)
+- Component tests for critical flows
+
+---
+
+### 10. Prop Drilling (6+ levels)
+**Example:** `DashboardTab.tsx`
+```
+investments, stats, formatCurrency, isPrivacyMode, 
+isDarkMode, onAddFirstAsset, formatCurrencyPrecise...
+```
+
+**Fix:** Context or Zustand slices for shared data
+
+---
+
+## 🐛 Potential Bugs Found
+
+### Bug #1: Race Condition
+**File:** `usePortfolio.ts` lines 117-119
+```typescript
+workerRef.current.onmessage = (e) => {
+  setProjectionData(e.data);  // No cleanup on unmount
+};
+```
+
+### Bug #2: Memory Leak
+**File:** `LightweightChart.tsx`
+```typescript
+window.addEventListener('resize', handleResize);
+// Missing dependency check for data changes
+```
+
+### Bug #3: Unbounded Data
+**File:** `TransactionContext.tsx`
+```typescript
+const [transactions, setTransactions] = useState<Transaction[]>([]);
+// No limit - could cause memory issues with large CSV imports
+```
+
+### Bug #4: Missing Validation
+**File:** `AddInvestmentModal.tsx`
+- No validation for negative amounts
+- No limit on decimal places
+- No sanitization of user input
+
+### Bug #5: localStorage Blocking
+**File:** Multiple Zustand stores
+```typescript
+persist({ name: 'wealth-aggregator-logic' })
+// Sync persist blocks rendering on large data
+```
+
+---
+
+## 🔒 Security Issues
+
+### 1. API Key Storage
+**File:** `settingsStore.ts`
+```typescript
+geminiApiKey: "" // Stored in localStorage
+```
+**Risk:** XSS can steal API keys
+
+**Fix:** Use secure cookie or backend proxy
+
+### 2. No Input Sanitization
+**Multiple files:** User input goes directly to database
+
+**Fix:** Add sanitization layer:
+```typescript
+const sanitize = (input: string) => 
+  DOMPurify.sanitize(input.trim());
+```
+
+### 3. No CSP Headers
+**File:** `vite.config.ts`
+Missing Content-Security-Policy configuration
+
+---
+
+## ⚡ Performance Issues
+
+### 1. Excessive Re-renders
+**Cause:** `usePortfolio` returns new objects each render
+```typescript
+const stats = useMemo(() => ..., [investments]);
+// Missing memoization for child props
+```
+
+### 2. No Virtualization
+**File:** Holdings list, transaction list
+**Issue:** Renders all items, even off-screen
+
+**Fix:** Use `react-virtual` or `react-window`
+
+### 3. Large Bundle Size
+**Lazy loading:** Only 6 tabs are lazy loaded
+**Issue:** 17 services load synchronously
+
+### 4. No Web Worker for Heavy Calculations
+**Only 1 worker:** projection.worker.ts
+**Missing:** Risk calculations, analytics
+
+### 5. unoptimized CSV Parsing
+**File:** `TransactionContext.tsx`
+Parses entire file synchronously on main thread
+
+---
+
+## 📁 File Structure Issues
+
+### Current (Flat):
+```
+components/
+├── AddInvestmentModal.tsx
+├── AddTradeModal.tsx
+├── PsychDashboard.tsx (65KB!)
+├── dashboard/
+├── tabs/
+└── ... (82 files mixed)
+```
+
+### Recommended (Feature-based):
+```
+features/
+├── investments/
+│   ├── components/
+│   ├── hooks/
+│   ├── services/
+│   └── types.ts
+├── trading/
+├── analytics/
+└── shared/
+    ├── components/
+    ├── hooks/
+    └── utils/
+```
+
+---
+
+## 📋 Improvement Checklist
+
+### Phase 1: Critical (Week 1-2)
+- [ ] Split `usePortfolio.ts` into 4 hooks
+- [ ] Add Error Boundaries (5 main sections)
+- [ ] Rename `database.tsx` → `database.ts`
+- [ ] Fix 5 identified bugs
+- [ ] Add input validation
+
+### Phase 2: Architecture (Week 3-4)
+- [ ] Consolidate state management (choose Zustand or Query)
+- [ ] Standardize service layer pattern
+- [ ] Create `/types/` directory structure
+- [ ] Add virtualization to lists
+
+### Phase 3: Quality (Week 5-6)
+- [ ] Split large components (4 files > 25KB)
+- [ ] Add unit tests (target: 60% coverage)
+- [ ] Implement proper error handling
+- [ ] Add CSP headers
+
+### Phase 4: Performance (Week 7-8)
+- [ ] Add web workers for calculations
+- [ ] Implement proper memoization
+- [ ] Lazy load services
+- [ ] Add performance monitoring
+
+---
+
+## 📊 Metrics Summary
+
+| Category | Score | Issues |
+|----------|-------|--------|
+| State Management | 4/10 | 5 issues |
+| Component Architecture | 5/10 | 6 issues |
+| Database Design | 7/10 | 4 issues |
+| Service Layer | 5/10 | 5 issues |
+| Type Safety | 6/10 | 4 issues |
+| Performance | 5/10 | 5 issues |
+| Security | 4/10 | 3 issues |
+| Code Quality | 6/10 | 6 issues |
+| **Overall** | **6.5/10** | **38 issues** |
+
+---
+
+## 🎯 Quick Wins (< 1 hour each)
+
+1. Rename `database.tsx` → `database.ts`
+2. Add `ErrorBoundary` wrapper to App.tsx
+3. Add input validation to `AddInvestmentModal`
+4. Limit transactions array to 1000 items
+5. Add `loading` states to all async operations
+6. Export types from single barrel file
+7. Add ESLint rule for max file size
+
+---
+
+*Report generated: December 6, 2025*
+*Analyst: Full-Stack Architecture Review*

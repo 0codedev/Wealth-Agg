@@ -1,0 +1,18 @@
+# Fix AI Advisor Tab Full-Screen Layout
+
+## Goal Description
+Address user feedback regarding:
+1.  **Gap:** Reduce the space between the AI Advisor header and the main app header.
+2.  **Floating Input:** Fix the input box "going upside" (floating in the middle) by enforcing a full-screen layout.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx)
+- Update the main container `className` to use negative margins (`-m-4 md:-m-8`) to counteract the parent padding in [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx).
+- Set a fixed height of `h-[calc(100vh-4rem)]` (viewport height minus header) to ensure the tab fills the screen and the input box stays at the bottom.
+- Ensure [renderHeader](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx#476-506) is visually consistent with this changes.
+
+## Verification Plan
+- Verify manually that the gap is gone and the input box stays at the bottom.

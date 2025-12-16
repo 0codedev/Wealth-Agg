@@ -1,0 +1,27 @@
+# Styles Refinement Plan
+
+## Goal Description
+The user reported that the **Credit Card Optimizer** widget has a "vibrant orange" gradient (`from-amber-500 to-orange-500`) that is visually jarring and "burning their eyes". The goal is to replace this with the standard application aesthetic (Dark Slate/White background with Indigo/Slate accents) to ensure consistency and visual comfort.
+
+## User Review Required
+> [!NOTE]
+> I will also check other widgets defined in [GodTierFeatures.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/GodTierFeatures.tsx) for similar outliers, though the user specifically called out the orange one.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [GodTierFeatures.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/GodTierFeatures.tsx)
+- **CreditCardOptimizer**:
+    - Remove: `bg-gradient-to-br from-amber-500 to-orange-500`
+    - Add: `bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800` (Standard Card Style)
+    - Heading: Change text color from `text-white` to `text-slate-900 dark:text-white`.
+    - Content: Update inner card backgrounds from `bg-white/20` (glass on orange) to `bg-slate-50 dark:bg-slate-800`.
+    - Text: Update text colors from `text-amber-100` to `text-slate-500`.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Visual Check**: Open the Dashboard tab.
+2.  **Locate Widget**: Find "Credit Card Optimizer".
+3.  **Confirm Style**: Ensure it looks like the "UPI Spending Tracker" widget (clean dark card) and not a bright orange box.

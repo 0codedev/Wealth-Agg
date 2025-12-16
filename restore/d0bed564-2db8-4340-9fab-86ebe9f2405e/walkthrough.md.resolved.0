@@ -1,0 +1,24 @@
+# Restored Premium Dark Aesthetics
+
+## Changes Implemented
+
+### 1. Portfolio Toolbar Fixes
+- **Problem**: The previous toolbar used a glass effect (`bg-white/80` / `dark:bg-slate-900/80`) that washed out colors and looked "milky" or "too bright" against the dark background.
+- **Fix**: Switched to a solid **Dark Slate** background (`dark:bg-slate-950`) to match the app's deep contrast theme.
+- **Detail**: Active tabs now use **Indigo-600** (Solid) instead of Slate-700 (Gray), aligning with the Sidebar's established design language.
+
+### 2. Holdings Card Refinement
+- **Problem**: Hover states on asset cards were lightening the background (`bg-slate-800/50`), contributing to the "bright" feeling.
+- **Fix**: Hover states now rely on **Subtle Indigo Borders** and **Shadows** (`shadow-indigo-500/15`), keeping the card background dark and premium.
+
+## Verification
+
+### Visual Confirmation
+The following screenshot demonstrates the fixed Portfolio Hub with the restored dark aesthetic:
+
+![Restored Portfolio UI](/C:/Users/gadda/.gemini/antigravity/brain/d0bed564-2db8-4340-9fab-86ebe9f2405e/portfolio_hub_fixed_1764968601775.png)
+
+### Checklist
+- [x] Toolbar background is solid dark (no glass).
+- [x] "Holdings" active pill is **Indigo**.
+- [x] Asset cards remain dark on hover.

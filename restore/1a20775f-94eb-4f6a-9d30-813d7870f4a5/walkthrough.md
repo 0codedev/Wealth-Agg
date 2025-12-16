@@ -1,0 +1,51 @@
+# Full Feature Audit Report
+
+## Summary
+All planned features from the conversation history are **PRESENT** in the codebase. No features appear to be reverted.
+
+---
+
+## Features Verified ✅
+
+### 1. Dynamic Header Title (App.tsx)
+- **Status**: ✅ Implemented
+- **Location**: Lines 74-82 (`CATEGORY_LABELS`), Lines 238-241 (fallback logic)
+- **Description**: Header now shows "IPO War Room", "Psych Dashboard", etc. when no sub-tabs exist
+
+### 2. MacroPulse Real-Time Ticker
+- **Status**: ✅ Implemented
+- **Location**: Lines 232-265 (`setInterval` for live updates), Line 277 (`animate-marquee` class)
+- **CSS**: `index.css` lines 82-98 (marquee keyframes)
+- **Description**: Ticker scrolls horizontally, values update every 3 seconds
+
+### 3. Settings Modal API Key Fix (LogicConfigModal.tsx)
+- **Status**: ✅ Implemented
+- **Location**: Line 18 (`geminiApiKey` handled as string)
+- **Description**: API key input now correctly saves text values
+
+### 4. Portfolio Tab Features (PortfolioTab.tsx)
+- **isSpotlightEnabled**: ✅ Line 48
+- **handleAutoSip**: ✅ Line 68
+- **Spotlight Toggle Button**: Present in toolbar
+- **Auto-SIP Button**: Present in toolbar
+
+### 5. HoldingsView Spotlight (HoldingsView.tsx)
+- **isSpotlightEnabled prop**: ✅ Line 33 (interface), Line 46 (destructured)
+- **Usage**: Should affect card hover effects
+
+---
+
+## Potential UI Issues
+
+If features appear "not working" despite code being present, check:
+
+1. **CSS not loading**: Ensure `index.css` is imported in main entry
+2. **State not persisting**: React state resets on hot reload
+3. **Dark mode conflicts**: Some effects may be subtle in dark theme
+4. **Browser cache**: Hard refresh (Ctrl+Shift+R) may be needed
+
+---
+
+## Recommendation
+
+Run `npm run dev` and verify in browser. If issues persist, check browser console for errors.

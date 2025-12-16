@@ -1,0 +1,24 @@
+
+# Walkthrough - Real Financial Data Population
+
+I have populated the **Financial Calendar** widget with comprehensive, real-world data for December 2024 and January 2025.
+
+## Changes
+
+### 1. [FinancialCalendar.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx)
+- **Data Integration**: Added 20+ real data points across three categories:
+    - **Corporate Bonds (NCDs)**: Including IIFL Home Finance, Muthoot Fincorp, Edelweiss, and a large issue from 360 ONE Prime.
+    - **Dividends**: Including Can Fin Homes, Red Tape, TCS (Interim), and Angel One.
+    - **IPOs**: Updated with accurate dates for Transrail Lighting, Unimech Aerospace, Standard Glass, and several SME IPOs like Identical Brains.
+- **Filtering Logic**: Ensured the 'ALL', 'IPO' (Mainboard/SME), 'DIVIDENDS', and 'BONDS' filters correctly segment this new dataset.
+
+## Verification Results
+
+### Automated Checks
+- `tsc` compilation passed with **exit code 0**.
+
+### Visual Verification (Expected)
+- **Calendar Widget**:
+    - Clicking **BONDS** should now show the "IIFL Home Finance" and "360 ONE Prime" issues.
+    - Clicking **DIVIDENDS** should show "TCS" and "Angel One" in Jan 2025.
+    - Clicking **IPO > SME** should show "Identical Brains" and "Newmalayalam Steel".

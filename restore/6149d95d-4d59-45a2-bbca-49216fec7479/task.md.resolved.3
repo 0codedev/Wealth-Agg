@@ -1,0 +1,43 @@
+# Phase 2: Performance Improvements - Task Checklist
+
+**Objective**: Eliminate UI freezes and improve app performance through modern React patterns.
+
+**Target Time**: 2 weeks  
+**Status**: In Progress
+
+---
+
+## Task Checklist
+
+### 1. Web Workers for Monte Carlo ⚡
+- [ ] Create `workers/monteCarloWorker.ts`
+- [ ] Migrate [RetirementPlanner.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/RetirementPlanner.tsx) simulation to worker
+- [ ] Migrate [GoalGPS.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/GoalGPS.tsx) simulation to worker
+- [ ] Add progress indicators during computation
+
+### 2. Lazy Loading Tabs 📦
+- [ ] Convert tab imports to `React.lazy()`
+- [ ] Add `<Suspense>` with skeleton fallback
+- [ ] Keep Dashboard eagerly loaded (critical path)
+
+### 3. Strategic Memoization 🧠
+- [ ] [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx) - useMemo for chart data
+- [ ] [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx) - useCallback for handlers
+- [ ] [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx) - memo chat components
+- [ ] [IPOWarRoom.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx) - memo calculation results
+
+### 4. Virtual Scrolling 📜
+- [ ] Create `hooks/useVirtualList.ts`
+- [ ] Apply to holdings list in Portfolio
+- [ ] Apply to trade history in Journal
+
+### 5. Performance Monitoring 📊
+- [ ] Create `hooks/usePerformance.ts`
+- [ ] Log slow renders in dev mode
+
+---
+
+## Progress
+- Started: 2025-12-06
+- Phase 1: ✅ Complete
+- Phase 2: 🔄 In Progress

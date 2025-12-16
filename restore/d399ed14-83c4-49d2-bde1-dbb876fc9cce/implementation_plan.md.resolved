@@ -1,0 +1,18 @@
+# Persist AI Advisor Chat & Clear Button
+
+## Goal Description
+Enhance the [AdvisorTab](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx#346-689) to persist chat history across tab switches using `localStorage`. Add a "Clear Chat" button to the header to allow the user to manually reset the conversation.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx)
+- Initialize `chatMessages` state from `localStorage` (key: `advisor_chat_history`).
+- Add `useEffect` to sync `chatMessages` to `localStorage`.
+- Add `handleClearChat` function to clear state and local storage.
+- Update [renderHeader](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx#476-506) to include a "Clear Chat" button (using `Trash2` or `RefreshCcw` icon).
+
+## Verification Plan
+- Verify chat messages persist after switching to another tab and back.
+- Verify "Clear Chat" button wipes the history.

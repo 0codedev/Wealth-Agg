@@ -1,0 +1,25 @@
+# Task: Restore Original App Aesthetics
+
+- [x] Analyze existing design system (colors, typography, common patterns) <!-- id: 0 -->
+- [x] Identify recent UI implementations that deviate (look for "bright" or inconsistent styles) <!-- id: 1 -->
+- [x] Create Implementation Plan to restore original aesthetics <!-- id: 2 -->
+- [x] Execute styling fixes <!-- id: 3 -->
+    - [x] Fix PortfolioTab.tsx <!-- id: 4 -->
+    - [x] Fix other identified components (HoldingsView card hover) <!-- id: 5 -->
+- [x] Fix Widget Aesthetics (Credit Card Optimizer) <!-- id: 7 -->
+- [x] Fix BankStatementParser Import Trigger <!-- id: 8 -->
+- [x] Fix Widget Aesthetics (Investment Clubs) <!-- id: 9 -->
+- [x] Reorganize Dashboard Widgets (Spending, Markets, Community) <!-- id: 10 -->
+- [x] Reorder Dashboard Rows & Redesign Achievements <!-- id: 11 -->
+- [x] Verify UI consistency <!-- id: 6 -->
+
+## Phase 3: Dashboard Architecture & Advanced Spending <!-- id: 12 -->
+- [/] Plan Dashboard Segregation Strategy <!-- id: 13 -->
+- [/] Refactor [DashboardTab](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx#72-378) to support Sub-Views (Router Pattern) <!-- id: 14 -->
+- [/] Implement `SpendingAnalyticsHub` (Advanced "Fold-like" Features) <!-- id: 15 -->
+    - [ ] Transaction List with Tagging & Filtering <!-- id: 16 -->
+    - [ ] Detailed Charts & Reports <!-- id: 17 -->
+    - [ ] Bank Parsing Integration <!-- id: 18 -->
+- [ ] Implement `MarketInsightsHub` & `CommunityHub` Wrappers <!-- id: 19 -->
+- [ ] Create "Summary Widgets" for Main Dashboard Entry Points <!-- id: 20 -->
+- [ ] Verify Navigation Flow & Back Button Logic <!-- id: 21 -->

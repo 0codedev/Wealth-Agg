@@ -1,0 +1,36 @@
+# Dashboard Layout & Achievements Redesign
+
+## Goal Description
+The user wants to reorder the dashboard elements to establish a better hierarchy and move/redesign the "Achievements" widget.
+
+**Desired Order:**
+1.  **Stats Row**: Total P/L, Top Performer (previously further down).
+2.  **Charts Row**: Project 5L, Asset Allocation, Platform Diversification.
+3.  **Calendar Row**: Financial Calendar, Heatmap.
+4.  **Wealth Simulator**: Moved to the bottom of the main dashboard (before Power Features).
+
+**Achievements Widget:**
+-   **Move**: To "Community & Rewards" section in Power Features.
+-   **Redesign**: Change from full-width purple banner to a **Square Card** (matching other widgets) with standard dark aesthetics.
+
+## Proposed Changes
+
+### [MODIFY] [GodTierFeatures.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/GodTierFeatures.tsx)
+-   **New Component**: `AchievementsWidget`
+    -   Extract logic from [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx).
+    -   Style: `bg-white dark:bg-slate-900 border...` (Standard Card).
+    -   Layout: Grid of icons (compact to fit square).
+
+### [MODIFY] [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/DashboardTab.tsx)
+-   **Refactor Layout**:
+    -   Move `Wealth Simulator` to bottom (just before `Power Features`).
+    -   Move `Stats Grid` (P&L, Top Performer, Loan) to top (below Time Traveler).
+    -   Ensure `Charts Grid` (Project 5L + Pie/Bar) follows Stats.
+    -   Ensure `Calendar Grid` follows Charts.
+-   **Achievements**:
+    -   Remove inline "Achievements" block.
+    -   Add `<AchievementsWidget />` to the "Community & Rewards" section in Power Features.
+
+## Verification Plan
+1.  **Visual Check**: Verify the vertical order of rows matches the user's request.
+2.  **Achievements**: Verify it's now in the "Community" section and looks like a standard dark card (not purple).

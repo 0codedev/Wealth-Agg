@@ -1,0 +1,17 @@
+# Fix AI Advisor Tab Layout
+
+## Goal Description
+The user requested that the AI Advisor header "should not stick" and should behave more naturally (scrolling with content). To achieve this, I will move the header inside the scrollable message container. This means the header will be visible at the top of the chat but will scroll out of view as the user scrolls down to read messages.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx)
+- Move the Header `div` (line 480) *inside* the scrollable container `div` (line 513).
+- Remove `sticky top-0` and `z-30` classes from the header to make it a standard block element.
+- Ensure the header styling (background, border) looks good in the new context.
+
+## Verification Plan
+- Verify manually that the header scrolls away when scrolling the chat messages.
+- Ensure the Input area remains fixed at the bottom (or behaves as existing logic dictates).

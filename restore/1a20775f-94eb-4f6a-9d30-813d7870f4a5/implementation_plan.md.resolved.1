@@ -1,0 +1,62 @@
+# Phase 1: Wealth Aggregator Pro Upgrade Plan
+
+## Goal Description
+Transform the current "Wealth Aggregator" into a "Pro-Grade" personal finance terminal by adding depth to analytics, simulation capabilities, and professional planning tools. The focus remains on **Local-First** privacy and **Offline** capability.
+
+## User Review Required
+> [!IMPORTANT]
+> **Database Schema Update**: This upgrade requires bumping the Dexie database version to support Tags, Paper Trades, and Quizzes.
+> **Mobile Layout**: Significant changes to [Sidebar.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/layout/Sidebar.tsx) and `MainLayout.tsx` are proposed to fix mobile navigation.
+
+## Proposed Changes
+
+### 1. Dashboard Enhancements
+#### [MODIFY] [components/tabs/DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx)
+- **Widget Grid System**: Refactor hardcoded grid to a flexible layout.
+- **New Widgets**:
+    - [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#9-74): Queries `dividends` and `ipo_applications` tables.
+    - [HeatmapWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/HeatmapWidget.tsx#9-56): Visualizes `history` table daily changes.
+
+### 2. Portfolio Deep Dive
+#### [MODIFY] [components/tabs/PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx)
+- **Tagging Interface**: Add "Manage Tags" modal and UI to assign tags to investments.
+- **Sector Analysis View**: New visualization tab using `recharts` Treemap.
+- **Tax Harvesting Tool**: Scans `investments` for `currentValue < investedAmount` and calculates potential tax offset.
+
+#### [MODIFY] [types.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts) & [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.tsx)
+- **Schema Update**: Add `tags: string[]` to [Investment](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts#28-42). Add `sector: string` to [Investment](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts#28-42).
+
+### 3. Market Intel & Strategy
+#### [NEW] `components/tabs/PaperTrading.tsx`
+- A fully isolated portfolio environment.
+- Uses a separate `paper_trades` table in Dexie.
+
+#### [NEW] `components/shared/CorrelationMatrix.tsx`
+- Mathematical utility to calculate correlation coefficients between asset classes (using historical simulation data).
+
+### 4. Growth Engine (Journal & Academy)
+#### [MODIFY] [components/PsychDashboard.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/PsychDashboard.tsx)
+- **"Mistake Eraser"**: Toggle specific mistakes in the filter to see "Adjusted PnL" line chart (Green line vs Red line).
+
+#### [MODIFY] [components/tabs/Academy.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/Academy.tsx)
+- **Quiz Engine**: Add JSON-based Q&A logic.
+- **Reward Integration**: Connect to `gamificationStore` to award XP for correct answers.
+
+### 5. New Modules (New Tabs)
+#### [NEW] `components/tabs/RetirementPlanner.tsx` (Retirement)
+- **Monte Carlo Engine**: A client-side simulation running 1,000 portfolio iterations based on volatility inputs (returns, std dev).
+- **FIRE Calculator**: "Financial Independence, Retire Early" specific projections (LeanFIRE, FatFIRE milestones).
+- **Inputs**: Current Age, Retirement Age, Withdrawal Rate, Inflation, Longevity.
+
+#### [NEW] `components/tabs/LegacyVault.tsx` (Estate)
+- **Local PDF Generator**: Generate a printable summary of assets without specific values (for security) or with values (for trusted executors).
+
+## Verification Plan
+
+### Automated Tests
+- None (Visual/UI heavy project).
+
+### Manual Verification
+1. **Mobile Check**: Verify Sidebar toggles correctly on iphone/android viewport sizes.
+2. **Data Integrity**: Verify "Paper Trades" do not mix with "Real Portfolio" Net Worth.
+3. **Simulation Speed**: Ensure Monte Carlo simulation (1000 iter) runs under 2 seconds via Web Worker.

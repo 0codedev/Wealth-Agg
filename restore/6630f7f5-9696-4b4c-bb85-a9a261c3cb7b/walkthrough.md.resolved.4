@@ -1,0 +1,31 @@
+# Syndicate Tracker & Psych Dashboard Refinements
+
+## Changes Implemented
+
+### 1. Syndicate Tracker Upgrade
+- **Grouped View (Excel-Style)**: Added a "Grouped" view mode to cluster applications by IPO Name. This makes handling multiple applications for the same IPO cleaner (like Excel groupings).
+- **Bulk Entry Flow**:
+    - When you add an application, the "IPO Name" and "Amount" persist, while "Applicant" and "UPI" reset.
+    - The cursor auto-focuses on "Applicant Name".
+    - This allows rapid data entry for family members.
+- **Listing Price Mode**: Added an option to calculate profit using **Listing Price** vs **Issue Price**, in addition to the existing % Gain method. This ensures exact math.
+- **Sync Fix**: Connected the "Realize Gains" action directly to the main Portfolio refresh trigger, so your Balance updates instantly.
+
+### 2. Psych Dashboard (Mistake Tags)
+- **Dynamic Tags**: You can now type a custom mistake tag (e.g., "Fat Finger") and add it to your trade log instantly. It will appear for that trade session.
+
+## Verification Steps
+
+### Syndicate Tracker Test
+1.  Go to **IPO War Room** -> **Syndicate Tracker**.
+2.  Add an application for `NTPC Green`. Note that after adding, the IPO name stays, so you can quickly add another for a different family member.
+3.  Toggle "Show Grouped" to see them clustered.
+4.  Mark one as **ALLOTTED**.
+5.  In the Listing Day section, select `NTPC Green`.
+6.  Switch mode to **Price**, enter Issue Price (100) and List Price (125).
+7.  Click **Realize**. Check that your **Portfolio Hub** balance updates immediately.
+
+### Psych Dashboard Test
+1.  Go to **Journal** -> **Log New Trade**.
+2.  In the "Psych Check" step, type a new tag in the input box and hit Enter.
+3.  Verify the new tag appears and is selected.

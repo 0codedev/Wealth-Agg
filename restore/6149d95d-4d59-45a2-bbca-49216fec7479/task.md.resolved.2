@@ -1,0 +1,47 @@
+# Phase 1: Foundation Improvements
+
+## Overview
+Implementing critical fixes and foundational improvements from the audit report.
+
+---
+
+# Phase 1: Foundation Improvements - Task Checklist
+
+**Objective**: Upgrade app to god-tier quality by addressing critical bugs and adding foundational enhancements.
+
+**Target Time**: 2 weeks  
+**Status**: ✅ Complete
+
+## Task Checklist
+
+### 1. Security Hardening - API Key Fix ✅
+- [x] Remove hardcoded API key from [aiService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/aiService.ts)
+- [x] Use environment variable only
+- [x] Added helpful error when key missing
+
+### 2. Error Boundary Implementation ✅
+- [x] Already exists in [index.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/index.tsx) - no changes needed
+- [x] Already styled with reset button
+
+### 3. Toast Notification System ✅
+- [x] Create [ToastProvider.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx) with React Context
+- [x] Implement [useToast()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx#29-37) hook with [success](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx#109-110), [error](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx#110-111), [warning](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx#111-112), [info](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/ToastProvider.tsx#112-113)
+- [x] Add Framer Motion animations
+- [x] Wrap App with ToastProvider in [index.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/index.tsx)
+- [x] Replace all `alert()` calls (10 total in 7 files)
+
+### 4. Legacy Vault - IndexedDB Persistence ✅
+- [x] Add `beneficiaries` table to [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.tsx)
+- [x] Bump DB version to 14
+- [x] Update [LegacyVault.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/LegacyVault.tsx) to use `useLiveQuery`
+- [x] Add initialization logic for default beneficiaries
+
+### 5. Loading Skeleton Components ✅
+- [x] Create [Skeleton.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/Skeleton.tsx) with base shimmer component
+- [x] Add variants: `Skeleton.Card`, `Skeleton.Text`, `Skeleton.Circle`, `Skeleton.Chart`
+- [x] Add [DashboardSkeleton](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/Skeleton.tsx#87-112) and [HoldingsSkeleton](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/Skeleton.tsx#113-133) layouts
+
+---
+
+## Progress
+- Started: 2025-12-06

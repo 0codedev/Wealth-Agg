@@ -1,0 +1,145 @@
+# Smart CSV Import - Implementation Plan
+
+## Goal
+Build a smart CSV import system that:
+1. ✅ Automatically detects Fold vs Paytm format
+2. ✅ Uses **UPI Reference Number** as unique ID for duplicate detection
+3. ✅ **Never duplicates** transactions (upsert logic)
+4. ✅ **Fills missing tags** on existing transactions
+5. ✅ **Adds new transactions** that don't exist yet
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> The `contexts/TransactionContext.tsx` file referenced by spending components is **MISSING**. This is currently breaking the build. I will create it as part of this implementation.
+
+---
+
+## Proposed Changes
+
+### Context Layer
+
+#### [NEW] [TransactionContext.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/contexts/TransactionContext.tsx)
+
+Creates the React Context with:
+- **Transaction interface**: id, upiRef, date, amount, type, merchant, category, tags, bankName, description, notes
+- **`smartMerge()`** function implementing upsert logic:
+  - Match by `upiRef` (UPI Reference Number)
+  - If exists: fill missing tags, DO NOT override amount/date/type
+  - If new: insert
+- **`parseAndAddFromFile(content, fileType)`**: Auto-detect Fold/Paytm CSV format
+- **localStorage persistence** for offline access
+
+---
+
+### Service Layer
+
+#### [NEW] [TransactionImportService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/services/TransactionImportService.ts)
+
+Contains:
+- `detectFormat(csvContent)`: Returns 'fold' | 'paytm' | 'unknown'
+- `parseFoldCSV(content)`: Returns Transaction[]
+- `parsePaytmCSV(content)`: Returns Transaction[]
+- `mapPaytmTags(emojiTag)`: Converts `#🥘 Food` → `Food & Dining`
+
+---
+
+### Smart Merge Algorithm
+
+```typescript
+function smartMerge(existing: Transaction[], incoming: Transaction[]): Transaction[] {
+  const result = [...existing];
+  const existingMap = new Map(existing.map(t => [t.upiRef, t]));
+  
+  for (const newTxn of incoming) {
+    const existing = existingMap.get(newTxn.upiRef);
+    
+    if (existing) {
+      // FILL missing data only
+      if (!existing.category && newTxn.category) existing.category = newTxn.category;
+      if (!existing.merchant && newTxn.merchant) existing.merchant = newTxn.merchant;
+      if ((!existing.tags || existing.tags.length === 0) && newTxn.tags?.length) {
+        existing.tags = newTxn.tags;
+      }
+      // DO NOT override: amount, date, type, upiRef
+    } else {
+      // ADD new transaction
+      result.push({ ...newTxn, id: crypto.randomUUID() });
+      existingMap.set(newTxn.upiRef, newTxn);
+    }
+  }
+  
+  return result;
+}
+```
+
+---
+
+### UI Layer
+
+#### [MODIFY] [BankImportModal.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/dashboard/spending/BankImportModal.tsx)
+
+- Show **import summary**: "X new, Y updated, Z skipped"
+- Add format detection feedback ("Detected Fold format")
+
+---
+
+### Database Schema
+
+#### [MODIFY] [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/database.tsx)
+
+Add new table:
+```typescript
+transactions: '++id, upiRef, date, type, category, bankName'
+```
+
+`upiRef` is the unique key for matching.
+
+---
+
+## Field Mapping
+
+### Fold CSV → Transaction
+| Fold Column | Transaction Field |
+|-------------|-------------------|
+| `reference` OR `narration` (extract UPI ref) | `upiRef` |
+| `txn_timestamp` | `date` |
+| `amount` | `amount` |
+| `type` | `type` (CREDIT→credit, DEBIT→debit) |
+| `merchant` | `merchant` |
+| `category` | `category` |
+| `bank_name` | `bankName` |
+| `narration` | `description` |
+| `category_icon_name` | `tags[0]` (if useful) |
+
+### Paytm CSV → Transaction
+| Paytm Column | Transaction Field |
+|--------------|-------------------|
+| `UPI Ref No.` | `upiRef` |
+| `Date` + `Time` | `date` |
+| `Amount` | `amount` (parse sign) |
+| Amount sign (+/-) | `type` |
+| `Transaction Details` | `description` |
+| `Other Transaction Details` | `upiId` |
+| `Tags` | `category` (strip emoji) |
+| `Your Account` | `bankName` |
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1. Import Fold CSV with 20 transactions → expect 20 inserted
+2. Import same Fold CSV again → expect 0 new, 0 duplicates
+3. Import 10-transaction file with 2 missing tags, then 20-transaction file with all tags → expect tags filled on 2
+
+### Manual Verification
+1. Open Spending Dashboard
+2. Click "Import Bank Statement"
+3. Upload `Fold-Transactions-2025-12-06_02-39AM.csv`
+4. Verify count shows "20 new, 0 updated"
+5. Upload same file again
+6. Verify count shows "0 new, 0 updated, 20 skipped"
+7. Verify Transaction Timeline shows all entries

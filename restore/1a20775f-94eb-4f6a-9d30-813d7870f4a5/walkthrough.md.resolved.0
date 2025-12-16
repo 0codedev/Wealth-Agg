@@ -1,0 +1,14 @@
+
+# Dynamic Header Title Update
+
+## Changes Implemented
+### App.tsx
+- Introduced `CATEGORY_LABELS` mapping to handle top-level category names.
+- Updated the header rendering logic to display the category name (e.g., "IPO War Room") when no sub-tabs are active, replacing the static "Dashboard" text.
+
+## Verification
+- **IPO War Room**: Header displays "IPO War Room".
+- **Trading Journal**: Header displays "Trading Journal".
+- **Portfolio Hub**: Header displays "Overview" (default sub-tab) or "Portfolio Hub" if no sub-tab active (though Portfolio usually has sub-tabs).
+
+This ensures the user knows exactly which context they are in, even for single-view modules.

@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Task list for Smart CSV Import feature implementation including TransactionContext creation, import service, and UI updates.",
+  "updatedAt": "2025-12-08T15:40:55.057585200Z",
+  "version": "24"
+}

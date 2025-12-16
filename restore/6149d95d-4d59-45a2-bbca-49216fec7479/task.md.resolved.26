@@ -1,0 +1,77 @@
+# Phase 1: Critical Architecture Fixes
+
+## Overview
+Implementing critical fixes identified in the architecture audit to improve code quality and maintainability.
+
+---
+
+## Task 1: Refactor PsychDashboard.tsx to Use Extracted Components
+**Priority:** CRITICAL  
+**Status:** [ ] Not Started
+
+### Sub-tasks:
+- [ ] 1.1 Review extracted components in `components/psych/`
+- [ ] 1.2 Update PsychDashboard.tsx imports
+- [ ] 1.3 Replace inline EquityCurve with `<EquityCurveChart />`
+- [ ] 1.4 Replace inline Drawdown with `<DrawdownChart />`
+- [ ] 1.5 Replace inline Expectancy with `<ExpectancyEngine />`
+- [ ] 1.6 Replace inline TiltOMeter with `<TiltOMeter />`
+- [ ] 1.7 Replace inline SlumpBuster with `<SlumpBusterModal />`
+- [ ] 1.8 Remove now-unused code (useMemo calculations moved to components)
+- [ ] 1.9 Verify build compiles
+- [ ] 1.10 Test PsychDashboard renders correctly
+
+**Expected Reduction:** ~400 lines removed
+
+---
+
+## Task 2: Consolidate Types into `types/` Directory
+**Priority:** CRITICAL  
+**Status:** [ ] Not Started
+
+### Sub-tasks:
+- [ ] 2.1 Create `types/database.types.ts` (Trade, Dividend, etc.)
+- [ ] 2.2 Create `types/domain.types.ts` (Investment, etc.)
+- [ ] 2.3 Create `types/ui.types.ts` (Props, States, etc.)
+- [ ] 2.4 Create `types/index.ts` barrel export
+- [ ] 2.5 Update `database.ts` to import from types
+- [ ] 2.6 Update `types.ts` (root) to re-export or delete
+- [ ] 2.7 Update all component imports
+- [ ] 2.8 Verify build compiles
+
+---
+
+## Task 3: Move gamificationStore.ts to `store/`
+**Priority:** HIGH  
+**Status:** [ ] Not Started
+
+### Sub-tasks:
+- [ ] 3.1 Move file to `store/gamificationStore.ts`
+- [ ] 3.2 Update all import paths
+- [ ] 3.3 Verify build compiles
+
+---
+
+## Task 4: Add Basic Vitest Setup
+**Priority:** HIGH  
+**Status:** [ ] Not Started
+
+### Sub-tasks:
+- [ ] 4.1 Install vitest, @testing-library/react, jsdom
+- [ ] 4.2 Create vitest.config.ts
+- [ ] 4.3 Create `__tests__/` directory
+- [ ] 4.4 Write first test for `utils/helpers.ts`
+- [ ] 4.5 Add test script to package.json
+- [ ] 4.6 Run tests to verify setup
+
+---
+
+## Progress Tracker
+| Task | Status | Lines Changed |
+|------|--------|---------------|
+| 1. PsychDashboard | ⬜ | 0 |
+| 2. Types Consolidation | ⬜ | 0 |
+| 3. Store Relocation | ⬜ | 0 |
+| 4. Vitest Setup | ⬜ | 0 |
+
+**Legend:** ⬜ Not Started | 🔄 In Progress | ✅ Complete | ❌ Blocked

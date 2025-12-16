@@ -1,0 +1,70 @@
+# 🎯 New Feature Implementation Tasks
+
+## Current Focus: Phase 1 - Corpus Growth Tracker
+
+---
+
+### Task 1: Investment Goal Widget
+**Priority:** HIGH  
+**Status:** [ ] NOT STARTED
+
+- [ ] Create `components/widgets/CorpusGoalWidget.tsx`
+- [ ] Goal input: target amount + target date
+- [ ] Progress bar with percentage
+- [ ] Monthly required amount calculator
+- [ ] Store goal in Zustand/IndexedDB
+
+---
+
+### Task 2: Corpus Growth Chart
+**Priority:** HIGH  
+**Status:** [ ] NOT STARTED
+
+- [ ] Add to Dashboard as new widget
+- [ ] Chart showing investment timeline
+- [ ] Mark SIP contributions
+- [ ] Projected growth line
+
+---
+
+### Task 3: Monthly Budget Summary
+**Priority:** HIGH  
+**Status:** [ ] NOT STARTED
+
+- [ ] Create budget summary component
+- [ ] Income - Expenses = Investable Surplus
+- [ ] category breakdown pie chart
+
+---
+
+### Task 4: Spending Limits with Alerts
+**Priority:** HIGH  
+**Status:** [ ] NOT STARTED
+
+- [ ] Add limit field to categories
+- [ ] Track spending vs limit
+- [ ] Toast when approaching 80%
+
+---
+
+## Backlog (Next Phases)
+
+| Task | Phase | Priority |
+|------|-------|----------|
+| Trade Replay | 3 | MEDIUM |
+| Strategy Playbook | 3 | MEDIUM |
+| Custom Category Rules | 4 | MEDIUM |
+| Split Transactions | 4 | MEDIUM |
+| Bill Reminders | 5 | LOW |
+| Investment Streaks | 6 | LOW |
+
+---
+
+## Progress Tracker
+
+| Phase | Total | Done |
+|-------|-------|------|
+| Phase 1 | 2 | 0 |
+| Phase 2 | 3 | 0 |
+| Phase 3 | 3 | 0 |
+| **Overall** | **14** | **0** |

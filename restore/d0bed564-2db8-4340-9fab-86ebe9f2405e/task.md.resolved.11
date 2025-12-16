@@ -1,0 +1,14 @@
+# Task: Restore Original App Aesthetics
+
+- [x] Analyze existing design system (colors, typography, common patterns) <!-- id: 0 -->
+- [x] Identify recent UI implementations that deviate (look for "bright" or inconsistent styles) <!-- id: 1 -->
+- [x] Create Implementation Plan to restore original aesthetics <!-- id: 2 -->
+- [x] Execute styling fixes <!-- id: 3 -->
+    - [x] Fix PortfolioTab.tsx <!-- id: 4 -->
+    - [x] Fix other identified components (HoldingsView card hover) <!-- id: 5 -->
+- [x] Fix Widget Aesthetics (Credit Card Optimizer) <!-- id: 7 -->
+- [x] Fix BankStatementParser Import Trigger <!-- id: 8 -->
+- [x] Fix Widget Aesthetics (Investment Clubs) <!-- id: 9 -->
+- [x] Reorganize Dashboard Widgets (Spending, Markets, Community) <!-- id: 10 -->
+- [ ] Reorder Dashboard Rows & Redesign Achievements <!-- id: 11 -->
+- [x] Verify UI consistency <!-- id: 6 -->

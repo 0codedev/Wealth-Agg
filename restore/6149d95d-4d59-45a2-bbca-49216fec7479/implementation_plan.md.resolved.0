@@ -1,0 +1,133 @@
+# Phase 1: Foundation Improvements - Implementation Plan
+
+## Goal
+Upgrade the Wealth Aggregator app to god-tier by implementing critical foundation improvements from the audit report.
+
+---
+
+## Proposed Changes
+
+### 1. Security: Remove Hardcoded API Key
+
+#### [MODIFY] [aiService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/services/aiService.ts)
+
+**Current (INSECURE):**
+```typescript
+const DEFAULT_API_KEY = "AIzaSyCLOar4MBIcCQsRfEJxW6JFMYdP2OdEqRw";
+```
+
+**Changes:**
+- Remove the hardcoded API key entirely
+- Update [getApiKey()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/aiService.ts#7-26) to throw helpful error if no key found
+- Add clear console warning when API features unavailable
+
+---
+
+### 2. Toast Notification System
+
+#### [NEW] [ToastProvider.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/ToastProvider.tsx)
+
+**Features:**
+- React Context for global toast access
+- `useToast()` hook with `toast.success()`, `toast.error()`, `toast.warning()`, `toast.info()`
+- Auto-dismiss with configurable duration
+- Framer Motion animations (slide-in, fade-out)
+- Stacking multiple toasts
+- Close button
+
+---
+
+### 3. Replace All Alert Calls
+
+Files to modify (10 calls across 7 files):
+
+| File | Line | Current | Replacement |
+|------|------|---------|-------------|
+| [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/PortfolioTab.tsx) | 64-65 | `alert()` | `toast.success()` / `toast.info()` |
+| [Academy.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/Academy.tsx) | 122 | `alert()` | `toast.warning()` |
+| [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/AdvisorTab.tsx) | 394 | `alert()` | `toast.error()` |
+| [SyndicateTracker.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/SyndicateTracker.tsx) | 218 | `alert()` | `toast.error()` |
+| [AddTradeModal.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/AddTradeModal.tsx) | 168, 186 | `alert()` | `toast.error()` |
+| [paperStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/store/paperStore.ts) | 49 | `alert()` | Return error (no toast in store) |
+| [PaperTradingGym.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/academy/PaperTradingGym.tsx) | 121 | `alert()` | `toast.warning()` |
+
+#### [MODIFY] [index.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/index.tsx)
+
+- Wrap `<App />` with `<ToastProvider>`
+
+---
+
+### 4. Legacy Vault IndexedDB Persistence
+
+#### [MODIFY] [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/database.tsx)
+
+**Changes:**
+- Add `beneficiaries` table to Dexie schema
+- Bump DB version to 14
+- Define [Beneficiary](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/LegacyVault.tsx#16-24) interface (already in LegacyVault, will export)
+
+#### [MODIFY] [LegacyVault.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/LegacyVault.tsx)
+
+**Changes:**
+- Import `db` from database
+- Use `useLiveQuery` from dexie-react-hooks for reactive data
+- Replace `useState` with database-backed methods
+- Add `useEffect` to save beneficiaries on change
+
+---
+
+### 5. Loading Skeleton Components
+
+#### [NEW] [Skeleton.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/Skeleton.tsx)
+
+**Features:**
+- `<Skeleton />` - animated shimmer effect
+- `<Skeleton.Card />` - card-shaped skeleton
+- `<Skeleton.Text lines={3} />` - text placeholder
+- `<Skeleton.Circle size={48} />` - avatar/icon placeholder
+- Dark mode compatible
+
+#### [MODIFY] [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/DashboardTab.tsx)
+
+- Add loading state for initial render
+- Show skeletons while data loads
+
+---
+
+## Verification Plan
+
+### Manual Testing (User Required)
+
+Since this project has no test framework configured, verification will be manual:
+
+1. **API Key Test**:
+   - Clear localStorage of any saved key
+   - Open app → Navigate to AI Advisor tab
+   - Attempt to send a message
+   - Expected: Toast appears "API key required. Go to Settings to add your Gemini key."
+
+2. **Toast Notification Test**:
+   - Go to Portfolio tab → Click "Auto-SIP" button
+   - Expected: Green toast slides in from bottom-right, auto-dismisses after 3s
+
+3. **Legacy Vault Persistence Test**:
+   - Go to Legacy Vault tab
+   - Add a beneficiary with custom allocation
+   - Refresh the page (F5)
+   - Expected: Beneficiary data persists and loads on refresh
+
+4. **Skeleton Test**:
+   - Clear IndexedDB (DevTools → Application → IndexedDB → Delete)
+   - Refresh app
+   - Expected: Dashboard shows animated shimmer skeletons briefly before content appears
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> This plan modifies 10+ files including core infrastructure (index.tsx, database.tsx). Please review before I proceed.
+
+**Questions:**
+1. Should I add a "Settings" modal for API key management, or just rely on localStorage/env variables?
+2. For the toast position, do you prefer bottom-right (default) or top-right?

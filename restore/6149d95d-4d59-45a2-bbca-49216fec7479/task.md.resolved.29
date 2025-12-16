@@ -1,0 +1,62 @@
+# Phase 2: Testing Foundation
+
+## Overview
+Expanding test coverage from Phase 1's initial 21 tests to comprehensive coverage of utilities and hooks.
+
+---
+
+## Task 1: Unit Tests for Utility Functions
+**Priority:** HIGH  
+**Status:** [x] COMPLETE ✅
+
+### 1.1 sanitize.ts ✅ (33 tests)
+- [x] [sanitizeHTML](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#6-21) - escapes HTML special characters (6 tests)
+- [x] [sanitizeAttribute](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#22-33) - extra escaping for attributes (2 tests)
+- [x] [sanitizeNumber](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#34-47) - validates numeric input (5 tests)
+- [x] [sanitizeCurrency](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#48-55) - ensures positive values (3 tests)
+- [x] [sanitizePercentage](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#56-63) - clamps 0-100 (2 tests)
+- [x] [sanitizeDate](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#64-75) - ISO date format (3 tests)
+- [x] [sanitizeURL](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#76-97) - blocks dangerous protocols (6 tests)
+- [x] [sanitizeText](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#98-105) - normalizes whitespace (3 tests)
+- [x] [sanitizeObject](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#106-125) - recursive sanitization (3 tests)
+
+### 1.2 portfolioMetrics.ts ✅ (16 tests)
+- [x] [calculateSectorAllocation](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#30-59) (3 tests)
+- [x] [calculateRiskAssessment](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#60-85) (2 tests)
+- [x] [calculateDiversificationScore](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#86-109) (3 tests)
+- [x] [calculateRiskScore](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#110-120) (2 tests)
+- [x] [calculateTaxEfficiency](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#121-139) (1 test)
+- [x] [calculateLiquidityScore](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#140-154) (1 test)
+- [x] [calculateReturnsScore](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#155-177) (2 tests)
+- [x] [calculatePortfolioHealth](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/portfolioMetrics.ts#178-224) (2 tests)
+
+### 1.3 helpers.ts ✅ (21 tests - Phase 1)
+- [x] [formatCurrency](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#26-33) (4 tests)
+- [x] [formatCurrencyPrecise](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#34-41) (1 test)
+- [x] [calculatePercentage](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/usePortfolioStats.ts#27-31) (3 tests)
+- [x] [calculateProgress5L](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#18-23) (3 tests)
+- [x] [getCountdownToTarget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#5-17) (2 tests)
+- [x] [calculateStreaks](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#47-83) (4 tests)
+- [x] [getFiscalYearRange](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#92-113) (4 tests)
+
+---
+
+## Task 2: Unit Tests for Hooks
+**Priority:** MEDIUM  
+**Status:** [~] Deferred to Phase 3
+
+### Reason:
+Hooks require React testing environment with complex mocking. 
+Core utility coverage achieved. Hook tests planned for next phase.
+
+---
+
+## Progress Tracker
+| File | Tests | Status |
+|------|-------|--------|
+| helpers.ts | 21 | ✅ |
+| sanitize.ts | 33 | ✅ |
+| portfolioMetrics.ts | 16 | ✅ |
+| **TOTAL** | **70** | ✅ |
+
+**Target:** 50+ tests ✅ **ACHIEVED: 70 tests**

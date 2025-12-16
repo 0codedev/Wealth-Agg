@@ -1,0 +1,28 @@
+
+# Walkthrough - Dashboard & Calendar Refinements
+
+I have refined the Dashboard layout and upgraded the Financial Calendar widget as requested.
+
+## Changes
+
+### 1. [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx) (Layout)
+- **Wealth Simulator**: Moved to a full-width container above the calendar row. This fixes the "squished" aspect ratio and allows the chart to breathe.
+- **Grid Layout**: Rearranged [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#12-157) and `HeatmapWidget` into a 50/50 split row below the simulator.
+
+### 2. [FinancialCalendar.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx) (Features)
+- Renamed header to **Calendar**.
+- Added Top-level Toggles: `ALL` | [IPO](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx#32-716) | `DIVIDENDS` | `BONDS`.
+- Added **IPO Sub-Toggles**: `Mainboard` | `SME Segment`.
+- populated with **Real upcoming IPO data** for Dec 2024 & Jan 2025 (e.g., Unimech, Transrail, Standard Glass, etc.).
+
+## Verification Results
+
+### Automated Checks
+- `tsc` compilation passed with **exit code 0**.
+
+### Visual Verification (Expected)
+- **Wealth Simulator**: Should now span the full width of the content area.
+- **Calendar**:
+    - Default view: `ALL` events.
+    - Clicking [IPO](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx#32-716) reveals the Mainboard/SME pills.
+    - Switching to `SME` shows valid SME IPOs like "Identical Brains" and "Leo Dry Fruits".

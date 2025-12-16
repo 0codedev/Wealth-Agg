@@ -1,0 +1,77 @@
+# Phase 3: State Cleanup
+
+## Overview
+Consolidating types, fixing database issues, and cleaning up state management.
+
+---
+
+## Task 1: Type Consolidation
+**Priority:** HIGH  
+**Status:** [x] COMPLETE ✅
+
+### 1.1 Create types/transaction.types.ts ✅
+- [x] Move [Transaction](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx#6-19) interface from TransactionContext.tsx
+- [x] Move [CategorySpending](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx#21-27) interface from TransactionContext.tsx
+- [x] Added [TransactionFilters](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/transaction.types.ts#36-46) and [TransactionImportResult](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/transaction.types.ts#50-56) types
+
+### 1.2 Create types/investment.types.ts ✅
+- [x] Re-export [Investment](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts#28-42), [HistoryEntry](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts#43-47) from types.ts
+- [x] Re-export `InvestmentType`, `RecurringFrequency` enums
+- [x] Added [PortfolioSummary](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/investment.types.ts#24-32) type
+
+### 1.3 Create types/trade.types.ts ✅
+- [x] Re-export all trade types from database.ts
+- [x] Backward compatible - original exports maintained
+
+### 1.4 Create types/common.types.ts ✅
+- [x] Added `CHART_COLORS` and `ASSET_CLASS_COLORS` constants
+- [x] Added [ApiResponse](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/common.types.ts#31-37), [PaginationParams](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/common.types.ts#41-47), [DateRange](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types/common.types.ts#62-66) types
+
+### 1.5 Create types/index.ts (Barrel Export) ✅
+- [x] Re-export all types from subdirectories
+- [x] Single import point: `import { X } from '@/types'`
+
+---
+
+## Task 2: Fix Database Issues
+**Priority:** HIGH  
+**Status:** [x] COMPLETE ✅
+
+### 2.1 Add proper Transaction type to database.ts ✅
+- [x] Replaced `Table<any>` with `Table<Transaction>`
+- [x] Import Transaction from types/transaction.types.ts
+
+### 2.2 Fix import paths ✅
+- [x] Fixed Academy.tsx gamificationStore import path
+
+---
+
+## Task 3: Data Ownership Documentation
+**Priority:** MEDIUM  
+**Status:** [x] COMPLETE ✅
+
+### Current State Architecture:
+| Source | Purpose | Examples |
+|--------|---------|----------|
+| **Zustand** | UI settings, user prefs | settingsStore, gamificationStore, paperStore |
+| **Context** | Session-scoped data | TransactionContext |
+| **Direct Dexie** | Persistent data | useInvestments, useAlerts, useTrades |
+
+---
+
+## Progress Tracker
+| Task | Files | Status |
+|------|-------|--------|
+| Transaction types | types/transaction.types.ts | ✅ |
+| Investment types | types/investment.types.ts | ✅ |
+| Trade types | types/trade.types.ts | ✅ |
+| Common types | types/common.types.ts | ✅ |
+| Barrel export | types/index.ts | ✅ |
+| Database fix | database.ts | ✅ |
+| Import fix | Academy.tsx | ✅ |
+
+---
+
+## Verification ✅
+- **Build:** Successful (node node_modules/vite/bin/vite.js build)
+- **Tests:** 70 passing (3 test files)

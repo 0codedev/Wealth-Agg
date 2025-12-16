@@ -1,0 +1,33 @@
+
+# Walkthrough - Portfolio Hub Refinements
+
+I have implemented a suite of refinements to the Portfolio Hub to improve usability, fix layout bugs, and add requested automation features.
+
+## Changes
+
+### 1. [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx)
+- **Toolbar Upgrades**:
+    - **Auto-SIP Button (`RefreshCw`)**: A new button that iterates through all assets with SIP enabled. It "simulates" an SIP installment by adding the recurring amount to both `investedAmount` and `currentValue`.
+    - **Spotlight Toggle**: A Circle/Dot toggle that enables/disables the glow and shadow effects on asset cards.
+    - **Bot Icon**: Updated the Auto-Rebalance button to use a `Bot` icon for better semantic clarity.
+
+### 2. [HoldingsView.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/portfolio/HoldingsView.tsx)
+- **Grouped Table Layout Fix**: Added the missing `<thead>` element inside the grouped view's table render. This ensures headers are correctly aligned when viewing assets by Type or Platform in Terminal mode.
+- **Spotlight Logic**: The card view now conditionally renders the `shadow-lg`, `border-color`, and `Sparkline` overlay based on the users spotlight toggle state.
+- **Keyboard Navigation**:
+    - **Arrow Up/Down**: Navigate the list.
+    - **Enter**: Open the Wealth Simulator for the selected asset.
+    - **'2' Key**: Immediately focus the "Current Value" input field for quick editing.
+
+### 3. [AnalyticsView.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/portfolio/AnalyticsView.tsx)
+- **Smart Sector Detection**: Implemented `inferSector` logic. If an asset has no defined sector, it analyzes the name against a dictionary of 50+ common keywords (e.g., "HDFC" -> Financials, "Infosys" -> Technology) to automatically categorize it in the pie chart.
+
+## Verification Results
+
+### Automated Checks
+- `tsc` compilation passed with **exit code 0**.
+
+### Visual Verification (Expected)
+- **Layout**: In "Holdings > Terminal > Group by Type", the table headers should now be visible within each group.
+- **Features**: Clicking the "Auto-SIP" button should trigger an alert showing how many assets were updated.
+- **Visuals**: Toggling the Spotlight button should turn the card glow on/off.

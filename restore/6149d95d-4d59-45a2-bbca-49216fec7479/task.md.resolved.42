@@ -1,0 +1,82 @@
+# 🎯 New Feature Implementation Tasks
+
+## Current Focus: Phase 1 - Corpus Growth Tracker ✅ COMPLETE
+
+---
+
+### Task 1: Investment Goal Widget ✅
+**Priority:** HIGH  
+**Status:** [x] COMPLETE
+
+- [x] Create [components/widgets/CorpusGoalWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/widgets/CorpusGoalWidget.tsx)
+- [x] Goal input: target amount + target date
+- [x] Progress bar with percentage + milestones
+- [x] Monthly required amount calculator
+- [x] Growth rate tracking
+
+---
+
+### Task 2: Goals Store ✅
+**Priority:** HIGH  
+**Status:** [x] COMPLETE
+
+- [x] Create [store/goalsStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/store/goalsStore.ts)
+- [x] Persist corpus goal
+- [x] Budget limits storage
+- [x] Monthly budgets storage
+
+---
+
+### Task 3: Monthly Budget Summary ✅
+**Priority:** HIGH  
+**Status:** [x] COMPLETE
+
+- [x] Create [components/widgets/MonthlyBudgetSummary.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/widgets/MonthlyBudgetSummary.tsx)
+- [x] Income - Expenses = Investable Surplus
+- [x] Savings rate with emoji feedback
+- [x] Top spending categories breakdown
+- [x] Over-budget alerts
+
+---
+
+### Task 4: Spending Limits Widget ✅
+**Priority:** HIGH  
+**Status:** [x] COMPLETE
+
+- [x] Create [components/widgets/SpendingLimitsWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/widgets/SpendingLimitsWidget.tsx)
+- [x] Add/edit/remove limits per category
+- [x] Visual progress bars
+- [x] Status indicators (safe/warning/over)
+- [x] Toast notifications
+
+---
+
+## ✅ Phase 1 Complete!
+
+| Widget | File | Lines |
+|--------|------|-------|
+| Corpus Goal | [CorpusGoalWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/widgets/CorpusGoalWidget.tsx) | ~230 |
+| Goals Store | [goalsStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/store/goalsStore.ts) | ~80 |
+| Budget Summary | [MonthlyBudgetSummary.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/widgets/MonthlyBudgetSummary.tsx) | ~200 |
+| Spending Limits | [SpendingLimitsWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/widgets/SpendingLimitsWidget.tsx) | ~240 |
+
+**Build:** ✅ Successful (8.12s)
+
+---
+
+## Next: Integrate Widgets into Dashboard
+
+- [ ] Add CorpusGoalWidget to DashboardTab
+- [ ] Connect goalsStore to widgets
+- [ ] Wire up spending limits with transactions
+
+---
+
+## Backlog (Next Phases)
+
+| Task | Phase | Priority |
+|------|-------|----------|
+| Trade Replay | 3 | MEDIUM |
+| Strategy Playbook | 3 | MEDIUM |
+| Custom Category Rules | 4 | MEDIUM |
+| Split Transactions | 4 | MEDIUM |

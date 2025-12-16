@@ -1,0 +1,10 @@
+# Restoring Spending Analytics Features
+
+- [/] Investigate missing features <!-- id: 0 -->
+    - [x] Check [SpendingOverview.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingOverview.tsx) usage of SpendingAnalytics <!-- id: 1 -->
+    - [x] Compare [JupiterAnalyticsWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx) capabilities <!-- id: 2 -->
+    - [ ] Check [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx) <!-- id: 2.1 -->
+- [/] Restore functionality <!-- id: 3 -->
+    - [x] Plan the restoration (Implementation Plan) <!-- id: 4 -->
+    - [/] Implement the fix (Swap or Reconstruct) <!-- id: 5 -->
+- [ ] Verify restoration <!-- id: 6 -->

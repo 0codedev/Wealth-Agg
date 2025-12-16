@@ -1,0 +1,28 @@
+# Syndicate Tracker & Psych Dashboard Refinements
+
+## Changes Implemented
+
+### 1. Syndicate Tracker Upgrade
+- **Grouped View (Excel-Style)**: Added a "Grouped" view mode to cluster applications by IPO Name. This makes handling multiple applications for the same IPO cleaner.
+- **Bulk Entry Flow**:
+    - When you add an application, the "IPO Name" and "Amount" persist, while "Applicant" and "UPI" reset.
+    - The cursor auto-focuses on "Applicant Name".
+- **Autocomplete Memory**:
+    - "Applicant" and "UPI ID" fields now remember previous entries.
+    - When you type, improved autocomplete suggestions appear (e.g., typing "S" shows "Self", "Son", etc. if used before).
+- **Listing Price Mode**: Added an option to calculate profit using **Listing Price** vs **Issue Price**.
+- **Sync Fix**: Connected the "Realize Gains" action directly to the main Portfolio refresh trigger.
+
+### 2. Psych Dashboard (Mistake Tags)
+- **Dynamic Tags**: You can now type a custom mistake tag (e.g., "Fat Finger") and add it to your trade log instantly.
+
+## Verification Steps
+
+### Syndicate Tracker Test
+1.  **Autocomplete**: Go to **Syndicate Tracker** and start typing a name you've used before in "Applicant". A dropdown should appear. Select it to autofill.
+2.  **Bulk Add**: Add an application. Notice IPO Name/Amount stays, Name/UPI clears. Use autocomplete to quickly fill the next family member.
+3.  **Grouped View**: Toggle "Show Grouped" to see the cluster.
+4.  **Realize Gains**: Use the Price mode in the Listing Day section and verify Portfolio updates.
+
+### Psych Dashboard Test
+1.  **Custom Tags**: Log a new trade and add a custom mistake tag. Verify it appears.

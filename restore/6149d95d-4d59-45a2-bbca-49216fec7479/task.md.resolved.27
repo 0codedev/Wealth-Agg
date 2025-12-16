@@ -1,0 +1,75 @@
+# Phase 1: Critical Architecture Fixes
+
+## Overview
+Implementing critical fixes identified in the architecture audit to improve code quality and maintainability.
+
+---
+
+## Task 1: Refactor PsychDashboard.tsx to Use Extracted Components
+**Priority:** CRITICAL  
+**Status:** [x] COMPLETE ✅
+
+### Summary:
+- Reduced from **1071 → 702 lines** (-34%, ~370 lines removed)
+- Added imports for 5 extracted psych components
+- Replaced inline SlumpBusterModal with component call
+- Replaced inline EquityCurve/Drawdown charts with components
+- Replaced inline ExpectancyEngine with component call
+- Replaced inline TiltOMeter with component call
+- Removed 6 unused useMemo blocks (equityData, CustomMistakeDot, maxDrawdown, expectancyStats, tiltStats, needle)
+- Fixed all lint errors (missing icons, RADIAN constant)
+- Build verified: ✅
+
+---
+
+## Task 2: Move gamificationStore.ts to `store/`
+**Priority:** HIGH  
+**Status:** [x] COMPLETE ✅
+
+### Summary:
+- Moved [gamificationStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/gamificationStore.ts) from root to [store/gamificationStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/store/gamificationStore.ts)
+- Note: File was unused (dead code) but relocated for project structure consistency
+- Build verified: ✅
+
+---
+
+## Task 3: Consolidate Types (Deferred)
+**Priority:** CRITICAL  
+**Status:** [~] Deferred to Phase 2
+
+### Reason:
+Type consolidation is a larger task that requires updating imports across 50+ files. 
+Prioritized Vitest setup (Task 4) as it provides immediate value for preventing regressions.
+
+---
+
+## Task 4: Add Basic Vitest Setup
+**Priority:** HIGH  
+**Status:** [x] COMPLETE ✅
+
+### Summary:
+- Installed: `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`
+- Created [vitest.config.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/vitest.config.ts) with jsdom environment and React plugin
+- Created [vitest.setup.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/vitest.setup.ts) for jest-dom matchers
+- Created [__tests__/helpers.test.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/__tests__/helpers.test.ts) with **21 unit tests**:
+  - [formatCurrency](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#26-33) (4 tests)
+  - [formatCurrencyPrecise](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#34-41) (1 test)
+  - [calculatePercentage](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/usePortfolio.ts#95-99) (3 tests)
+  - [calculateProgress5L](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#18-23) (3 tests)
+  - [getCountdownToTarget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#5-17) (2 tests)
+  - [calculateStreaks](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#47-83) (4 tests)
+  - [getFiscalYearRange](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/helpers.ts#92-113) (4 tests)
+- Added `test` and `test:coverage` scripts to package.json
+- All tests passing: ✅
+
+---
+
+## Progress Tracker
+| Task | Status | Lines Changed |
+|------|--------|---------------|
+| 1. PsychDashboard | ✅ | -369 |
+| 2. Store Relocation | ✅ | 0 (move) |
+| 3. Types Consolidation | ⏸️ | Deferred |
+| 4. Vitest Setup | ✅ | +180 |
+
+**Legend:** ✅ Complete | ⏸️ Deferred | 🔄 In Progress | ⬜ Not Started

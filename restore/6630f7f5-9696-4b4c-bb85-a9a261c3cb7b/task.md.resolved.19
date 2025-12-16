@@ -1,0 +1,37 @@
+# Tasks
+
+- [/] Full Application Audit
+    - [ ] **Dashboard Audit**
+        - [ ] Verify aggregate PnL numbers.
+        - [ ] Check sidebar navigation.
+        - [ ] Test "Add Trade" button and modal.
+    - [ ] **Syndicate Tracker Audit**
+        - [ ] Verify grouped view vs list view.
+        - [ ] Test bulk verification again (visual).
+        - [ ] Check Capital Stack visualization.
+        - [ ] Verify Listing Day Simulator.
+    - [ ] **Journal & Analytics Audit**
+        - [ ] Check Calendar view rendering.
+        - [ ] Verify Analytics charts (Win Rate, etc.).
+    - [ ] **Psych Dashboard Audit**
+        - [ ] Check mistake tagging visualization.
+        - [ ] Verify "Tilt Meter" or similar visuals.
+    - [ ] **Compliance & Strategy Audit**
+        - [ ] Check Rulebook rendering.
+        - [ ] Verify Compliance score calculations.
+    - [ ] **Other Tabs**
+        - [ ] Academy (Video rendering/links).
+        - [ ] Advisor (Chat interface check).
+        - [ ] Macro Pulse (Data simulation check).
+    - [ ] **Final Report Generation**
+
+- [x] Syndicate Tracker Refinements
+    - [x] Grouped view for applications
+    - [x] Bulk entry flow improvements
+    - [x] Price mode for listing simulator
+    - [x] Immediate UI updates
+    - [x] Dynamic Mistake Tags
+    - [x] Autocomplete for Applicant/UPI
+    - [x] Remove multiple applicant restriction
+    - [x] Default to 'Shovel View'
+    - [x] Clear Archived History Functionality (Fixed & verified)

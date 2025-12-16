@@ -1,0 +1,58 @@
+# 🎯 Future Work - 80/20 Priority List
+
+**Status:** ✅ ALL COMPLETE
+
+---
+
+## 🔴 Priority 1: Bug Fixes ✅ (4/4)
+
+### 1.1 Remove `alert()` in TransactionTimeline ✅
+- Replaced with `toast.success()` + proper date filtering
+
+### 1.2 Remove `alert()` in BankImportModal ✅
+- Replaced with `toast.error()`
+
+### 1.3 Remove `alert()` in GodTierFeatures ✅ (x2)
+- VoiceCommandButton: toast.warning()
+- BankStatementParser: toast.error()
+
+### 1.4 Fix Transaction ID Uniqueness ✅
+- Added `generateTxnId()` with timestamp + random string
+
+---
+
+## 🟠 Priority 2: Organization ✅ (4/4)
+
+### 2.1 Z-Index Constants ✅
+- Created [utils/zIndex.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/zIndex.ts)
+
+### 2.2 Move Sample Files ✅
+- [sample_statement.csv](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/sample_statement.csv) → `data/`
+- [test_api.js](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/test_api.js) → `scripts/`
+- [list_models.js](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/list_models.js) → `scripts/`
+
+### 2.3 Remove Extra files folder ✅
+- Moved contents to `data/`
+
+---
+
+## 🟡 Priority 3: Accessibility ✅
+
+### 3.1 ARIA Labels ✅
+- Added to edit/delete buttons in HoldingsView
+
+---
+
+## Verification ✅
+- **Build:** Successful (5.02s)
+- **Tests:** 70 passing
+
+---
+
+## Summary
+| Category | Total | Done |
+|----------|-------|------|
+| Bug Fixes | 4 | 4 ✅ |
+| Organization | 4 | 4 ✅ |
+| Accessibility | 1 | 1 ✅ |
+| **TOTAL** | **9** | **9 ✅** |

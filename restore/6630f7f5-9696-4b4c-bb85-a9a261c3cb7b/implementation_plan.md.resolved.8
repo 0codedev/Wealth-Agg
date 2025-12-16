@@ -1,0 +1,42 @@
+# Portfolio & Syndicate Tracker Refinement Plan
+
+## Goal Description
+Address user reported issues in Syndicate Tracker (row limits, profit calc, UI sync) and Psych Dashboard (mistake tags).
+
+## User Review Required
+> [!IMPORTANT]
+> **Syndicate Tracker Layout Change**: The straight list of applications will be replaced/augmented with a "Grouped by IPO" view to better handle multiple applications and mimic "Excel-like" columns.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1 (3)/App.tsx)
+- Pass `refreshData` from [usePortfolio](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/usePortfolio.ts#100-506) to [renderContent](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx#131-181) common props.
+- Ensure [IPOWarRoom](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx#32-716) receives `onRefresh`.
+
+#### [MODIFY] [AddTradeModal.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1 (3)/components/AddTradeModal.tsx)
+- Replace static `MISTAKE_TAGS` buttons with a dynamic input mechanism.
+- Allow users to add custom mistake tags that persist (or at least valid for the session/trade).
+
+#### [MODIFY] [SyndicateTracker.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1 (3)/components/SyndicateTracker.tsx)
+- **Multi-Row / Bulk Add**: Improve "Add Application" to be more fluid for bulk entry (keep IPO name, auto-focus next field).
+- **Grouped View**: Implement a grouped table view (Group by IPO Name) -> Expand to see individual applicants. This solves "dynamic display... within a column".
+- **Profit Logic**: Add "Listing Price" input field as an alternative to "Gain %" to prevent calculation errors.
+- **Sync**: Verify `onPortfolioRefresh` triggers the parent refresh correctly.
+
+#### [MODIFY] [IPOWarRoom.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1 (3)/components/tabs/IPOWarRoom.tsx)
+- Ensure properties are passed down correctly.
+
+## Verification Plan
+
+### Manual Verification
+1.  **Syndicate Tracker**:
+    - Add 3 applications for "NTPC Green". Verify they appear grouped under "NTPC Green".
+    - Mark 2 as ALLOTTED.
+    - Use "Listing Price" to realize gains.
+    - Check if "IPO Gain: NTPC Green" appears in the main Portfolio instantly.
+2.  **Psych Dashboard**:
+    - Open "Log New Trade".
+    - Type a new mistake "Fat Finger" and add it.
+    - Save the trade.

@@ -1,0 +1,29 @@
+
+# Goal
+Refactor the Dashboard Tab layout to improve the Wealth Simulator's aspect ratio and enhance the Financial Calendar with IPO data and toggles.
+
+## User Review Required
+> [!NOTE]
+> [WealthSimulator](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/WealthSimulator.tsx#15-88) will be moved to a full-width row above the Calendar/Heatmap widgets to fix the "squished" look.
+> [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#9-74) will be upgraded to support IPOs, Dividends, and Bonds listing.
+
+## Proposed Changes
+
+### Components
+#### [MODIFY] [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/DashboardTab.tsx)
+- Change grid layout for the "Financial Calendar & Insight Row".
+- Move [WealthSimulator](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/WealthSimulator.tsx#15-88) to its own full-width container.
+- Place [FinancialCalendar](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/widgets/FinancialCalendar.tsx#9-74) and `HeatmapWidget` in a `grid-cols-2` container below it.
+
+#### [MODIFY] [FinancialCalendar.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/dashboard/widgets/FinancialCalendar.tsx)
+- Rename header to "Calendar".
+- Add internal state for active tab: [IPO](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx#32-716) | `DIVIDENDS` | `BONDS`.
+- Add static data for upcoming IPOs (Mainboard & SME) for Dec 2024/Jan 2025.
+- Render list based on active tab.
+
+## Verification Plan
+### Manual Verification
+- Verify [WealthSimulator](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/WealthSimulator.tsx#15-88) is wide and readable.
+- Verify Calendar widget shows "IPO", "DIVIDENDS", "BONDS" toggles.
+- Verify clicking "IPO" shows the list of upcoming IPOs.
+- Verify clicking "DIVIDENDS" shows the existing portfolio events.

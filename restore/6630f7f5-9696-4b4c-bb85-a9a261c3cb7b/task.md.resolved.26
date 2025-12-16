@@ -1,0 +1,21 @@
+# Tasks
+
+- [x] Full Application Audit
+- [x] Fix Critical Audit Findings
+- [x] Backup Download Fix (FileSystem API)
+- [x] Syndicate Tracker Refinements
+
+---
+
+- [/] **Smart CSV Import System**
+    - [x] Create [TransactionContext.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx) with Transaction interface
+    - [ ] Implement [smartMerge()](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx#300-355) upsert algorithm
+    - [ ] Create `TransactionImportService.ts`
+        - [ ] Auto-detect Fold vs Paytm format
+        - [ ] Parse Fold CSV
+        - [ ] Parse Paytm CSV
+        - [ ] Map emoji tags to categories
+    - [ ] Add `transactions` table to Dexie database
+    - [ ] Update [BankImportModal.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/BankImportModal.tsx) with smart merge feedback
+    - [ ] Verify: No duplicates on re-import
+    - [ ] Verify: Missing tags filled on re-import

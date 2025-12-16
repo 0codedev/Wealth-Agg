@@ -1,0 +1,26 @@
+# Tasks
+
+- [x] Full Application Audit
+    - [x] **Dashboard Audit** (Loaded, but Add Trade crashes)
+    - [x] **Syndicate Tracker Audit** (Verified improvements & cleanup)
+    - [x] **Journal & Analytics Audit** (Crash found)
+    - [x] **Psych Dashboard Audit** (Tab Missing)
+    - [x] **Compliance & Strategy Audit** (Strategy functional, Compliance Missing)
+    - [x] **Other Tabs** (Academy, Advisor, Market Intel functional)
+
+- [ ] **Fix Critical Audit Findings**
+    - [ ] **[CRITICAL] Fix "Rendered fewer hooks" crash in Add Trade Modal**
+    - [ ] **Restore Missing "Psych Dashboard" Tab**
+    - [ ] **Restore Missing "Compliance Shield" Tab**
+    - [ ] Improve Syndicate Tracker Data Entry UX (Enter key behavior)
+
+- [x] Syndicate Tracker Refinements
+    - [x] Grouped view for applications
+    - [x] Bulk entry flow improvements
+    - [x] Price mode for listing simulator
+    - [x] Immediate UI updates
+    - [x] Dynamic Mistake Tags
+    - [x] Autocomplete for Applicant/UPI
+    - [x] Remove multiple applicant restriction
+    - [x] Default to 'Shovel View'
+    - [x] Clear Archived History Functionality (Fixed & verified)

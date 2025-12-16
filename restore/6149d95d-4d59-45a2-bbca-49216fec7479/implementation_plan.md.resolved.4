@@ -1,0 +1,51 @@
+# Bank Statement Parser - Connected to UPI Tracker
+
+## Goal
+Build a powerful parser that reads bank/UPI statements and updates the UPI Spending Tracker widget with categorized transaction data.
+
+## Proposed Changes
+
+### 1. Create Transaction Context Store
+
+#### [NEW] [TransactionContext.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/contexts/TransactionContext.tsx)
+- React Context to share parsed transactions across components
+- Functions: `addTransactions`, `clearTransactions`, `getSpendingByCategory`
+
+### 2. Build Intelligent Categorization Engine
+
+**Category Rules (Pattern Matching):**
+```
+Food & Dining    → swiggy, zomato, dominos, pizza, restaurant, cafe, food
+Groceries        → bigbasket, zepto, blinkit, dmart, grocery, supermarket
+Shopping         → amazon, flipkart, myntra, ajio, meesho, mall
+Bills & Utilities→ electricity, water, gas, broadband, jio, airtel, vi
+Transport        → uber, ola, rapido, metro, petrol, diesel, fuel
+Entertainment    → netflix, hotstar, prime, spotify, inox, pvr, movie
+Healthcare       → apollo, pharmacy, 1mg, netmeds, hospital, doctor
+Education        → udemy, coursera, books, school, college, coaching
+Investment       → groww, zerodha, upstox, sip, mutual fund, mf
+Rent             → rent, landlord, housing
+Transfer         → upi, neft, imps, transfer (exclude from spending)
+```
+
+### 3. Modify GodTierFeatures.tsx
+
+#### [MODIFY] [GodTierFeatures.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/shared/GodTierFeatures.tsx)
+
+**BankStatementParser changes:**
+- Parse CSV/text content from uploaded file
+- Extract transaction rows (Date, Description, Amount)
+- Categorize each transaction using pattern matching
+- Save to TransactionContext on success
+
+**UPITrackerWidget changes:**
+- Read from TransactionContext instead of static mock data
+- Show "No data - Import statement" if empty
+- Auto-refresh when context updates
+
+---
+
+## Verification Plan
+1. Upload a sample CSV bank statement
+2. Verify transactions are categorized correctly
+3. Confirm UPI Tracker widget shows the parsed data

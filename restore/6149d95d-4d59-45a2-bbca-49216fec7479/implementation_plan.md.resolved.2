@@ -1,0 +1,73 @@
+# Phase 3: Features Implementation Plan
+
+## Goal
+Transform the app into a god-tier PWA with offline support, persistent conversations, and smart alerts.
+
+---
+
+## 1. PWA with Offline Support 📱
+
+### Files to Create/Modify
+
+#### [NEW] [manifest.json](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/public/manifest.json)
+- App icons, theme colors, display mode
+- Enable "Add to Home Screen"
+
+#### [NEW] [sw.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/public/sw.ts)
+- Cache strategies for offline access
+- Background sync capability
+
+#### [MODIFY] [index.html](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/index.html)
+- Link manifest, meta tags for theme
+
+---
+
+## 2. Conversation History Persistence 💬
+
+### Files to Create/Modify
+
+#### [MODIFY] [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/database.tsx)
+- Add `conversations` and `chat_messages` tables
+- Bump to version 15
+
+#### [NEW] [useChatHistory.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/hooks/useChatHistory.ts)
+- Save/load conversation threads
+- Search through history
+
+#### [MODIFY] [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/AdvisorTab.tsx)
+- Integrate history sidebar
+- Load previous conversations
+
+---
+
+## 3. Smart Alerts System 🔔
+
+### Files to Create
+
+#### [NEW] [NotificationService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/services/NotificationService.ts)
+- Request permission
+- Send notifications
+- Schedule reminders
+
+#### [NEW] [useAlerts.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/hooks/useAlerts.ts)
+- Portfolio alerts (target hit, stop loss)
+- SIP reminders
+- Tax deadlines
+
+---
+
+## 4. Broker API Foundation 🔗
+
+#### [NEW] [BrokerService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/services/BrokerService.ts)
+- Abstract interface for broker integration
+- Mock implementation for demo
+- Ready for Zerodha/Groww APIs
+
+---
+
+## Execution Order
+
+1. **Conversation History** (highest value - AI Advisor becomes useful)
+2. **PWA Setup** (installable app)
+3. **Smart Alerts** (proactive engagement)
+4. **Broker Foundation** (future integration point)

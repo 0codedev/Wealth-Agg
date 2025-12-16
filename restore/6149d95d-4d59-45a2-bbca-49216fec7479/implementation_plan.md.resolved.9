@@ -1,0 +1,39 @@
+# 🏗️ Architecture Improvements - Phase 1 Implementation Plan
+
+## Goal
+Implement critical stability and safety improvements identified in the Architecture Analysis.
+**Focus:** Safety Nets, Cleanup, Data Integrity.
+
+## 📋 Tasks
+
+### 1. File Cleanup
+- [ ] Rename [database.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.tsx) → `database.ts`
+  - **Reason:** File contains no JSX, strictly TypeScript logic.
+  - **Risk:** Low (imports use extensionless path).
+
+### 2. Stability: Error Boundaries
+- [ ] Create `components/shared/ErrorBoundary.tsx`
+  - React Class component to catch rendering errors.
+  - Fallback UI: Simple "Something went wrong" with reload button.
+- [ ] Wrap [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx) main content
+  - **Reason:** Prevent white screen of death on component crashes.
+
+### 3. Data Integrity: Input Validation
+- [ ] Modify [components/AddInvestmentModal.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/AddInvestmentModal.tsx)
+  - Add validation logic before submission.
+  - **Rules:**
+    - Amount must be > 0.
+    - Name cannot be empty.
+    - Quantity must be > 0 (where applicable).
+  - **Feedback:** Show red border or error message.
+
+### 4. Performance: Data Limits
+- [ ] Modify [contexts/TransactionContext.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx)
+  - Add simple limit to `transactions` state (e.g., Max 2000 items).
+  - **Reason:** Prevent memory issues from importing massive CSVs.
+
+## 🔄 Verification Plan
+1. **Rename:** Check app still compiles/runs.
+2. **Error Boundary:** Manually throw an error in a component (temp) to test fallback UI.
+3. **Validation:** Try entering negative amounts in Add Investment modal.
+4. **Limits:** Check TransactionContext code changes.

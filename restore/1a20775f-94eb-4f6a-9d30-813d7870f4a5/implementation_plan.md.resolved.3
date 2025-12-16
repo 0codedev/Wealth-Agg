@@ -1,0 +1,21 @@
+
+# Dynamic Header Title Update
+
+## Goal Description
+Update the main header title in [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx) to dynamically reflect the selected main category (e.g., "IPO War Room", "Trading Journal") instead of defaulting to a static "Dashboard" or incorrect label when no sub-tabs are present.
+
+## Proposed Changes
+
+### [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx)
+#### [MODIFY] Update Header Logic
+- Locate the main `<h1>` in the render method.
+- Currently, it might be hardcoded using `SUB_TABS[activeCategory]` logic which falls back or isn't handling single-tab categories correctly for the title.
+- Implement logic to check if `SUB_TABS[activeCategory]` is empty.
+    - If empty (like 'ipo' or 'journal'), use the label from `CATEGORIES` (need to import or define logic to get it).
+    - If not empty, it probably uses `activeSubTab` to find the label.
+
+## Verification Plan
+### Manual Verification
+- Click on "IPO War Room" -> Header should say "IPO War Room".
+- Click on "Trading Journal" -> Header should say "Trading Journal".
+- Click on "Portfolio Hub" -> Header should likely say "Overview" or "Portfolio Hub" depending on sub-tab. (Existing behavior for sub-tabs should be preserved).

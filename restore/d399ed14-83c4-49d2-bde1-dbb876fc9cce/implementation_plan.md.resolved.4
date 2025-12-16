@@ -1,0 +1,19 @@
+# Add Net Worth Graph (CSV Data)
+
+## Goal Description
+Integrate [NetWorthTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx#10-136) into the Spending Analytics dashboard, positioned between the main analytics chart and the category/merchant charts. The widget will display net worth trends derived from `current_balance` and `txn_timestamp` in the transaction data (parsed from CSV).
+
+## User Review Required
+> [!NOTE]
+> The [NetWorthTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx#10-136) relies on the CSV file having valid `current_balance` and `txn_timestamp` columns. I verified the parsing logic supports the "FOLD" format present in the provided CSV.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx)
+- Import [NetWorthTrendWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/NetWorthTrendWidget.tsx#10-136).
+- Insert `<NetWorthTrendWidget />` below [JupiterAnalyticsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx#33-317) and above the [CategoryDonutChart](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/CategoryDonutChart.tsx#11-69)/[TopMerchantsBarChart](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/TopMerchantsBarChart.tsx#9-76) grid.
+
+## Verification Plan
+- Verify manually that the "Net Worth Trend" graph appears in the correct location and displays data.

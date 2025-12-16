@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Detailed structural analysis of Fold and Paytm transaction export files, comparing formats and recommending CSV for import.",
+  "updatedAt": "2025-12-08T15:35:25.433730400Z",
+  "version": "6"
+}

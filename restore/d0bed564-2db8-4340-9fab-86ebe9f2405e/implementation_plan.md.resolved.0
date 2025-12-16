@@ -1,0 +1,31 @@
+# Styles Restoration Plan
+
+## Goal Description
+Restore the "original" dark/premium aesthetic of the Wealth Aggregator app. Recent changes introduced in [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx) (Unified Toolbar) use lighter grays (`slate-700`) and glass effects that deviate from the established solid, high-contrast design (e.g., Sidebar using `indigo-600` for active states). The goal is to eliminate the "too bright" feeling by darkening backgrounds and standardizing active states.
+
+## User Review Required
+> [!IMPORTANT]
+> This plan assumes the "Original Aesthetic" is defined by the **Sidebar's high-contrast dark mode** (Slate 900 background, Indigo 600 active states). I will be modifying the new "Unified Toolbar" to match this.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/PortfolioTab.tsx)
+- **Toolbar Background**: Change from `bg-white/80 dark:bg-slate-900/80` (glass) to `bg-white dark:bg-slate-900` (solid) or `dark:bg-slate-950` to ensure deep contrast.
+- **Active Tab State**: Change from `dark:bg-slate-700` (Gray) to `bg-indigo-600 text-white` (Solid Indigo). This matches [Sidebar.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/layout/Sidebar.tsx).
+- **Search Bar**: Darken input background to `dark:bg-slate-950`.
+- **View Toggles/buttons**: Ensure they use consistent hover/active states.
+
+#### [MODIFY] [HoldingsView.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/portfolio/HoldingsView.tsx)
+- **Card Backgrounds**: Ensure they use `dark:bg-slate-900` with `dark:border-slate-800`.
+- **Spotlight Effect**: Soften or adjust the spotlight glow if it contributes to the "too bright" feel. (Will likely keep `hover:shadow-lg` but ensure color is subtle `indigo-500/10`).
+
+## Verification Plan
+
+### Manual Verification
+1.  **Visual Check**: Open the app in Browser (http://localhost:3000/).
+2.  **Navigation**: Go to "Portfolio Hub".
+3.  **Check Toolbar**: Verify the top toolbar is solid/dark and not "milky".
+4.  **Check Active State**: Click through tabs (Holdings, Analytics). Verify the active button is **Indigo** (not Gray).
+5.  **Check Cards**: In "Holdings", hover over asset cards. Verify the hover effect is premium/subtle and not blindingly bright.

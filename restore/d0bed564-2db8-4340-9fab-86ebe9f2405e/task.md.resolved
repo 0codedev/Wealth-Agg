@@ -1,0 +1,59 @@
+# Task: Restore Original App Aesthetics
+
+- [x] Analyze existing design system (colors, typography, common patterns) <!-- id: 0 -->
+- [x] Identify recent UI implementations that deviate (look for "bright" or inconsistent styles) <!-- id: 1 -->
+- [x] Create Implementation Plan to restore original aesthetics <!-- id: 2 -->
+- [x] Execute styling fixes <!-- id: 3 -->
+    - [x] Fix PortfolioTab.tsx <!-- id: 4 -->
+    - [x] Fix other identified components (HoldingsView card hover) <!-- id: 5 -->
+- [x] Fix Widget Aesthetics (Credit Card Optimizer) <!-- id: 7 -->
+- [x] Fix BankStatementParser Import Trigger <!-- id: 8 -->
+- [x] Fix Widget Aesthetics (Investment Clubs) <!-- id: 9 -->
+- [x] Reorganize Dashboard Widgets (Spending, Markets, Community) <!-- id: 10 -->
+- [x] Reorder Dashboard Rows & Redesign Achievements <!-- id: 11 -->
+- [x] Verify UI consistency <!-- id: 6 -->
+
+## Phase 3: Dashboard Architecture & Advanced Spending <!-- id: 12 -->
+- [x] Plan Dashboard Segregation Strategy <!-- id: 13 -->
+# Task: Restore Original App Aesthetics
+
+- [x] Analyze existing design system (colors, typography, common patterns) <!-- id: 0 -->
+- [x] Identify recent UI implementations that deviate (look for "bright" or inconsistent styles) <!-- id: 1 -->
+- [x] Create Implementation Plan to restore original aesthetics <!-- id: 2 -->
+- [x] Execute styling fixes <!-- id: 3 -->
+    - [x] Fix PortfolioTab.tsx <!-- id: 4 -->
+    - [x] Fix other identified components (HoldingsView card hover) <!-- id: 5 -->
+- [x] Fix Widget Aesthetics (Credit Card Optimizer) <!-- id: 7 -->
+- [x] Fix BankStatementParser Import Trigger <!-- id: 8 -->
+- [x] Fix Widget Aesthetics (Investment Clubs) <!-- id: 9 -->
+- [x] Reorganize Dashboard Widgets (Spending, Markets, Community) <!-- id: 10 -->
+- [x] Reorder Dashboard Rows & Redesign Achievements <!-- id: 11 -->
+- [x] Verify UI consistency <!-- id: 6 -->
+
+## Phase 3: Dashboard Architecture & Advanced Spending <!-- id: 12 -->
+- [x] Plan Dashboard Segregation Strategy <!-- id: 13 -->
+- [x] Refactor [DashboardTab](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx#77-375) to support Sub-Views (Router Pattern) <!-- id: 14 -->
+- [x] Implement [SpendingAnalyticsHub](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx#15-94) (Advanced "Fold-like" Features) <!-- id: 15 -->
+    - [x] Transaction List with Tagging & Filtering <!-- id: 16 -->
+    - [x] Detailed Charts & Reports <!-- id: 17 -->
+    - [x] Bank Parsing Integration <!-- id: 18 -->
+- [x] Implement [MarketInsightsHub](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/MarketInsightsHub.tsx#10-36) & [CommunityHub](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/CommunityHub.tsx#13-47) Wrappers <!-- id: 19 -->
+- [ ] **Navigation**: Verify "Back" logic preserves main dashboard state <!-- id: 38 -->
+
+## Phase 5: Smart Feed Detailed Upgrades
+- [ ] **Logic Fix**: Update [TransactionContext](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx#223-232) to support Overwrite on Import <!-- id: 39 -->
+- [ ] **Refactor**: Extract [BankImportModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/BankImportModal.tsx#10-130) from [GodTierFeatures](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/GodTierFeatures.tsx#11-17) for reuse <!-- id: 46 -->
+- [ ] **Enhancement**: Integrate [BankImportModal](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/BankImportModal.tsx#10-130) into [SpendingAnalyticsHub](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx#15-94) ("+" Button) <!-- id: 47 -->
+- [ ] **Enhancement**: Update [SpendingOverview](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingOverview.tsx#26-303) with "Edit Account" (Pencil) & "Clear Data" buttons <!-- id: 48 -->
+- [ ] **New Component**: [RecurringPatternsWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/RecurringPatternsWidget.tsx) (extracted from Insights) <!-- id: 40 -->
+- [ ] **New Component**: [AnomaliesWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/AnomaliesWidget.tsx) (extracted from Insights) <!-- id: 41 -->
+- [ ] **Refactor**: Clean up [ExpenseInsights.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/ExpenseInsights.tsx) to only show Savings <!-- id: 42 -->
+- [ ] **New Component**: [CashFlowHeader.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/CashFlowHeader.tsx) with Time Filters (T/W/M/Y/All) <!-- id: 43 -->
+- [x] **Account Feature**: `AddAccountModal` with Form (Name, No, PIN) and SBI/ICICI mocks <!-- id: 44 -->
+- [x] **Integration**: Assemble all new components in [SpendingOverview.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingOverview.tsx) <!-- id: 45 -->
+- [x] Verify Navigation Flow & Back Button Logic <!-- id: 21 -->
+
+## Phase 6: Analytics & Visuals Upgrade
+- [ ] **New Widget**: `NetWorthTrendWidget` (Area Chart) with 1M/3M/6M toggle <!-- id: 50 -->
+- [ ] **New Widget**: `MonthlySpendTrendWidget` (Line Chart) comparing current vs last month <!-- id: 51 -->
+- [ ] **Enhancement**: Polish [SpendingAnalytics.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingAnalytics.tsx) with Recharts tooltips and "Fold-like" dark visuals <!-- id: 52 -->

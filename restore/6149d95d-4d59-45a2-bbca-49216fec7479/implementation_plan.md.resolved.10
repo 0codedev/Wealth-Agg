@@ -1,0 +1,259 @@
+# 🏗️ Complete Architecture Improvement Plan
+
+## Executive Summary
+**Total Remaining Issues:** 15  
+**Estimated Effort:** 4-6 hours  
+**Risk Level:** Medium (incremental changes, backward compatible)
+
+---
+
+## Phase 1: Performance Optimization (Priority: HIGH)
+**Impact:** Immediate UX improvement, eliminates jank and lag
+
+### Task 1.1: List Virtualization
+**Problem:** Large lists (transactions, investments) cause scroll lag  
+**Solution:** Implement virtual scrolling using CSS-only or lightweight library
+
+**Files to Modify:**
+- `components/dashboard/spending/TransactionList.tsx` (or equivalent)
+- [components/tabs/PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx) (for investment lists)
+
+**Approach:**
+```tsx
+// Use windowing technique - render only visible items
+const ITEM_HEIGHT = 64;
+const VISIBLE_COUNT = 15;
+const startIndex = Math.floor(scrollTop / ITEM_HEIGHT);
+const visibleItems = items.slice(startIndex, startIndex + VISIBLE_COUNT);
+```
+
+---
+
+### Task 1.2: Memoization Audit
+**Problem:** Excessive re-renders causing performance issues  
+**Solution:** Strategic use of React.memo, useMemo, useCallback
+
+**High-Priority Components:**
+- [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx) - Heavy component, many child components
+- [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx) - Complex calculations
+- Chart components - Expensive renders
+
+**Pattern:**
+```tsx
+// Before
+const MyComponent = ({ data }) => { ... }
+
+// After
+const MyComponent = React.memo(({ data }) => { ... });
+```
+
+---
+
+### Task 1.3: CSV Parsing to Web Worker
+**Problem:** CSV parsing blocks main thread, causes UI freeze  
+**Solution:** Move parseCSV to dedicated Web Worker
+
+**Files to Create/Modify:**
+- `workers/csvParser.worker.ts` (NEW)
+- [contexts/TransactionContext.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx) (Update to use worker)
+
+---
+
+### Task 1.4: Code Splitting Enhancement
+**Problem:** Large initial bundle (17 services sync load)  
+**Solution:** Dynamic imports for heavy services
+
+**Pattern:**
+```tsx
+// Lazy load AI service only when needed
+const AIService = await import('./services/AIService');
+```
+
+---
+
+## Phase 2: Security Hardening (Priority: HIGH)
+**Impact:** Protects user data, prevents XSS attacks
+
+### Task 2.1: Move API Keys to Environment Variables
+**Problem:** API keys in localStorage visible to XSS attacks  
+**Solution:** Use Vite environment variables
+
+**Files to Modify:**
+- Create [.env.local](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/.env.local) template
+- [store/settingsStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/store/settingsStore.ts) - Read from env instead of localStorage
+- [services/AIService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/AIService.ts) - Use env variable
+
+**Pattern:**
+```tsx
+// Before
+const apiKey = localStorage.getItem('gemini_api_key');
+
+// After
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+```
+
+---
+
+### Task 2.2: Input Sanitization
+**Problem:** User input not sanitized, potential XSS  
+**Solution:** Create sanitization utility
+
+**Files to Create:**
+- `utils/sanitize.ts` (NEW)
+
+**Usage:**
+```tsx
+const sanitize = (input: string): string => {
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+};
+```
+
+---
+
+### Task 2.3: CSP Headers (Documentation Only)
+**Problem:** No Content Security Policy headers  
+**Solution:** Document required headers for deployment
+
+**Deliverable:** Add CSP configuration to README or deployment docs
+
+---
+
+## Phase 3: State Management Consolidation (Priority: MEDIUM)
+**Impact:** Cleaner code, easier debugging, predictable state
+
+### Task 3.1: Audit State Locations
+**Current State Sources:**
+1. Zustand: [settingsStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/store/settingsStore.ts), [gamificationStore.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/gamificationStore.ts)
+2. Context: [TransactionContext.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx)
+3. Direct Dexie: [useInvestments.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/useInvestments.ts)
+4. Local useState: Various components
+
+**Recommendation:** Keep Zustand + Dexie, phase out localStorage for critical data
+
+---
+
+### Task 3.2: Migrate Settings to Zustand Persistence
+**Problem:** Settings scattered between localStorage and Zustand  
+**Solution:** Consolidate all settings into Zustand with persist middleware (already partially done)
+
+---
+
+## Phase 4: Structure & Organization (Priority: MEDIUM)
+**Impact:** Maintainability, developer experience
+
+### Task 4.1: Split PsychDashboard.tsx
+**Problem:** 65KB single file, too large  
+**Solution:** Extract into sub-components
+
+**Proposed Structure:**
+```
+components/psych/
+├── PsychDashboard.tsx (orchestrator)
+├── TradeJournal.tsx
+├── EmotionTracker.tsx
+├── PerformanceMetrics.tsx
+└── DailyReview.tsx
+```
+
+---
+
+### Task 4.2: Consolidate Types
+**Problem:** Types in 3 locations: [types.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts), [database.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.ts), inline  
+**Solution:** Create `types/` directory with domain-specific files
+
+**Proposed Structure:**
+```
+types/
+├── index.ts (re-exports)
+├── investment.types.ts
+├── transaction.types.ts
+├── trade.types.ts
+└── common.types.ts
+```
+
+---
+
+### Task 4.3: Component Directory Reorganization (Documentation)
+**Problem:** 82 components in flat structure  
+**Solution:** Document recommended folder structure (major refactor, defer to later)
+
+---
+
+## Phase 5: Bug Fixes (Priority: HIGH)
+**Impact:** Stability, crash prevention
+
+### Task 5.1: Fix Worker Race Condition
+**Problem:** Worker message handling can race  
+**Solution:** Add message ID tracking
+
+**Pattern:**
+```tsx
+let messageId = 0;
+const pendingMessages = new Map();
+
+worker.postMessage({ id: ++messageId, data });
+worker.onmessage = (e) => {
+  const resolver = pendingMessages.get(e.data.id);
+  resolver?.(e.data.result);
+};
+```
+
+---
+
+### Task 5.2: Fix LightweightChart Memory Leak
+**Problem:** Resize listener not cleaned up  
+**Solution:** Ensure proper cleanup in useEffect
+
+**File:** [components/charts/LightweightChart.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/charts/LightweightChart.tsx)
+
+**Pattern:**
+```tsx
+useEffect(() => {
+  const handleResize = () => { ... };
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+}, []);
+```
+
+---
+
+## Execution Order (Recommended)
+
+| Order | Task | Time Est. | Risk |
+|-------|------|-----------|------|
+| 1 | 5.2 Fix Chart Memory Leak | 10 min | Low |
+| 2 | 5.1 Fix Worker Race Condition | 15 min | Low |
+| 3 | 2.2 Input Sanitization | 15 min | Low |
+| 4 | 2.1 API Keys to Env Vars | 20 min | Low |
+| 5 | 1.2 Memoization Audit | 30 min | Low |
+| 6 | 1.1 List Virtualization | 45 min | Medium |
+| 7 | 1.3 CSV Worker | 30 min | Medium |
+| 8 | 4.1 Split PsychDashboard | 45 min | Medium |
+| 9 | 4.2 Consolidate Types | 30 min | Low |
+| 10 | 3.1-3.2 State Consolidation | 30 min | Medium |
+
+---
+
+## Success Metrics
+
+After completion:
+- [ ] No scroll jank with 10k+ transactions
+- [ ] No memory leaks (check DevTools Memory tab)
+- [ ] API keys not visible in DevTools Application tab
+- [ ] All user inputs sanitized
+- [ ] No files > 20KB (except bundle)
+- [ ] Consistent state management pattern
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> Before proceeding, please confirm:
+> 1. Do you want all items or specific phases only?
+> 2. Any items you want to skip or deprioritize?
+> 3. Preferred order (recommended vs custom)?

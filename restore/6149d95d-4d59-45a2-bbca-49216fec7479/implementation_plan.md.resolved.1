@@ -1,0 +1,106 @@
+# Phase 2: Performance Improvements - Implementation Plan
+
+## Goal
+Eliminate UI freezes and improve load times through Web Workers, lazy loading, and React optimization patterns.
+
+---
+
+## 1. Web Workers for Monte Carlo Simulations
+
+### Problem
+- [RetirementPlanner.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/RetirementPlanner.tsx) runs 500 simulations × 40 years = **20,000 iterations** in main thread
+- [GoalGPS.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/GoalGPS.tsx) runs 1000 simulations blocking UI
+
+### Solution
+
+#### [NEW] [monteCarloWorker.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/workers/monteCarloWorker.ts)
+
+```typescript
+// Web Worker for Monte Carlo simulations
+self.onmessage = (e) => {
+  const { type, params } = e.data;
+  if (type === 'RETIREMENT') runRetirementSim(params);
+  if (type === 'GOAL_GPS') runGoalGPSSim(params);
+};
+```
+
+#### [MODIFY] [RetirementPlanner.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/RetirementPlanner.tsx)
+- Replace `setTimeout` with Web Worker
+- Add progress indicator during computation
+
+#### [MODIFY] [GoalGPS.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/GoalGPS.tsx)
+- Move [runMonteCarlo](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/RetirementPlanner.tsx#43-95) to worker
+
+---
+
+## 2. Lazy Loading with React.lazy()
+
+### Problem
+- All 13 tab components imported eagerly in [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx)
+- Initial bundle includes everything (~500KB+)
+
+### Solution
+
+#### [MODIFY] [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/App.tsx)
+
+Replace:
+```typescript
+import DashboardTab from './components/tabs/DashboardTab';
+import AdvisorTab from './components/tabs/AdvisorTab';
+```
+
+With:
+```typescript
+const DashboardTab = lazy(() => import('./components/tabs/DashboardTab'));
+const AdvisorTab = lazy(() => import('./components/tabs/AdvisorTab'));
+```
+
+Add Suspense fallback with DashboardSkeleton.
+
+---
+
+## 3. Strategic Memoization
+
+### Files to Optimize
+
+| File | Size | Optimizations |
+|------|------|---------------|
+| [IPOWarRoom.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/IPOWarRoom.tsx) | 48KB | Split into sub-components, memo heavy computations |
+| [AdvisorTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/AdvisorTab.tsx) | 39KB | Memoize chat history, model selectors |
+| [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/DashboardTab.tsx) | 24KB | useMemo for chart data calculations |
+| [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx) | 16KB | useCallback for handlers |
+
+---
+
+## 4. Virtual Scrolling for Holdings
+
+### Problem
+- Large portfolios (100+ holdings) render all cards/rows
+- Causes layout thrashing and slow scrolling
+
+### Solution
+
+#### [NEW] [useVirtualList.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/hooks/useVirtualList.ts)
+
+Lightweight virtual list hook (no external dependency):
+```typescript
+export function useVirtualList<T>(items: T[], itemHeight: number, containerHeight: number)
+```
+
+---
+
+## 5. Performance Monitoring
+
+#### [NEW] [usePerformance.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/hooks/usePerformance.ts)
+
+Add hook to log render times in development mode.
+
+---
+
+## Execution Order
+
+1. **Web Worker** (highest impact - eliminates freezes) 
+2. **Lazy Loading** (fastest initial load)
+3. **Memoization** (re-render optimization)
+4. **Virtual Scrolling** (large list performance)
+5. **Performance Hook** (monitoring)

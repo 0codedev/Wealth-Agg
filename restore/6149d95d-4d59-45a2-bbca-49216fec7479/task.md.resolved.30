@@ -1,0 +1,64 @@
+# Phase 3: State Cleanup
+
+## Overview
+Consolidating types, fixing database issues, and cleaning up state management.
+
+---
+
+## Task 1: Type Consolidation
+**Priority:** HIGH  
+**Status:** [ ] IN PROGRESS
+
+### 1.1 Create types/transaction.types.ts
+- [ ] Move [Transaction](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx#6-19) interface from TransactionContext.tsx
+- [ ] Move [CategorySpending](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/contexts/TransactionContext.tsx#21-27) interface from TransactionContext.tsx
+
+### 1.2 Create types/investment.types.ts  
+- [ ] Move [Investment](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts#28-42), [HistoryEntry](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/types.ts#43-47) from types.ts
+- [ ] Move `InvestmentType`, `RecurringFrequency` enums
+
+### 1.3 Create types/trade.types.ts
+- [ ] Move [Trade](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.tsx#33-67), [Dividend](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/database.ts#68-75), etc. from database.ts
+- [ ] Keep type exports in database.ts for backward compatibility
+
+### 1.4 Create types/index.ts (Barrel Export)
+- [ ] Re-export all types from subdirectories
+- [ ] Add CHART_COLORS, ASSET_CLASS_COLORS constants
+
+---
+
+## Task 2: Fix Database Issues
+**Priority:** HIGH  
+**Status:** [ ] NOT STARTED
+
+### 2.1 Add proper Transaction type to database.ts
+- [ ] Replace `Table<any>` with `Table<Transaction>`
+- [ ] Import Transaction from types/
+
+### 2.2 Fix database version consistency
+- [ ] Verify version(15) matches schema definition
+- [ ] Document version history
+
+---
+
+## Task 3: Data Ownership Documentation
+**Priority:** MEDIUM  
+**Status:** [ ] NOT STARTED
+
+### 3.1 Document current state architecture
+- [ ] Zustand stores: settingsStore, gamificationStore, paperStore
+- [ ] Context: TransactionContext
+- [ ] Direct Dexie: useInvestments, useAlerts, etc.
+
+---
+
+## Progress Tracker
+| Task | Files | Status |
+|------|-------|--------|
+| Transaction types | types/transaction.types.ts | [ ] |
+| Investment types | types/investment.types.ts | [ ] |
+| Trade types | types/trade.types.ts | [ ] |
+| Barrel export | types/index.ts | [ ] |
+| Database fix | database.ts | [ ] |
+
+**Target:** Unified type system with proper TypeScript coverage

@@ -1,0 +1,31 @@
+# Promote IPO War Room and Trading Journal to Main Tabs
+
+## Goal
+Move "IPO War Room" and "Trading Journal" from sub-tabs (under Market and Growth respectively) to the main sidebar navigation for easier access.
+
+## Proposed Changes
+### [App.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/App.tsx)
+
+1.  **Update `CATEGORIES`**:
+    *   Add `{ id: 'ipo', icon: Zap, label: 'IPO War Room' }`.
+    *   Add `{ id: 'journal', icon: Brain, label: 'Trading Journal' }`.
+
+2.  **Update `SUB_TABS`**:
+    *   Remove `ipo` entry from `market` array.
+    *   Remove `journal` entry from `growth` array.
+    *   Add empty arrays for `ipo` and `journal`:
+        ```typescript
+        ipo: [],
+        journal: [],
+        ```
+
+3.  **Update Navigation Logic (`useEffect`)**:
+    *   Modify the effect that sets `activeSubTab` when `activeCategory` changes.
+    *   Current logic checks specifically for 'dashboard'.
+    *   New logic: if `SUB_TABS[activeCategory]` is empty or undefined, set `activeSubTab = activeCategory`. Otherwise, set it to the first sub-tab's ID.
+
+## Verification
+*   Launch app.
+*   Verify "IPO War Room" and "Trading Journal" appear in the sidebar.
+*   Clicking them should render the correct components.
+*   Verify "Market Intel" and "Growth Engine" no longer show these as sub-tabs.

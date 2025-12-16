@@ -1,0 +1,5 @@
+# Fixing Chart Visibility
+
+- [ ] Fix Chart Colors <!-- id: 0 -->
+    - [ ] Update [JupiterAnalyticsWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx) to use visible colors (Indigo) <!-- id: 1 -->
+- [ ] Verify (Code only) <!-- id: 2 -->

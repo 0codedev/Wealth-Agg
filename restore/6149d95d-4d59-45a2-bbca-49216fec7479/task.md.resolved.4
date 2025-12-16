@@ -1,0 +1,38 @@
+# Phase 2: Performance Improvements - Task Checklist
+
+**Objective**: Eliminate UI freezes and improve app performance through modern React patterns.
+
+**Target Time**: 2 weeks  
+**Status**: ✅ Complete
+
+---
+
+## Task Checklist
+
+### 1. Web Workers for Monte Carlo ⚡ ✅
+- [x] Create [workers/monteCarloWorker.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/workers/monteCarloWorker.ts)
+- [x] Migrate [RetirementPlanner.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/RetirementPlanner.tsx) simulation to worker
+- [x] Create [hooks/useMonteCarloWorker.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/useMonteCarloWorker.ts) with progress reporting
+
+### 2. Lazy Loading Tabs 📦 ✅
+- [x] Convert 11 tab imports to `React.lazy()`
+- [x] Add `<Suspense>` with DashboardSkeleton fallback
+- [x] Keep Dashboard/Portfolio eagerly loaded (critical path)
+
+### 3. Strategic Memoization 🧠 ✅
+- [x] [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx) - useMemo for filtered investments
+- [x] [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/PortfolioTab.tsx) - useCallback for handleAutoSip, downloadCSV
+
+### 4. Virtual Scrolling 📜 ✅
+- [x] Create [hooks/useVirtualList.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/useVirtualList.ts) (lightweight, no dependencies)
+
+### 5. Performance Monitoring 📊 ✅
+- [x] Create [hooks/usePerformance.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/hooks/usePerformance.ts) with render timing
+- [x] Add debounce/throttle utilities
+
+---
+
+## Progress
+- Started: 2025-12-06
+- Phase 1: ✅ Complete
+- Phase 2: ✅ Complete

@@ -1,0 +1,33 @@
+# Add Donut and Horizontal Bar Charts
+
+## Goal Description
+The user requested a **Donut Chart** for category spending (matching existing tooltips) and a **Horizontal Bar Graph** for top merchant transfers. These will be added to the Spending Analytics Hub.
+
+## User Review Required
+> [!NOTE]
+> I will creating two new component files:
+> 1. `CategoryDonutChart.tsx`: Spending breakdown by category.
+> 2. `TopMerchantsBarChart.tsx`: Top spending recipients (merchants).
+>
+> These will be added to the grid in [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx).
+
+## Proposed Changes
+
+### Components
+
+#### [NEW] [CategoryDonutChart.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/CategoryDonutChart.tsx)
+- Recharts `PieChart` with `innerRadius` for donut effect.
+- Custom Tooltip matching [JupiterAnalyticsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx#33-317).
+- Data aggregated from `useTransactions`.
+
+#### [NEW] [TopMerchantsBarChart.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/TopMerchantsBarChart.tsx)
+- Recharts `BarChart` with `layout="vertical"`.
+- Displays top 5-7 merchants by total spend.
+- Matches tooltip style.
+
+#### [MODIFY] [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx)
+- Import new widgets.
+- Add to the analytics grid.
+
+## Verification Plan
+- Verify manually by checking the Spending Analytics tab in the browser (user will perform this per instructions, but I will verify code correctness).

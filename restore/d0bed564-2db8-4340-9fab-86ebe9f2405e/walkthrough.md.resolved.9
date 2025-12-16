@@ -1,0 +1,24 @@
+# Walkthrough - Real Data & Calendar Pro
+
+I have upgraded the Spending Hub with professional-grade data handling and a sleek new calendar view.
+
+## 1. Real Balance Trends (Net Worth)
+- **Data Source**: The Net Worth Chart now directly reads the `current_balance` column from your imported Fold CSV.
+- **Visuals**: It plots your *actual* bank balance history, not mock data.
+- **Interaction**: The chart is auto-scaled to your balance range.
+
+## 2. 'Zone Run' Style Calendar
+- **New Widget**: Replaced the standard calendar with a **Compressed Monthly View** inspired by the Trading Journal/Zone Run aesthetic.
+- **Design**:
+    -   **Compressed**: Small, dense boxes to fit the whole month at a glance.
+    -   **Visuals**: Dark/Light mode compatible with varying shades of Indigo based on spend intensity.
+    -   **Total**: Shows total monthly spend in the header.
+
+## 3. Data Integration
+- **Transaction Context**: Updated the core parser to handle the `current_balance` field from Fold exports.
+- **Import**: Just drop your CSV again, and the Net Worth chart will instantly reflect your real financial curve.
+
+## Verification
+- **Import CSV**: Upload `Fold-Transactions...csv`.
+- **Check Chart**: See the Net Worth curve match your balance history.
+- **Check Calendar**: Verify the new compact design shows daily spending intensity.

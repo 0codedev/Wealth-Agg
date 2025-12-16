@@ -1,0 +1,44 @@
+# Dashboard Hierarchy Reorganization
+
+## Goal Description
+The user feels the widgets are "scattered". I will reorganize the "Power Features" grid into **Logical Sections** to provide a clear visual hierarchy, placing the most important financial tracking tools first.
+
+## User Review Required
+> [!NOTE]
+> I will be breaking the single "Power Features" grid into 3 distinct rows/sections.
+
+## Proposed Changes
+
+### Structure
+I will categorize widgets into these 3 sections.
+
+#### 1. Spending & Optimization (Top Priority)
+*Focus: Personal Finances & Actionable Insights*
+- **Bank Statement Parser** (Import Data)
+- **UPI Spending Tracker** (Expenses)
+- **Credit Card Optimizer** (Optimizing Spend)
+
+#### 2. Market & Benchmarking
+*Focus: External Data & Comparisons*
+- **Market News Sentiment**
+- **Peer Comparison**
+
+#### 3. Community & Gamification
+*Focus: Social & Fun*
+- **Investment Clubs**
+- **Active Challenges**
+
+### Component Implementation
+
+#### [MODIFY] [DashboardTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/DashboardTab.tsx)
+-   Replace the single `<div className="mt-8">` block with a spaced container (`space-y-8`).
+-   **Section 1**: Header "Spending & Analytics" + Grid (UPI, Credit Card). Move [BankStatementParser](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/shared/GodTierFeatures.tsx#268-385) button here.
+-   **Section 2**: Header "Market Insights" + Grid (News, Peer Comp).
+-   **Section 3**: Header "Community & Rewards" + Grid (Clubs, Challenges).
+
+## Verification Plan
+
+### Manual Verification
+1.  **Visual Check**: Verify 3 distinct sections with headers.
+2.  **Hierarchy**: Confirm "Spending" is at the top.
+3.  **Layout**: Ensure widgets are still responsive (grid columns).

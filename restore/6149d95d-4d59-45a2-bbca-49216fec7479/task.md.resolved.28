@@ -1,0 +1,77 @@
+# Phase 2: Testing Foundation
+
+## Overview
+Expanding test coverage from Phase 1's initial 21 tests to comprehensive coverage of utilities and hooks.
+
+---
+
+## Task 1: Unit Tests for Utility Functions
+**Priority:** HIGH  
+**Status:** [ ] In Progress
+
+### 1.1 sanitize.ts
+- [ ] Test [sanitizeHTML](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#6-21) - escapes dangerous characters
+- [ ] Test [sanitizeNumber](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#34-47) - validates numeric input
+- [ ] Test [sanitizeCurrency](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#48-55) - ensures positive values
+- [ ] Test [sanitizeURL](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#76-97) - blocks javascript: protocol
+- [ ] Test [sanitizeText](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#98-105) - removes null bytes
+- [ ] Test [sanitizeObject](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/utils/sanitize.ts#106-125) - recursive sanitization
+
+### 1.2 portfolioMetrics.ts
+- [ ] Test `calculateCAGR` - compound annual growth rate
+- [ ] Test `calculateVolatility` - standard deviation
+- [ ] Test `calculateSharpeRatio` - risk-adjusted returns
+- [ ] Test `calculateDiversityScore` - portfolio spread
+
+### 1.3 transactionPatterns.ts
+- [ ] Test pattern detection functions
+- [ ] Test recurring transaction identification
+- [ ] Test anomaly detection logic
+
+### 1.4 FinancialCalculators.ts
+- [ ] Test SIP calculations
+- [ ] Test tax calculations
+- [ ] Test retirement projections
+
+---
+
+## Task 2: Unit Tests for Hooks
+**Priority:** HIGH  
+**Status:** [ ] Not Started
+
+### 2.1 useFiscalYear
+- [ ] Test fiscal year calculation
+- [ ] Test offset navigation
+
+### 2.2 useAlerts
+- [ ] Test alert creation
+- [ ] Test alert triggering logic
+
+### 2.3 useAccessibility
+- [ ] Test keyboard navigation
+- [ ] Test focus management
+
+---
+
+## Task 3: Integration Tests
+**Priority:** MEDIUM  
+**Status:** [ ] Not Started
+
+### 3.1 Data Flow Tests
+- [ ] Test transaction import → storage → display
+- [ ] Test investment add → portfolio update
+
+---
+
+## Progress Tracker
+| Task | Tests | Status |
+|------|-------|--------|
+| helpers.ts | 21 | ✅ |
+| sanitize.ts | 0 | 🔄 |
+| portfolioMetrics.ts | 0 | ⬜ |
+| transactionPatterns.ts | 0 | ⬜ |
+| FinancialCalculators.ts | 0 | ⬜ |
+| Hooks | 0 | ⬜ |
+| Integration | 0 | ⬜ |
+
+**Target:** 50+ tests total

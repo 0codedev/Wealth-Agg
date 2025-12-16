@@ -1,0 +1,37 @@
+
+# Goal
+Fix groupings layout in Portfolio Hub, add Auto-SIP and Spotlight features, and improve Sector Analytics.
+
+## User Review Required
+> [!NOTE]
+> - "Auto-SIP" will simulate adding the SIP amount to `currentValue` if the Date matches. Since we don't track "Last SIP Date" explicitly in the provided code, this will be a manual trigger that adds +Amount to Current Value for *all* SIPs.
+> - "Spotlight" toggle will control the glow/shadow effects on cards.
+> - Sector Analytics will use a "smart mapping" based on asset name keywords to fill in gaps.
+
+## Proposed Changes
+
+### [MODIFY] [PortfolioTab.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/PortfolioTab.tsx)
+- **State**: Add `isSpotlightEnabled` (default true).
+- **Toolbar**:
+    - Add "Auto SIP" button (`RefreshCw` icon).
+    - Change "Auto-Rebalance" button icon to `Bot`.
+    - Add "Card Spotlight" toggle (Circle/Dot customization).
+- **Logic**: Implement `handleAutoSip` to iterate investments and increment `currentValue` if `recurring.isEnabled`.
+
+### [MODIFY] [HoldingsView.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/portfolio/HoldingsView.tsx)
+- **Layout Fix**: Add missing `<thead>` to the table in Grouped View (Terminal Mode).
+- **Spotlight**: Apply conditional styling to [renderCardItem](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/tabs/portfolio/HoldingsView.tsx#187-231) based on `isSpotlightEnabled`.
+- **Keyboard Nav**:
+    - Add Key listener for '2' -> Focus `currentValue` input of selected row.
+    - Add Key listener for 'Enter' -> Open Simulator (Existing but verify).
+
+### [MODIFY] [AnalyticsView.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20(3)/components/tabs/portfolio/AnalyticsView.tsx)
+- **Sector Logic**: Implement `inferSector(name, type)` helper.
+- Dictionary of 50+ common Indian stock/MF keywords (e.g., "HDFC" -> Finance, "Infy" -> Tech, "Reliance" -> Energy).
+
+## Verification Plan
+### Manual Verification
+- **Grouped View**: Group by Type -> Check Terminal View -> Verify headers align.
+- **Auto SIP**: Click new Refresh button -> Check if SIP values increment.
+- **Spotlight**: Toggle the circle button -> Check if card glow disappears.
+- **Key Nav**: Select row, press '2' -> Focus Current Value input.

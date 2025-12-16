@@ -1,0 +1,41 @@
+# Phase 1: Foundation Improvements
+
+## Overview
+Implementing critical fixes and foundational improvements from the audit report.
+
+---
+
+## Task Checklist
+
+### 1. Security Hardening - API Key Fix
+- [ ] Remove hardcoded API key from [aiService.ts](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/services/aiService.ts)
+- [ ] Use environment variable only
+- [ ] Update [.env.local](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/.env.local) with proper template
+
+### 2. Error Boundary Implementation  
+- [ ] Create `ErrorBoundary` component
+- [ ] Wrap entire app with error boundary
+- [ ] Add fallback UI with retry option
+
+### 3. Toast Notification System
+- [ ] Create `ToastProvider` context
+- [ ] Create `Toast` component with animations
+- [ ] Replace all `alert()` calls with toast notifications
+- [ ] Add success/error/warning/info variants
+
+### 4. Legacy Vault Persistence
+- [ ] Add `beneficiaries` table to database schema
+- [ ] Migrate Legacy Vault to use IndexedDB
+- [ ] Add load/save functionality
+
+### 5. Loading Skeletons
+- [ ] Create reusable `Skeleton` component
+- [ ] Add skeletons to Dashboard
+- [ ] Add skeletons to Portfolio
+- [ ] Add skeletons to other data-heavy tabs
+
+---
+
+## Progress
+- Started: 2025-12-06
+- Status: In Progress

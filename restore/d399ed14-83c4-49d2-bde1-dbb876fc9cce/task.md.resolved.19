@@ -1,0 +1,10 @@
+# Restoring Additional Spending Widgets
+
+- [x] Identify and locate missing widgets <!-- id: 0 -->
+    - [x] Check [MonthlySpendTrendWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/MonthlySpendTrendWidget.tsx) <!-- id: 1 -->
+    - [x] Check [SpendingCalendarWidget.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingCalendarWidget.tsx) <!-- id: 2 -->
+    - [x] Search for any "Pie Chart" related to spending <!-- id: 3 -->
+- [/] Integrate widgets into SpendingAnalyticsHub <!-- id: 4 -->
+    - [x] Plan the layout (Implementation Plan) <!-- id: 5 -->
+    - [x] Update [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx) <!-- id: 6 -->
+- [x] Verify the layout <!-- id: 7 -->

@@ -1,0 +1,27 @@
+# Restore Spending Analytics Features
+
+## Goal Description
+The "Spending Analytics" tab currently shows a placeholder because the original file was corrupted and replaced. I will restore the full functionality by integrating the existing [JupiterAnalyticsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx#33-317), which contains the rich analytics features (graphs, category breakdowns) that the user expects.
+
+## User Review Required
+> [!NOTE]
+> I am replacing the placeholder [SpendingAnalytics](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingAnalytics.tsx#3-12) with [JupiterAnalyticsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx#33-317). This assumes [JupiterAnalyticsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx#33-317) is the correct, intended component for this view.
+
+## Proposed Changes
+
+### Components
+
+#### [MODIFY] [SpendingAnalyticsHub.tsx](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/hubs/SpendingAnalyticsHub.tsx)
+- Change import from [SpendingAnalytics](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/SpendingAnalytics.tsx#3-12) to [JupiterAnalyticsWidget](file:///c:/Users/gadda/Downloads/wealth-aggregator-v1.1%20%283%29/components/dashboard/spending/JupiterAnalyticsWidget.tsx#33-317).
+- Replace `<SpendingAnalytics />` with `<JupiterAnalyticsWidget />`.
+
+## Verification Plan
+
+### Automated Tests
+- `npm run dev` should continue to pass.
+
+### Manual Verification
+- Navigate to the Dashboard.
+- Click on "Power Features" > "Spending" (or finding the way to the Spending Hub).
+- Click the "Analytics" tab.
+- Verify that the rich charts and lists appear instead of the "Under Maintenance" message.
