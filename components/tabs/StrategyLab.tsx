@@ -2,9 +2,11 @@ import React from 'react';
 import { Beaker } from 'lucide-react';
 import SIPTimeMachine from './market/strategies/SIPTimeMachine';
 import RebalanceAlpha from './market/strategies/RebalanceAlpha';
+import StrategyBuilder from './market/strategies/StrategyBuilder';
 
 /**
  * StrategyLab - Quantitative Backtesting & Simulation Engine
+ * Enhanced with full strategy backtester and multiple simulators
  */
 const StrategyLab: React.FC = () => {
     return (
@@ -20,7 +22,10 @@ const StrategyLab: React.FC = () => {
                 </p>
             </div>
 
-            {/* Strategy Widgets Grid */}
+            {/* Main Strategy Backtester */}
+            <StrategyBuilder />
+
+            {/* Additional Simulators */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* SIP Time Machine */}
                 <div className="h-[500px]">
@@ -37,3 +42,4 @@ const StrategyLab: React.FC = () => {
 };
 
 export default StrategyLab;
+

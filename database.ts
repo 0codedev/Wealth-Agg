@@ -12,7 +12,7 @@ export type SetupGrade = 'A+' | 'A' | 'B' | 'C' | 'D';
 export interface TradeScreenshot {
   id: string;
   filename: string;
-  dataUrl: string; // base64 encoded
+  blob: Blob;
   annotations?: any[]; // Drawing data
   uploadedAt: string;
 }
@@ -183,11 +183,15 @@ export interface Transaction {
   amount: number;
   category: string;
   type: 'credit' | 'debit';
-  bankName: string;
+  bankName?: string;
   merchant?: string;
   icon?: string;
   tags?: string[];
   balance?: number;
+  upiRef?: string;
+  upiId?: string;
+  notes?: string;
+  excluded?: boolean;
 }
 
 export class TradeDatabase extends Dexie {

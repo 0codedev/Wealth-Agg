@@ -1,24 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { db, Transaction } from '../database';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export interface Transaction {
-    id: string;
-    upiRef?: string;           // Primary key for matching (UPI Reference Number)
-    date: string;              // ISO 8601 datetime
-    amount: number;            // Always positive
-    type: 'credit' | 'debit'; // Direction
-    merchant?: string;         // Extracted merchant name
-    category: string;          // Category (e.g., "Food & Dining", "Investment")
-    tags?: string[];           // Additional tags
-    bankName?: string;         // Source bank
-    description: string;       // Raw narration/description
-    upiId?: string;            // UPI ID (payee@bank)
-    notes?: string;            // User notes
-    excluded?: boolean;        // Excluded from cash flow (self-transfers)
-}
+
 
 interface CategorySummary {
     category: string;
@@ -361,25 +348,23 @@ function smartMerge(existing: Transaction[], incoming: Transaction[]): { merged:
 const STORAGE_KEY = 'wealth_aggregator_transactions';
 
 export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [transactions, setTransactions] = useState<Transaction[]>(() => {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            return stored ? JSON.parse(stored) : [];
-        } catch {
-            return [];
-        }
-    });
-
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [lastImportResult, setLastImportResult] = useState<ImportResult | null>(null);
 
-    // Persist to localStorage
+    // Load from Dexie on mount
     useEffect(() => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
-        } catch (e) {
-            console.error('[TransactionContext] Failed to persist transactions:', e);
-        }
-    }, [transactions]);
+        const load = async () => {
+            try {
+                const txns = await db.transactions.toArray();
+                setTransactions(txns);
+            } catch (e) {
+                console.error('[TransactionContext] Failed to load from DB:', e);
+            }
+        };
+        load();
+    }, []);
+
+    // No localStorage effect anymore
 
     // Calculate spending by category
     const spendingByCategory = React.useMemo(() => {
@@ -408,23 +393,32 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
     }, [transactions]);
 
     const addTransaction = useCallback((txn: Transaction) => {
-        setTransactions(prev => [...prev, { ...txn, id: txn.id || crypto.randomUUID() }]);
+        const newTxn = { ...txn, id: txn.id || crypto.randomUUID() };
+        setTransactions(prev => [...prev, newTxn]);
+        // Async persist
+        db.transactions.add(newTxn).catch(e => console.error('DB Add Error', e));
     }, []);
 
     const updateTransaction = useCallback((id: string, updates: Partial<Transaction>) => {
         setTransactions(prev => prev.map(txn =>
             txn.id === id ? { ...txn, ...updates } : txn
         ));
+        // Async persist
+        db.transactions.update(id, updates).catch(e => console.error('DB Update Error', e));
     }, []);
 
     const deleteTransaction = useCallback((id: string) => {
         setTransactions(prev => prev.filter(txn => txn.id !== id));
+        // Async persist
+        db.transactions.delete(id).catch(e => console.error('DB Delete Error', e));
     }, []);
 
     const smartImport = useCallback((incoming: Transaction[]): ImportResult => {
         const { merged, result } = smartMerge(transactions, incoming);
         setTransactions(merged);
         setLastImportResult(result);
+        // Async persist
+        db.transactions.bulkPut(merged).catch(e => console.error('DB BulkPut Error', e));
         return result;
     }, [transactions]);
 
@@ -464,7 +458,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
 
     const clearTransactions = useCallback(() => {
         setTransactions([]);
-        localStorage.removeItem(STORAGE_KEY);
+        db.transactions.clear().catch(e => console.error('DB Clear Error', e));
     }, []);
 
     const value: TransactionContextType = {

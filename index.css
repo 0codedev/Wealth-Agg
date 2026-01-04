@@ -4,13 +4,15 @@
 
 :root {
   --glass-surface: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-blur: 12px;
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-blur: 16px;
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
 }
 
 .dark {
-  --glass-surface: rgba(15, 23, 42, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-surface: rgba(15, 23, 42, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 @layer components {
@@ -19,6 +21,13 @@
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-panel:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
   }
 
   .glass-button {
@@ -31,6 +40,20 @@
   .glass-button:hover {
     background: rgba(99, 102, 241, 0.2);
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+    border-color: rgba(99, 102, 241, 0.5);
+  }
+
+  .glass-input {
+    background: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+  }
+
+  .glass-input:focus {
+    background: rgba(15, 23, 42, 0.5);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
   }
 }
 
@@ -96,4 +119,258 @@
 
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+/* Market Ticker Scroll Animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   These styles ONLY apply on mobile devices
+   Desktop layout remains 100% unchanged
+   ============================================ */
+
+@media (max-width: 768px) {
+
+  /* Make header sticky on mobile */
+  .mobile-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+
+  /* Larger touch targets for buttons */
+  button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Full width cards/widgets on mobile */
+  .md\:col-span-2,
+  .md\:col-span-3,
+  .md\:col-span-4,
+  .md\:col-span-6,
+  .lg\:col-span-2,
+  .lg\:col-span-3 {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Widget grid: single column on mobile */
+  .dashboard-widget-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  /* Improve modal display on mobile */
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+    margin: 1rem;
+    border-radius: 1rem;
+  }
+
+  /* Make charts responsive */
+  .recharts-responsive-container {
+    min-height: 200px !important;
+  }
+
+  /* Scrollable tabs on mobile */
+  .tabs-list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Input fields larger on mobile */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    /* Prevents zoom on iOS */
+  }
+
+  /* Cards padding adjustment */
+  .card-padding-mobile {
+    padding: 1rem !important;
+  }
+
+  /* Hide elements marked as desktop-only */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* ===== NEW: Sidebar Fixes ===== */
+
+  /* Sidebar as slide-out drawer */
+  .sidebar-container {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto;
+    max-height: 100vh;
+  }
+
+  .sidebar-container.sidebar-open {
+    transform: translateX(0);
+  }
+
+  /* Sidebar backdrop */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 39;
+  }
+
+  /* ===== NEW: Form Improvements ===== */
+
+  /* Stack form fields on mobile */
+  .form-row {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .form-row>* {
+    width: 100% !important;
+  }
+
+  /* ===== NEW: Table Responsiveness ===== */
+
+  .responsive-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .responsive-table table {
+    min-width: 600px;
+  }
+
+  /* Card-based table view for mobile */
+  .table-as-cards tbody tr {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: rgb(30 41 59 / 0.5);
+    border-radius: 0.75rem;
+    border: 1px solid rgb(51 65 85 / 0.5);
+  }
+
+  .table-as-cards tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border: none !important;
+  }
+
+  .table-as-cards tbody td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: rgb(148 163 184);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .table-as-cards thead {
+    display: none;
+  }
+
+  /* ===== NEW: Bottom Navigation Safe Area ===== */
+
+  .has-bottom-nav {
+    padding-bottom: 80px;
+  }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgb(15 23 42);
+    border-top: 1px solid rgb(51 65 85);
+    z-index: 30;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ===== NEW: Improved Grid Gaps ===== */
+
+  .gap-6 {
+    gap: 1rem !important;
+  }
+
+  .gap-4 {
+    gap: 0.75rem !important;
+  }
+
+  .p-6 {
+    padding: 1rem !important;
+  }
+
+  /* ===== NEW: Text Size Adjustments ===== */
+
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  .text-4xl {
+    font-size: 1.75rem !important;
+  }
+}
+
+/* Show elements only on mobile */
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ===== NEW: Safe Area Insets for iOS ===== */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ===== NEW: Reduced Motion for Accessibility ===== */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-marquee {
+    animation: none !important;
+  }
 }

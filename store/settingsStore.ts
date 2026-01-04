@@ -13,6 +13,7 @@ export interface SettingsState {
   ipoFreshIssueThreshold: number;
   allocationTargets: Record<string, number>; // New Field
   isEditMode: boolean; // Global dashboard edit mode
+  isDarkMode: boolean;
 
   // Real-Time Data Config
   dataMode: 'SIMULATION' | 'LIVE';
@@ -20,7 +21,11 @@ export interface SettingsState {
     rapidApi?: string;
     alphaVantage?: string;
   };
-  geminiApiKey: string; // New: BYOK Support
+  geminiApiKey: string; // BYOK Support
+
+  // Google Drive Sync
+  googleDriveClientId: string;
+  lastGoogleSyncTime: string | null;
 
   updateSetting: (key: keyof SettingsState, value: any) => void;
   resetDefaults: () => void;
@@ -51,7 +56,13 @@ const DEFAULTS = {
     alphaVantage: ''
   },
 
-  geminiApiKey: ""
+  geminiApiKey: "",
+
+  // Google Drive Sync
+  googleDriveClientId: "",
+  lastGoogleSyncTime: null as string | null,
+
+  isDarkMode: true, // Default to Dark Mode
 };
 
 export const useSettingsStore = create<SettingsState>()(

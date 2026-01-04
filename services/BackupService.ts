@@ -7,7 +7,16 @@ const STORAGE_KEYS = [
   'theme',
   'realized_ltcg_fy',
   'wealth-aggregator-logic',
-  'wealth-aggregator-paper-trader'
+  'wealth-aggregator-paper-trader',
+  // Added Backup Keys (Audit Fix)
+  'financial_mistakes',        // Mirror of Truth
+  'advisor_chat_history',      // AI Advisor Chat
+  'advisor_report_data',       // AI Advisor Reports
+  'rebalance-targets',         // Strategy Rebalancing Config
+  'academy_completed_items',   // Education Progress
+  'fortress_notes',            // Fortress Private Notes
+  'fortress_hash',             // Fortress Security Hash
+  'dashboard-widget-order-v8'  // Dashboard Layout Preference (v8: Refactored Layout with Smart Actions + Phase 8 Widgets)
 ];
 
 /**

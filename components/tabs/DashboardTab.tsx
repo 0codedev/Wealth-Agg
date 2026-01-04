@@ -40,7 +40,7 @@ import {
     Project5LWidget, ExposureChartWidget, PlatformChartWidget,
     SpendingWidget, MarketWidget, CommunityWidget
 } from '../dashboard/StandardWidgets';
-// import TaxHarvestingWidget from '../dashboard/widgets/TaxHarvestingWidget';
+import TaxHarvestingWidget from '../dashboard/widgets/TaxHarvestingWidget';
 
 // God-Tier Widgets
 import {
@@ -57,10 +57,17 @@ import {
 import { SpendingAnalyticsHub } from '../dashboard/hubs/SpendingAnalyticsHub';
 import { MarketInsightsHub } from '../dashboard/hubs/MarketInsightsHub';
 import { CommunityHub } from '../dashboard/hubs/CommunityHub';
-// import OracleHub from '../dashboard/hubs/OracleHub';
-// import FortressHub from '../dashboard/hubs/FortressHub';
-
-
+import AlertsManager from '../dashboard/widgets/AlertsManager';
+import OracleHub from '../dashboard/hubs/OracleHub';
+import FortressHub from '../dashboard/hubs/FortressHub';
+import Project5LWidgetEnhanced from '../dashboard/widgets/Project5LWidget';
+import AICopilotWidget from '../dashboard/widgets/AICopilotWidget';
+import FIREDashboardWidget from '../dashboard/widgets/FIREDashboardWidget';
+import CorrelationMatrixWidget from '../dashboard/widgets/CorrelationMatrixWidget';
+import RebalancingWizard from '../dashboard/widgets/RebalancingWizard';
+import SmartActionsWidget from '../dashboard/widgets/SmartActionsWidget';
+import { RunwayGauge } from '../dashboard/RunwayGauge';
+import { LiabilityWatchdogWidget } from '../dashboard/widgets/LiabilityWatchdogWidget';
 
 
 
@@ -178,26 +185,34 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         // Row 1: The "What's Happening" row
         'market-widget', 'community-widget', 'spending-widget',
 
-        // Row 2: Visual & Planning
-        // 'oracle-hub',                   // NEW: Gold Tier Oracle
-        'calendar',                     // Full width often (col-span-3)
-        'wealth-simulator',             // Full width often (col-span-3)
+        // Row 2: Visual & Planning - Gold Tier Features
+        // 'oracle-hub', // Moved to Goal GPS
+        'calendar',
+        'wealth-simulator',
 
-        // Row 3: Metrics
-        // 'tax-harvesting', 'total-pl', 'top-performer', 'loan-widget',
-        'total-pl', 'top-performer', 'loan-widget',
+        // Row 3: Metrics & Tax Optimization
+        'tax-harvesting', 'total-pl', 'top-performer', 'loan-widget',
 
         // Row 4: Deep Dives
         'project-5l', 'exposure-chart', 'platform-chart',
-        'heatmap',
+        'heatmap', 'alerts-widget',
 
-        // Row 5: Security (Gold Tier)
-        // 'fortress-hub'
+        // Row 5: Security - Gold Tier Fortress
+        'fortress-hub',
+
+        // Row 6: Phase 8 New Widgets
+        'ai-copilot', 'fire-dashboard', 'correlation-matrix', 'rebalancing-wizard',
+
+        // Financial Skeptic
+        'runway-gauge', 'liability-watchdog',
+
+        // Refactor: Smart Actions Standalone
+        'smart-actions-widget'
     ];
 
     const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
         try {
-            const saved = localStorage.getItem('dashboard-widget-order-v5'); // Bump to v5 to force update
+            const saved = localStorage.getItem('dashboard-widget-order-v8'); // Bump to v8 - Refactoring layout
             return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
         } catch {
             return DEFAULT_WIDGETS;
@@ -225,7 +240,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 const oldIndex = items.indexOf(active.id as string);
                 const newIndex = items.indexOf(over?.id as string);
                 const newOrder = arrayMove(items, oldIndex, newIndex);
-                localStorage.setItem('dashboard-widget-order-v5', JSON.stringify(newOrder));
+                localStorage.setItem('dashboard-widget-order-v8', JSON.stringify(newOrder));
                 return newOrder;
             });
         }
@@ -241,12 +256,20 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             case 'loan-widget':
                 return <LoanWidgetWrapper key={id} id={id} dragHandle={isEditMode} />;
             case 'project-5l':
-                return <Project5LWidget key={id} id={id} dragHandle={isEditMode} stats={stats} targetNetWorth={targetNetWorth} targetDate={targetDate} progress5L={progress5L} countdown={countdown} isGrindMode={isGrindMode} formatCurrency={formatCurrency} />;
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                        <Project5LWidgetEnhanced
+                            currentWealth={stats?.totalCurrent || 0}
+                            targetWealth={targetNetWorth}
+                            monthlyContribution={25000}
+                            expectedReturn={12}
+                        />
+                    </SortableWidget>
+                );
             case 'exposure-chart':
                 return <ExposureChartWidget key={id} id={id} dragHandle={isEditMode} allocationData={allocationData} investments={investments} CustomTooltip={CustomTooltip} isPrivacyMode={isPrivacyMode} formatCurrency={formatCurrency} calculatePercentage={calculatePercentage} />;
             case 'platform-chart':
                 return <PlatformChartWidget key={id} id={id} dragHandle={isEditMode} platformData={platformData} isDarkMode={isDarkMode} isPrivacyMode={isPrivacyMode} CustomTooltip={CustomTooltip} />;
-            /*
             case 'tax-harvesting':
                 return (
                     <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 md:row-span-2 h-full">
@@ -255,15 +278,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                         </div>
                     </SortableWidget>
                 );
-            */
-            /*
             case 'fortress-hub':
                 return (
                     <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-6 h-full">
                         <FortressHub />
                     </SortableWidget>
                 );
-            */
             // Complex/Custom Widgets kept inline or wrapped here
             // Independent Widgets (Replacing Power Grid)
             case 'spending-widget':
@@ -288,20 +308,62 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                         </div>
                     </SortableWidget>
                 );
-            /*
             case 'oracle-hub':
+                return null; // Removed from dashboard
+            case 'smart-actions-widget':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-6 h-full">
-                        <OracleHub totalPortfolioValue={stats?.totalCurrent || 0} />
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                        <SmartActionsWidget onQuickAction={(action) => console.log('Action:', action)} />
                     </SortableWidget>
                 );
-            */
             case 'heatmap':
                 return (
                     <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
                         <div className="h-full min-h-[400px]">
                             <HeatmapWidget history={history} isDarkMode={isDarkMode} />
                         </div>
+                    </SortableWidget>
+                );
+            case 'alerts-widget':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                        <AlertsManager investments={investments} formatCurrency={formatCurrency} />
+                    </SortableWidget>
+                );
+            case 'ai-copilot':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
+                        <AICopilotWidget formatCurrency={formatCurrency} />
+                    </SortableWidget>
+                );
+            case 'fire-dashboard':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
+                        <FIREDashboardWidget stats={stats} formatCurrency={formatCurrency} />
+                    </SortableWidget>
+                );
+            case 'correlation-matrix':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
+                        <CorrelationMatrixWidget investments={investments} />
+                    </SortableWidget>
+                );
+            case 'rebalancing-wizard':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
+                        <RebalancingWizard investments={investments} formatCurrency={formatCurrency} />
+                    </SortableWidget>
+                );
+            case 'runway-gauge':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                        <RunwayGauge />
+                    </SortableWidget>
+                );
+            case 'liability-watchdog':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                        <LiabilityWatchdogWidget />
                     </SortableWidget>
                 );
             default:

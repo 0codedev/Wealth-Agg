@@ -88,12 +88,14 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
         .filter(app => app.status === 'BLOCKED')
         .reduce((acc, curr) => acc + curr.amount, 0);
 
-    const displayTotal = Math.max(totalCash, blockedCapital);
-    const availableCapital = totalCash - blockedCapital;
-    const isCapitalDanger = availableCapital < 0;
-
     // Group active applications logic
     const activeApplications = applications.filter(app => app.status !== 'LISTED');
+    const totalActiveCapital = activeApplications.reduce((acc, curr) => acc + curr.amount, 0);
+
+    // Fix: Use totalActiveCapital as fallback for displayTotal to prevent NaN/Overflow if totalCash is 0 or < active amount
+    const displayTotal = Math.max(totalCash || 0, totalActiveCapital);
+    const availableCapital = totalCash - blockedCapital;
+    const isCapitalDanger = availableCapital < 0;
 
     const groupedApps = useMemo(() => {
         const groups: Record<string, IPOApplication[]> = {};
@@ -579,7 +581,7 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
                             )}
                         </div>
                         <div className="space-y-2 opacity-60">
-                            {listedApps.slice(0, 5).map(app => (
+                            {listedApps.map(app => (
                                 <div key={app.id} className="flex justify-between items-center text-xs text-slate-400">
                                     <span>{app.ipoName} ({app.applicantName})</span>
                                     <span>{formatCurrency(app.amount)} - <span className="text-emerald-500">Realized</span></span>

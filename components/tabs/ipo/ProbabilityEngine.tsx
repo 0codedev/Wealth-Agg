@@ -16,6 +16,8 @@ const ProbabilityEngine: React.FC<ProbabilityEngineProps> = ({
     setSubscriptionX,
     luckStats
 }) => {
+    // Local state for number of applications
+    const [numApplications, setNumApplications] = React.useState<number>(1);
 
     // Probability Calculation
     const calculateProbability = (accounts: number) => {
@@ -42,17 +44,33 @@ const ProbabilityEngine: React.FC<ProbabilityEngineProps> = ({
                         Don't guess. Calculate. Input the current subscription (e.g. 50x) to see your true odds.
                     </p>
 
-                    <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Retail Subscription (Times)</label>
-                        <div className="flex items-center gap-3">
-                            <input
-                                type="number"
-                                value={subscriptionX}
-                                onChange={(e) => setSubscriptionX(parseFloat(e.target.value) || '')}
-                                placeholder="e.g. 50"
-                                className="w-32 bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xl font-mono font-bold outline-none focus:border-indigo-500"
-                            />
-                            <span className="text-slate-500 font-bold">X</span>
+                    <div className="flex gap-4">
+                        <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800 flex-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Retail Subscription</label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="number"
+                                    value={subscriptionX}
+                                    onChange={(e) => setSubscriptionX(parseFloat(e.target.value) || '')}
+                                    placeholder="e.g. 50"
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xl font-mono font-bold outline-none focus:border-indigo-500 transition-colors"
+                                />
+                                <span className="text-slate-500 font-bold shrink-0">X</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800 flex-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Applications</label>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={numApplications}
+                                    onChange={(e) => setNumApplications(Math.max(1, parseInt(e.target.value) || 1))}
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xl font-mono font-bold outline-none focus:border-indigo-500 transition-colors"
+                                />
+                                <span className="text-slate-500 font-bold shrink-0">Nos</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -77,12 +95,12 @@ const ProbabilityEngine: React.FC<ProbabilityEngineProps> = ({
                     </div>
 
                     <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col justify-between group hover:bg-slate-800 transition-colors">
-                        <p className="text-xs text-slate-400 font-bold uppercase mb-1">Theoretical (1 Acc)</p>
-                        <div className="text-2xl font-black text-slate-200">{calculateProbability(1)}%</div>
+                        <p className="text-xs text-slate-400 font-bold uppercase mb-1">Theoretical ({numApplications} Acc)</p>
+                        <div className="text-2xl font-black text-slate-200">{calculateProbability(numApplications)}%</div>
                         <div className="w-full bg-slate-700 h-1.5 rounded-full mt-3 overflow-hidden">
-                            <div className="bg-slate-400 h-full" style={{ width: `${calculateProbability(1)}%` }}></div>
+                            <div className="bg-slate-400 h-full" style={{ width: `${calculateProbability(numApplications)}%` }}></div>
                         </div>
-                        <p className="text-[9px] text-slate-400 mt-2">Vs {subscriptionX || 0}x sub.</p>
+                        <p className="text-[9px] text-slate-400 mt-2">Vs {subscriptionX || 0}x sub with {numApplications} apps.</p>
                     </div>
                 </div>
             </div>

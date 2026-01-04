@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Filex, TrendingDown, ArrowRight, Wallet, BadgePercent, AlertCircle } from 'lucide-react';
+import { FileX, TrendingDown, ArrowRight, Wallet, BadgePercent, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '../../../utils/helpers';
 import { findHarvestingOpportunities } from '../../../utils/TaxRules';
 import { Investment } from '../../../types';
@@ -25,7 +25,7 @@ const TaxHarvestingWidget: React.FC<TaxHarvestingWidgetProps> = ({ investments, 
         >
             {/* Background Decor */}
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Filex size={80} className="text-amber-400" />
+                <FileX size={80} className="text-amber-400" />
             </div>
 
             <div className="relative z-10 flex flex-col h-full">
@@ -93,8 +93,5 @@ const TaxHarvestingWidget: React.FC<TaxHarvestingWidgetProps> = ({ investments, 
         </div>
     );
 };
-
-// Helper for the CheckCircle2 that was missing in imports
-import { CheckCircle2 } from 'lucide-react';
 
 export default TaxHarvestingWidget;

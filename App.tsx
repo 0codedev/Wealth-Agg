@@ -97,7 +97,7 @@ const App: React.FC = () => {
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isPrivacyMode, setIsPrivacyMode] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    const { isDarkMode, updateSetting } = useSettingsStore();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     // --- Modals ---
@@ -219,7 +219,6 @@ const App: React.FC = () => {
             case 'strategy': return <StrategyLab />;
             case 'macro': return <MacroPulse />;
             case 'paper': return <PaperTrading />;
-            // @ts-ignore
             case 'ipo': return <IPOWarRoom {...commonProps} onRefresh={commonProps.onRefreshPortfolio} />;
             case 'advisor': return <AdvisorTab {...commonProps} />;
             case 'predator': return <AlphaPredator investments={investments} />;
@@ -255,8 +254,8 @@ const App: React.FC = () => {
                     onClick={() => setIsSearchFocused(false)}
                     className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent flex flex-col"
                 >
-                    {/* Header - Now inside scrollable area so it scrolls with content */}
-                    <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md flex items-center justify-between px-6 shrink-0 z-20">
+                    {/* Header - Sticky on mobile, scrolls on desktop */}
+                    <header className="mobile-sticky-header h-16 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shrink-0 z-20">
                         <div className="flex items-center gap-4">
                             {/* Mobile Toggle Button */}
                             <button
@@ -406,7 +405,7 @@ const App: React.FC = () => {
                             </button>
 
                             <button
-                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                onClick={() => updateSetting('isDarkMode', !isDarkMode)}
                                 className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"
                             >
                                 {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, AlertTriangle, TrendingDown, BookOpen, Plus, Trash2, DollarSign, Brain, Target, ShieldAlert } from 'lucide-react';
+import { X, AlertTriangle, TrendingDown, BookOpen, Plus, Trash2, DollarSign, Brain, Target, ShieldAlert, Pencil } from 'lucide-react';
 import { formatCurrency } from '../../utils/helpers';
 import { useToast } from '../shared/ToastProvider';
 
@@ -30,6 +30,7 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
     const [category, setCategory] = useState<'TRADING' | 'LIFE'>('TRADING');
     const [lesson, setLesson] = useState('');
     const [emotionalState, setEmotionalState] = useState('');
+    const [editId, setEditId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -59,9 +60,9 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
             return;
         }
 
-        const newMistake: Mistake = {
-            id: Date.now().toString(),
-            date: new Date().toISOString().split('T')[0],
+        const mistakeData: Mistake = {
+            id: editId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            date: editId ? mistakes.find(m => m.id === editId)?.date || new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             title,
             cost: parseFloat(cost),
             category,
@@ -69,18 +70,40 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
             emotionalState
         };
 
-        const updated = [newMistake, ...mistakes];
-        saveMistakes(updated);
-        toast.success("Reflection logged. Pain is the best teacher.");
+        if (editId) {
+            // Update existing
+            const updated = mistakes.map(m => m.id === editId ? mistakeData : m);
+            saveMistakes(updated);
+            toast.success("Reflection updated.");
+        } else {
+            // Create new
+            const updated = [mistakeData, ...mistakes];
+            saveMistakes(updated);
+            toast.success("Reflection logged. Pain is the best teacher.");
+        }
+
         resetForm();
         setView('LIST');
     };
 
-    const handleDelete = (id: string) => {
-        if (confirm('Forget this mistake? (Not recommended unless erroneous entry)')) {
+    const handleDelete = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        console.log("Deleting mistake:", id);
+        if (window.confirm('Forget this mistake? (Not recommended unless erroneous entry)')) {
             const updated = mistakes.filter(m => m.id !== id);
             saveMistakes(updated);
+            toast.success("Mistake deleted.");
         }
+    };
+
+    const handleEdit = (mistake: Mistake) => {
+        setTitle(mistake.title);
+        setCost(mistake.cost.toString());
+        setCategory(mistake.category);
+        setLesson(mistake.lesson);
+        setEmotionalState(mistake.emotionalState || '');
+        setEditId(mistake.id);
+        setView('new');
     };
 
     const resetForm = () => {
@@ -89,6 +112,7 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
         setCategory('TRADING');
         setLesson('');
         setEmotionalState('');
+        setEditId(null);
     };
 
     const totalCost = mistakes.reduce((acc, m) => acc + m.cost, 0);
@@ -161,9 +185,25 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
                                                     </span>
                                                     <span className="text-xs text-slate-400">{mistake.date}</span>
                                                 </div>
-                                                <button onClick={() => handleDelete(mistake.id)} className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEdit(mistake);
+                                                        }}
+                                                        className="p-1 text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 rounded transition-colors relative z-20"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDelete(e, mistake.id)}
+                                                        className="p-1 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded transition-colors relative z-20"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <div className="flex justify-between items-start">
@@ -260,7 +300,7 @@ const MistakesReflectorModal: React.FC<MistakesReflectorModalProps> = ({ isOpen,
                                 onClick={handleSubmit}
                                 className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
                             >
-                                Commit to Memory
+                                {editId ? 'Update Reflection' : 'Commit to Memory'}
                             </button>
 
                         </div>

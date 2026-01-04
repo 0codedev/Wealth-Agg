@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Mic, MicOff, Bell, BellRing, Settings, X, Upload, FileText,
     CreditCard, AlertTriangle, TrendingUp, TrendingDown, Newspaper,
@@ -54,41 +54,85 @@ export const VoiceCommandButton: React.FC<{ onCommand?: (cmd: string) => void }>
 };
 
 // ===================== ALERTS PANEL =====================
-interface Alert {
+// Now uses centralized alertsStore for user-created alerts
+// and InsightService for auto-generated portfolio insights
+
+import { InsightService } from '../../services/InsightService';
+import { useAlertsStore, Alert as StoredAlert } from '../../store/alertsStore';
+
+// Combined alert type for UI display
+interface DisplayAlert {
     id: string;
-    type: 'anomaly' | 'price' | 'sip' | 'tax' | 'news' | 'risk' | 'milestone';
+    type: 'anomaly' | 'price' | 'sip' | 'tax' | 'news' | 'risk' | 'milestone' | 'user';
     title: string;
     message: string;
     time: string;
     read: boolean;
     severity?: 'low' | 'medium' | 'high';
+    isUserAlert?: boolean;
 }
-
-import { InsightService } from '../../services/InsightService';
 
 export const AlertsDropdown: React.FC<{ investments: Investment[] }> = ({ investments }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [alerts, setAlerts] = useState<Alert[]>([
-        // Default welcome alert
-        { id: 'welcome', type: 'news', title: 'Welcome to Pro Mode', message: 'Smart Insights active.', time: 'Now', read: false }
-    ]);
+    const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
-    // Dynamic Analysis
-    useEffect(() => {
+    // Get user-created alerts from store
+    const { alerts: userAlerts, triggerAlert } = useAlertsStore();
+
+    // Combine user alerts with smart insights
+    const combinedAlerts: DisplayAlert[] = useMemo(() => {
+        const result: DisplayAlert[] = [];
+
+        // Add user-created alerts (from AlertsManager)
+        userAlerts.filter(a => a.isActive).forEach(alert => {
+            result.push({
+                id: alert.id,
+                type: 'user',
+                title: alert.name,
+                message: alert.type === 'PRICE'
+                    ? `${alert.assetName} ${alert.condition} ₹${alert.targetPrice?.toLocaleString()}`
+                    : alert.type === 'SIP_REMINDER'
+                        ? `SIP reminder on day ${alert.sipDay}`
+                        : alert.type === 'PL_TARGET'
+                            ? `P/L target at ${alert.targetPLPercent}%`
+                            : 'Custom alert',
+                time: alert.isTriggered ? 'Triggered!' : 'Active',
+                read: readIds.has(alert.id),
+                severity: alert.isTriggered ? 'high' : 'low',
+                isUserAlert: true
+            });
+        });
+
+        // Add smart portfolio insights
         if (investments.length > 0) {
             const smartAlerts = InsightService.analyzePortfolio(investments);
-            // Merge with existing (mock) news alerts for richness
-            const newsAlerts: Alert[] = [
-                { id: 'mkt-1', type: 'news', title: 'Market Update', message: 'Nifty 50 at all-time high', time: '2h ago', read: true }
-            ];
-            setAlerts([...smartAlerts, ...newsAlerts]);
+            smartAlerts.forEach(a => {
+                result.push({
+                    ...a,
+                    read: readIds.has(a.id)
+                });
+            });
         }
-    }, [investments]);
 
-    const unreadCount = alerts.filter(a => !a.read).length;
+        // Add a welcome message if no alerts
+        if (result.length === 0) {
+            result.push({
+                id: 'welcome',
+                type: 'news',
+                title: 'Alerts Active',
+                message: 'No active alerts. Create one from the Alerts Engine widget.',
+                time: 'Now',
+                read: true
+            });
+        }
+
+        return result;
+    }, [userAlerts, investments, readIds]);
+
+    const unreadCount = combinedAlerts.filter(a => !a.read).length;
 
     const markAllRead = () => {
-        setAlerts(alerts.map(a => ({ ...a, read: true })));
+        setReadIds(new Set(combinedAlerts.map(a => a.id)));
     };
 
     const getIcon = (type: string) => {
@@ -100,6 +144,7 @@ export const AlertsDropdown: React.FC<{ investments: Investment[] }> = ({ invest
             case 'tax': return <Shield className="text-amber-500" size={16} />;
             case 'news': return <Newspaper className="text-purple-500" size={16} />;
             case 'milestone': return <Trophy className="text-yellow-500" size={16} />;
+            case 'user': return <Bell className="text-indigo-500" size={16} />;
             default: return <Bell size={16} />;
         }
     };
@@ -129,20 +174,22 @@ export const AlertsDropdown: React.FC<{ investments: Investment[] }> = ({ invest
                             </button>
                         </div>
                         <div className="max-h-80 overflow-y-auto">
-                            {alerts.map(alert => (
+                            {combinedAlerts.map(alert => (
                                 <div
                                     key={alert.id}
                                     className={`p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer ${!alert.read ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''
                                         }`}
+                                    onClick={() => setReadIds(prev => new Set([...prev, alert.id]))}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                        <div className={`p-2 rounded-lg ${alert.isUserAlert ? 'bg-indigo-100 dark:bg-indigo-900/30' : 'bg-slate-100 dark:bg-slate-800'}`}>
                                             {getIcon(alert.type)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between">
                                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{alert.title}</p>
                                                 {alert.severity === 'high' && <span className="text-[10px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded font-bold">HIGH</span>}
+                                                {alert.isUserAlert && <span className="text-[10px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-bold">USER</span>}
                                             </div>
                                             <p className="text-xs text-slate-500 mt-0.5 truncate">{alert.message}</p>
                                             <p className="text-[10px] text-slate-400 mt-1">{alert.time}</p>

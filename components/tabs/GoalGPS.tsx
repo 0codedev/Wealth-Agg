@@ -10,6 +10,9 @@ import {
 } from 'recharts';
 import { CustomTooltip } from '../../components/shared/CustomTooltip';
 
+import OracleHub from '../dashboard/hubs/OracleHub';
+import { usePortfolio } from '../../hooks/usePortfolio';
+
 // Helper function defined locally to avoid circular dependency with App.tsx
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -20,16 +23,26 @@ const formatCurrency = (value: number) => {
 };
 
 const GoalGPS: React.FC = () => {
+    // --- GLOBAL STATE ---
+    const { stats } = usePortfolio();
+
     // --- STATE ---
     const [targetAmount, setTargetAmount] = useState(50000000); // 5 Cr
     const [targetYear, setTargetYear] = useState(2035);
-    const [currentWealth, setCurrentWealth] = useState(2500000); // 25 L
+    const [currentWealth, setCurrentWealth] = useState(stats?.totalCurrent || 2500000); // Default or actual
     const [monthlySip, setMonthlySip] = useState(50000);
     const [inflationRate, setInflationRate] = useState(6);
     const [isInflationAdjusted, setIsInflationAdjusted] = useState(false);
     const [riskProfile, setRiskProfile] = useState<'conservative' | 'balanced' | 'aggressive'>('balanced');
     const [showTable, setShowTable] = useState(false);
     const [scenario, setScenario] = useState<'base' | 'bear' | 'bull'>('base');
+
+    // Sync current wealth with portfolio stats when available
+    React.useEffect(() => {
+        if (stats?.totalCurrent) {
+            setCurrentWealth(stats.totalCurrent);
+        }
+    }, [stats?.totalCurrent]);
 
     // --- RISK PROFILES ---
     const RISK_PARAMS = {
@@ -153,6 +166,9 @@ const GoalGPS: React.FC = () => {
                     </p>
                 </div>
             </div>
+
+            {/* ORACLE 2.0 HUB MOVED HERE */}
+            <OracleHub totalPortfolioValue={stats?.totalCurrent || 0} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

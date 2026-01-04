@@ -1,4 +1,4 @@
-
+// IPO War Room - HMR Trigger
 import React, { useState, useMemo, useEffect } from 'react';
 import {
     AlertTriangle, CheckCircle2, XCircle,
@@ -18,7 +18,7 @@ import DemandHeatmap from './ipo/DemandHeatmap';
 import ProbabilityEngine from './ipo/ProbabilityEngine';
 import FlippersMatrix from './ipo/FlippersMatrix';
 
-interface IPOWarRoomProps {
+export interface IPOWarRoomProps {
     investments?: Investment[];
     onRefresh?: () => void;
 }

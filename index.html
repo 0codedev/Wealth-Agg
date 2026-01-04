@@ -61,11 +61,27 @@
     </script>
     <script>
       // Check local storage or system preference on load
-      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
+      (function() {
+        try {
+          var localState = localStorage.getItem('wealth-aggregator-logic');
+          var isDark = true; // Default
+          
+          if (localState) {
+            var state = JSON.parse(localState);
+            if (state && state.state && typeof state.state.isDarkMode === 'boolean') {
+              isDark = state.state.isDarkMode;
+            }
+          }
+          
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          document.documentElement.classList.add('dark'); // Safe default
+        }
+      })();
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>

@@ -1,26 +1,188 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
-export type MarketStatus = 'NORMAL' | 'AMBER' | 'RED';
+export type MarketStatus = 'NORMAL' | 'AMBER' | 'RED' | 'PRE_MARKET' | 'POST_MARKET' | 'CLOSED';
 
-export const useMarketSentiment = () => {
-  const [vix, setVix] = useState<number>(24.5); // Default Mock
+interface MarketSentiment {
+  vix: number;
+  status: MarketStatus;
+  isMarketOpen: boolean;
+  marketMessage: string;
+  nextEvent: string;
+}
+
+// India Market Hours (IST)
+const MARKET_OPEN_HOUR = 9;
+const MARKET_OPEN_MINUTE = 15;
+const MARKET_CLOSE_HOUR = 15;
+const MARKET_CLOSE_MINUTE = 30;
+const PRE_MARKET_START_HOUR = 9;
+const PRE_MARKET_START_MINUTE = 0;
+
+// Check if today is a trading day (Mon-Fri, excluding holidays)
+const isTradingDay = (date: Date): boolean => {
+  const day = date.getDay();
+  // Weekend check
+  if (day === 0 || day === 6) return false;
+
+  // Major Indian market holidays 2024-2025 (simplified)
+  const holidays = [
+    '2024-12-25', // Christmas
+    '2025-01-26', // Republic Day
+    '2025-03-14', // Holi
+    '2025-04-14', // Ambedkar Jayanti
+    '2025-08-15', // Independence Day
+    '2025-10-02', // Gandhi Jayanti
+    '2025-11-04', // Diwali (approx)
+  ];
+
+  const dateStr = date.toISOString().split('T')[0];
+  return !holidays.includes(dateStr);
+};
+
+// Get market status based on current time
+const getMarketStatus = (date: Date): { isOpen: boolean; phase: string } => {
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const currentTime = hour * 60 + minute;
+
+  const preMarketStart = PRE_MARKET_START_HOUR * 60 + PRE_MARKET_START_MINUTE;
+  const marketOpen = MARKET_OPEN_HOUR * 60 + MARKET_OPEN_MINUTE;
+  const marketClose = MARKET_CLOSE_HOUR * 60 + MARKET_CLOSE_MINUTE;
+
+  if (!isTradingDay(date)) {
+    return { isOpen: false, phase: 'Weekend/Holiday' };
+  }
+
+  if (currentTime < preMarketStart) {
+    return { isOpen: false, phase: 'Pre-market' };
+  } else if (currentTime < marketOpen) {
+    return { isOpen: false, phase: 'Pre-market session' };
+  } else if (currentTime < marketClose) {
+    return { isOpen: true, phase: 'Market Open' };
+  } else {
+    return { isOpen: false, phase: 'After hours' };
+  }
+};
+
+// Calculate next market event
+const getNextMarketEvent = (date: Date): string => {
+  const { isOpen, phase } = getMarketStatus(date);
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+
+  if (!isTradingDay(date)) {
+    // Find next trading day
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    while (!isTradingDay(nextDay)) {
+      nextDay.setDate(nextDay.getDate() + 1);
+    }
+    return `Market opens ${nextDay.toLocaleDateString('en-IN', { weekday: 'short' })} 9:15 AM`;
+  }
+
+  if (isOpen) {
+    const closeHour = MARKET_CLOSE_HOUR;
+    const closeMinute = MARKET_CLOSE_MINUTE;
+    const hoursLeft = closeHour - hour - (minute > closeMinute ? 1 : 0);
+    const minsLeft = (closeMinute - minute + 60) % 60;
+    return `Closes in ${hoursLeft}h ${minsLeft}m`;
+  } else if (phase === 'Pre-market' || phase === 'Pre-market session') {
+    return `Opens at 9:15 AM`;
+  } else {
+    return `Closed for today`;
+  }
+};
+
+// Simulate VIX with some variation (in production, fetch from API)
+const getSimulatedVix = (): number => {
+  // Base VIX around 14-18 for normal markets, with some daily variation
+  const baseVix = 15.5;
+  const dayOfWeek = new Date().getDay();
+  const hourVariation = Math.sin(new Date().getHours() / 24 * Math.PI) * 2;
+  const randomVariation = (Math.random() - 0.5) * 3;
+
+  // Mondays and Fridays tend to have slightly higher VIX
+  const dayBonus = (dayOfWeek === 1 || dayOfWeek === 5) ? 1.5 : 0;
+
+  return Math.max(10, Math.min(35, baseVix + hourVariation + randomVariation + dayBonus));
+};
+
+export const useMarketSentiment = (): MarketSentiment => {
+  const [vix, setVix] = useState<number>(15.5);
   const [status, setStatus] = useState<MarketStatus>('NORMAL');
 
   useEffect(() => {
-    // Logic: Simulate VIX or fetch here
-    // Change this value to test Red/Amber states
-    const currentVix = 24.5; 
+    const updateSentiment = () => {
+      const now = new Date();
+      const { isOpen, phase } = getMarketStatus(now);
+      const currentVix = getSimulatedVix();
 
-    setVix(currentVix);
+      setVix(parseFloat(currentVix.toFixed(2)));
 
-    if (currentVix > 30) {
-      setStatus('RED');
-    } else if (currentVix > 25) {
-      setStatus('AMBER');
-    } else {
-      setStatus('NORMAL');
-    }
+      // Determine status based on VIX and market state
+      if (!isOpen) {
+        if (phase === 'Weekend/Holiday') {
+          setStatus('CLOSED');
+        } else if (phase.includes('Pre-market')) {
+          setStatus('PRE_MARKET');
+        } else {
+          setStatus('POST_MARKET');
+        }
+      } else {
+        // Market is open - use VIX to determine sentiment
+        if (currentVix > 28) {
+          setStatus('RED');
+        } else if (currentVix > 20) {
+          setStatus('AMBER');
+        } else {
+          setStatus('NORMAL');
+        }
+      }
+    };
+
+    // Initial update
+    updateSentiment();
+
+    // Update every minute
+    const interval = setInterval(updateSentiment, 60000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  return { vix, status };
+  const sentiment = useMemo((): MarketSentiment => {
+    const now = new Date();
+    const { isOpen, phase } = getMarketStatus(now);
+
+    let message = '';
+    switch (status) {
+      case 'RED':
+        message = 'High Volatility - Exercise caution';
+        break;
+      case 'AMBER':
+        message = 'Elevated Volatility';
+        break;
+      case 'NORMAL':
+        message = 'Markets stable';
+        break;
+      case 'CLOSED':
+        message = 'Markets closed';
+        break;
+      case 'PRE_MARKET':
+        message = 'Pre-market session';
+        break;
+      case 'POST_MARKET':
+        message = 'After hours';
+        break;
+    }
+
+    return {
+      vix,
+      status,
+      isMarketOpen: isOpen,
+      marketMessage: message,
+      nextEvent: getNextMarketEvent(now)
+    };
+  }, [vix, status]);
+
+  return sentiment;
 };

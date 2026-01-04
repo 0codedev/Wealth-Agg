@@ -2,6 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { HardDrive, Download, Upload, Loader2, CheckCircle, AlertTriangle, RefreshCw, X, ShieldAlert } from 'lucide-react';
 import * as BackupService from '../services/BackupService';
+import CloudSyncPanel from './settings/CloudSyncPanel';
 
 interface DataBackupSettingsProps {
   onDataRestored?: () => void;
@@ -149,6 +150,11 @@ const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored,
           onChange={handleFileSelect}
           disabled={status === 'PROCESSING'}
         />
+      </div>
+
+      {/* Cloud Sync Section */}
+      <div className="mt-3">
+        <CloudSyncPanel onRestoreComplete={onDataRestored} />
       </div>
 
       {/* Restore Confirmation Modal */}
