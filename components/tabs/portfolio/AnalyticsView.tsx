@@ -2,7 +2,8 @@
 import React, { useMemo } from 'react';
 import { Investment, CHART_COLORS, InvestmentType } from '../../../types';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Globe, Briefcase, Tag, TrendingDown } from 'lucide-react';
+import { Globe, Briefcase, Tag, TrendingDown, AlertTriangle } from 'lucide-react';
+import { ConcentrationAlerts } from '../../portfolio/ConcentrationAlerts';
 
 interface AnalyticsViewProps {
     investments: Investment[];
@@ -92,6 +93,11 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ investments, forma
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+            {/* CONCENTRATION RISK ALERTS - P0 Enhancement */}
+            <div className="md:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <ConcentrationAlerts investments={investments} threshold={20} />
+            </div>
+
             {/* SECTOR BREAKDOWN */}
             <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2 mb-6">

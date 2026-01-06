@@ -68,6 +68,7 @@ import RebalancingWizard from '../dashboard/widgets/RebalancingWizard';
 import SmartActionsWidget from '../dashboard/widgets/SmartActionsWidget';
 import { RunwayGauge } from '../dashboard/RunwayGauge';
 import { LiabilityWatchdogWidget } from '../dashboard/widgets/LiabilityWatchdogWidget';
+import { GoalThermometer } from '../dashboard/widgets/GoalThermometer';
 
 
 
@@ -205,6 +206,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 
         // Financial Skeptic
         'runway-gauge', 'liability-watchdog',
+
+        // Goal Tracking
+        'goal-thermometer',
 
         // Refactor: Smart Actions Standalone
         'smart-actions-widget'
@@ -364,6 +368,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 return (
                     <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
                         <LiabilityWatchdogWidget />
+                    </SortableWidget>
+                );
+            case 'goal-thermometer':
+                return (
+                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
+                        <GoalThermometer currentNetWorth={stats?.totalCurrent} />
                     </SortableWidget>
                 );
             default:

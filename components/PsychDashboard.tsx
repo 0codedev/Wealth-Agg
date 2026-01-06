@@ -18,6 +18,7 @@ import MistakesReflectorModal from './journal/MistakesReflectorModal';
 import SlumpBusterModal from './journal/SlumpBusterModal';
 import JournalCommandCenter from './journal/JournalCommandCenter'; // New Component
 import { AnimatedToggle } from './ui/AnimatedToggle';
+import { PreTradeChecklist } from './journal/PreTradeChecklist';
 
 type ViewMode = 'ANALYTICS' | 'JOURNAL' | 'PLAYBOOK';
 
@@ -179,12 +180,21 @@ const PsychDashboard: React.FC = () => {
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <JournalAnalytics
-                                trades={trades}
-                                timeframe={timeframe}
-                                ignoredMistakes={ignoredMistakes}
-                                setIgnoredMistakes={setIgnoredMistakes}
-                            />
+                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                                {/* Main Analytics - 3 cols */}
+                                <div className="lg:col-span-3">
+                                    <JournalAnalytics
+                                        trades={trades}
+                                        timeframe={timeframe}
+                                        ignoredMistakes={ignoredMistakes}
+                                        setIgnoredMistakes={setIgnoredMistakes}
+                                    />
+                                </div>
+                                {/* Pre-Trade Checklist Sidebar - 1 col */}
+                                <div className="lg:col-span-1">
+                                    <PreTradeChecklist />
+                                </div>
+                            </div>
                         </motion.div>
                     )}
 
