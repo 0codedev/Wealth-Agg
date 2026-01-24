@@ -47,7 +47,7 @@ const calculateDaysToGoal = (current: number, target: number, monthly: number, r
 
 // Mountain SVG Component with animated path
 const MountainVisualization: React.FC<{ progress: number; milestones: typeof MILESTONES; currentValue: number }> =
-    ({ progress, milestones, currentValue }) => {
+    React.memo(({ progress, milestones, currentValue }) => {
 
         const clampedProgress = Math.min(100, Math.max(0, progress));
 
@@ -198,7 +198,7 @@ const MountainVisualization: React.FC<{ progress: number; milestones: typeof MIL
                 </svg>
             </div>
         );
-    };
+    });
 
 const Project5LWidget: React.FC<Project5LWidgetProps> = ({
     currentWealth = 850000,
@@ -347,8 +347,8 @@ const Project5LWidget: React.FC<Project5LWidgetProps> = ({
                                             animate={{ scale: 1 }}
                                             transition={{ delay: idx * 0.05 }}
                                             className={`p-2 rounded-xl text-center border transition-all ${achieved
-                                                    ? `${milestone.bgColor} border-current ${milestone.color}`
-                                                    : 'bg-slate-800/50 border-slate-700/50 text-slate-500'
+                                                ? `${milestone.bgColor} border-current ${milestone.color}`
+                                                : 'bg-slate-800/50 border-slate-700/50 text-slate-500'
                                                 }`}
                                         >
                                             <MilestoneIcon size={16} className="mx-auto mb-1" />

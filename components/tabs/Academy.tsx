@@ -5,11 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, Video, FileText, AlertTriangle, Brain, Disc, Trophy,
     CheckCircle, Lock, PlayCircle, Star, Search, ChevronRight,
-    GraduationCap, Zap, Clock, ShieldAlert, BadgeInfo
+    GraduationCap, Zap, Clock, ShieldAlert, BadgeInfo, Target
 } from 'lucide-react';
 import { useGamificationStore } from '../../store/gamificationStore';
 import { ACADEMY_CURRICULUM, AcademyModule, AcademyItem } from '../../data/AcademyContent';
 import confetti from 'canvas-confetti';
+import { InteractiveQuiz } from '../academy/InteractiveQuiz';
 
 // --- Types ---
 interface CompletedItems {
@@ -26,6 +27,7 @@ const Academy: React.FC = () => {
     });
 
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+    const [activeView, setActiveView] = useState<'lessons' | 'quiz'>('lessons');
 
     // Persist progress
     useEffect(() => {
@@ -118,8 +120,8 @@ const Academy: React.FC = () => {
                                 key={module.id}
                                 onClick={() => setSelectedModuleId(module.id)}
                                 className={`w-full text-left p-4 rounded-xl transition-all border relative overflow-hidden group ${isSelected
-                                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-lg transform scale-[1.02]'
-                                        : 'bg-white dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800'
+                                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-lg transform scale-[1.02]'
+                                    : 'bg-white dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800'
                                     }`}
                             >
                                 <div className="flex justify-between items-start mb-2 relative z-10">
@@ -171,111 +173,142 @@ const Academy: React.FC = () => {
 
                 <div className="max-w-4xl mx-auto p-8 md:p-12 relative z-10">
 
-                    {/* Header */}
-                    <div className="mb-10">
-                        <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-widest text-xs mb-2">
-                            <span className="bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded">Module</span>
-                            <ChevronRight size={12} />
-                            <span>{activeModule.title}</span>
-                        </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4">
-                            {activeModule.description}
-                        </h1>
+                    {/* View Toggle */}
+                    <div className="flex items-center gap-3 mb-8">
+                        <button
+                            onClick={() => setActiveView('lessons')}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeView === 'lessons'
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                }`}
+                        >
+                            <GraduationCap size={18} />
+                            Lessons
+                        </button>
+                        <button
+                            onClick={() => setActiveView('quiz')}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${activeView === 'quiz'
+                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                }`}
+                        >
+                            <Target size={18} />
+                            Quiz Arena
+                        </button>
                     </div>
 
-                    {/* Content List */}
-                    <div className="space-y-6">
-                        {activeModule.items.map((item, idx) => {
-                            const isCompleted = !!completedItems[item.id];
-                            const isHovered = hoveredItem === item.id;
+                    {/* Quiz View */}
+                    {activeView === 'quiz' ? (
+                        <InteractiveQuiz />
+                    ) : (
+                        <div>
+                            {/* Header */}
+                            <div className="mb-10">
+                                <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-widest text-xs mb-2">
+                                    <span className="bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded">Module</span>
+                                    <ChevronRight size={12} />
+                                    <span>{activeModule.title}</span>
+                                </div>
+                                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4">
+                                    {activeModule.description}
+                                </h1>
+                            </div>
 
-                            return (
-                                <div
-                                    key={item.id}
-                                    onMouseEnter={() => setHoveredItem(item.id)}
-                                    onMouseLeave={() => setHoveredItem(null)}
-                                    className={`group relative bg-white dark:bg-slate-900 rounded-2xl p-6 border transition-all duration-300 ${isCompleted
-                                            ? 'border-emerald-500/30 shadow-sm opacity-80'
-                                            : isHovered
-                                                ? 'border-indigo-500 shadow-xl shadow-indigo-500/10 scale-[1.01] z-20'
-                                                : 'border-slate-200 dark:border-slate-800 shadow-sm'
-                                        }`}
-                                >
-                                    <div className="flex gap-6 items-start">
+                            {/* Content List */}
+                            <div className="space-y-6">
+                                {activeModule.items.map((item, idx) => {
+                                    const isCompleted = !!completedItems[item.id];
+                                    const isHovered = hoveredItem === item.id;
 
-                                        {/* Status Indicator / Action */}
-                                        <div className="shrink-0 pt-1">
-                                            <button
-                                                onClick={() => handleCompleteItem(item)}
-                                                disabled={isCompleted}
-                                                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted
-                                                        ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-500 rotate-0 scale-100'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:shadow-lg group-hover:scale-110'
-                                                    }`}
-                                            >
-                                                {isCompleted ? <CheckCircle size={24} /> : <PlayCircle size={24} />}
-                                            </button>
-                                        </div>
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            onMouseEnter={() => setHoveredItem(item.id)}
+                                            onMouseLeave={() => setHoveredItem(null)}
+                                            className={`group relative bg-white dark:bg-slate-900 rounded-2xl p-6 border transition-all duration-300 ${isCompleted
+                                                ? 'border-emerald-500/30 shadow-sm opacity-80'
+                                                : isHovered
+                                                    ? 'border-indigo-500 shadow-xl shadow-indigo-500/10 scale-[1.01] z-20'
+                                                    : 'border-slate-200 dark:border-slate-800 shadow-sm'
+                                                }`}
+                                        >
+                                            <div className="flex gap-6 items-start">
 
-                                        {/* Content */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getItemColor(item.type)}`}>
-                                                    {item.type}
-                                                </span>
-                                                {item.duration && (
-                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                                        <Clock size={10} /> {item.duration}
-                                                    </span>
-                                                )}
+                                                {/* Status Indicator / Action */}
+                                                <div className="shrink-0 pt-1">
+                                                    <button
+                                                        onClick={() => handleCompleteItem(item)}
+                                                        disabled={isCompleted}
+                                                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted
+                                                            ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-500 rotate-0 scale-100'
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:shadow-lg group-hover:scale-110'
+                                                            }`}
+                                                    >
+                                                        {isCompleted ? <CheckCircle size={24} /> : <PlayCircle size={24} />}
+                                                    </button>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${getItemColor(item.type)}`}>
+                                                            {item.type}
+                                                        </span>
+                                                        {item.duration && (
+                                                            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                                <Clock size={10} /> {item.duration}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <h3 className={`text-lg font-bold mb-2 transition-colors ${isCompleted ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                                                        }`}>
+                                                        {item.title}
+                                                    </h3>
+
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+                                                        {item.description}
+                                                    </p>
+
+                                                    {item.url && !isCompleted && (
+                                                        <a
+                                                            href={item.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 text-xs font-bold text-indigo-500 hover:text-indigo-600 underline decoration-indigo-200 underline-offset-4"
+                                                        >
+                                                            Open Resource <ChevronRight size={12} />
+                                                        </a>
+                                                    )}
+                                                </div>
+
+                                                {/* XP Badge */}
+                                                <div className="shrink-0 text-right">
+                                                    <div className={`inline-flex flex-col items-center justify-center w-16 h-16 rounded-xl border-2 border-dashed ${isCompleted
+                                                        ? 'border-emerald-200 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-800'
+                                                        : 'border-indigo-100 text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10 dark:border-indigo-800 group-hover:border-indigo-500 group-hover:text-indigo-600 transition-colors'
+                                                        }`}>
+                                                        <span className="text-lg font-black">{item.xpReward}</span>
+                                                        <span className="text-[10px] uppercase font-bold">XP</span>
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            <h3 className={`text-lg font-bold mb-2 transition-colors ${isCompleted ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
-                                                }`}>
-                                                {item.title}
-                                            </h3>
-
-                                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                                                {item.description}
-                                            </p>
-
-                                            {item.url && !isCompleted && (
-                                                <a
-                                                    href={item.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 text-xs font-bold text-indigo-500 hover:text-indigo-600 underline decoration-indigo-200 underline-offset-4"
-                                                >
-                                                    Open Resource <ChevronRight size={12} />
-                                                </a>
+                                            {/* Success Message Overlay */}
+                                            {isCompleted && (
+                                                <div className="absolute inset-x-0 bottom-0 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-center rounded-b-2xl border-t border-emerald-100 dark:border-emerald-800/30">
+                                                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center justify-center gap-2">
+                                                        <Trophy size={10} /> Lesson Mastered
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
-
-                                        {/* XP Badge */}
-                                        <div className="shrink-0 text-right">
-                                            <div className={`inline-flex flex-col items-center justify-center w-16 h-16 rounded-xl border-2 border-dashed ${isCompleted
-                                                    ? 'border-emerald-200 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/10 dark:border-emerald-800'
-                                                    : 'border-indigo-100 text-indigo-400 bg-indigo-50 dark:bg-indigo-900/10 dark:border-indigo-800 group-hover:border-indigo-500 group-hover:text-indigo-600 transition-colors'
-                                                }`}>
-                                                <span className="text-lg font-black">{item.xpReward}</span>
-                                                <span className="text-[10px] uppercase font-bold">XP</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Success Message Overlay */}
-                                    {isCompleted && (
-                                        <div className="absolute inset-x-0 bottom-0 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-center rounded-b-2xl border-t border-emerald-100 dark:border-emerald-800/30">
-                                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest flex items-center justify-center gap-2">
-                                                <Trophy size={10} /> Lesson Mastered
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        </div>
+                    )}
             </div>
         </div>
     );

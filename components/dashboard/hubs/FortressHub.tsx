@@ -36,7 +36,7 @@ interface SecurityItem {
 }
 
 // ===================== SECURITY DASHBOARD =====================
-const SecurityDashboard: React.FC<{ securityScore: number }> = ({ securityScore }) => {
+const SecurityDashboard: React.FC<{ securityScore: number }> = React.memo(({ securityScore }) => {
     const securityItems: SecurityItem[] = [
         { id: '1', name: 'Google Account', platform: 'google.com', has2FA: true, lastChecked: '2024-12-15', icon: <Mail size={14} /> },
         { id: '2', name: 'Bank Account', platform: 'hdfc.com', has2FA: true, lastChecked: '2024-12-10', icon: <Building size={14} /> },
@@ -56,7 +56,7 @@ const SecurityDashboard: React.FC<{ securityScore: number }> = ({ securityScore 
                         <ShieldCheck size={14} /> Security Score
                     </h4>
                     <span className={`text-2xl font-black font-mono ${securityScore > 80 ? 'text-emerald-400' :
-                            securityScore > 60 ? 'text-amber-400' : 'text-rose-400'
+                        securityScore > 60 ? 'text-amber-400' : 'text-rose-400'
                         }`}>
                         {securityScore}%
                     </span>
@@ -64,7 +64,7 @@ const SecurityDashboard: React.FC<{ securityScore: number }> = ({ securityScore 
                 <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                     <div
                         className={`h-full transition-all duration-1000 ${securityScore > 80 ? 'bg-emerald-500' :
-                                securityScore > 60 ? 'bg-amber-500' : 'bg-rose-500'
+                            securityScore > 60 ? 'bg-amber-500' : 'bg-rose-500'
                             }`}
                         style={{ width: `${securityScore}%` }}
                     />
@@ -100,10 +100,10 @@ const SecurityDashboard: React.FC<{ securityScore: number }> = ({ securityScore 
             </div>
         </div>
     );
-};
+});
 
 // ===================== LEGACY PLANNING =====================
-const LegacyPlanning: React.FC = () => {
+const LegacyPlanning: React.FC = React.memo(() => {
     const [beneficiaries, setBeneficiaries] = useState<LegacyBeneficiary[]>([
         { id: '1', name: 'Spouse', email: 'spouse@email.com', relationship: 'Spouse', share: 50 },
         { id: '2', name: 'Child 1', email: 'child1@email.com', relationship: 'Child', share: 25 },
@@ -227,7 +227,7 @@ const LegacyPlanning: React.FC = () => {
             </div>
         </div>
     );
-};
+});
 
 // ===================== DOCUMENT CATEGORIES =====================
 const CATEGORIES = [
@@ -442,8 +442,8 @@ const FortressHub: React.FC = () => {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === tab.id
-                                    ? 'bg-emerald-600 text-white shadow-lg'
-                                    : 'text-slate-400 hover:text-white'
+                                ? 'bg-emerald-600 text-white shadow-lg'
+                                : 'text-slate-400 hover:text-white'
                                 }`}
                         >
                             {tab.icon}
@@ -472,8 +472,8 @@ const FortressHub: React.FC = () => {
                                     key={cat.id}
                                     onClick={() => setSelectedCategory(cat.id)}
                                     className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all ${selectedCategory === cat.id
-                                            ? `${cat.color} border border-current`
-                                            : 'text-slate-400 hover:bg-slate-800'
+                                        ? `${cat.color} border border-current`
+                                        : 'text-slate-400 hover:bg-slate-800'
                                         }`}
                                 >
                                     {cat.icon} {cat.label}

@@ -72,7 +72,7 @@ const ALERT_TEMPLATES = [
 ];
 
 // Analytics Component
-const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
+const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = React.memo(({ alerts }) => {
     const stats = useMemo(() => {
         const total = alerts.length;
         const active = alerts.filter(a => a.isActive).length;
@@ -165,7 +165,7 @@ const AlertsAnalytics: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
             </div>
         </div>
     );
-};
+});
 
 const AlertsManager: React.FC<AlertsManagerProps> = ({ investments = [], formatCurrency = (v) => `₹${v.toLocaleString()}` }) => {
     const { alerts, addAlert, removeAlert, toggleAlert } = useAlertsStore();

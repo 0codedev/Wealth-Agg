@@ -10,6 +10,7 @@ import { AnalyticsView } from './portfolio/AnalyticsView';
 import { HoldingsView } from './portfolio/HoldingsView';
 import { RiskEngineView } from './portfolio/RiskEngineView';
 import { PassiveIncomeView } from './portfolio/PassiveIncomeView';
+import { PortfolioExportPanel } from '../portfolio/PortfolioExportPanel';
 // DashboardTabComponent removed as it was redundant with the main dashboard
 import { useMarketSentiment } from '../../hooks/useMarketSentiment';
 import { Investment, ASSET_CLASS_COLORS } from '../../types';
@@ -283,11 +284,16 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                             )}
 
                             {activeTab === 'ANALYTICS' && (
-                                <AnalyticsView
-                                    investments={investments}
-                                    formatCurrency={formatCurrency}
-                                    isPrivacyMode={isPrivacyMode}
-                                />
+                                <>
+                                    <AnalyticsView
+                                        investments={investments}
+                                        formatCurrency={formatCurrency}
+                                        isPrivacyMode={isPrivacyMode}
+                                    />
+                                    <div className="mt-6">
+                                        <PortfolioExportPanel investments={investments} />
+                                    </div>
+                                </>
                             )}
 
                             {activeTab === 'KILL_SWITCH' && (

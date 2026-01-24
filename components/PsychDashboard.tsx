@@ -19,6 +19,7 @@ import SlumpBusterModal from './journal/SlumpBusterModal';
 import JournalCommandCenter from './journal/JournalCommandCenter'; // New Component
 import { AnimatedToggle } from './ui/AnimatedToggle';
 import { PreTradeChecklist } from './journal/PreTradeChecklist';
+import { WhatIfScenarioBuilder } from './journal/WhatIfScenarioBuilder';
 
 type ViewMode = 'ANALYTICS' | 'JOURNAL' | 'PLAYBOOK';
 
@@ -194,6 +195,11 @@ const PsychDashboard: React.FC = () => {
                                 <div className="lg:col-span-1">
                                     <PreTradeChecklist />
                                 </div>
+                            </div>
+
+                            {/* What-If Scenario Builder */}
+                            <div className="mt-6">
+                                <WhatIfScenarioBuilder />
                             </div>
                         </motion.div>
                     )}

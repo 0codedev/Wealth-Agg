@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useToast } from './shared/ToastProvider';
 import { db, IPOApplication } from '../database';
 import { Investment, InvestmentType } from '../types';
@@ -89,8 +89,12 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
         .reduce((acc, curr) => acc + curr.amount, 0);
 
     // Group active applications logic
-    const activeApplications = applications.filter(app => app.status !== 'LISTED');
-    const totalActiveCapital = activeApplications.reduce((acc, curr) => acc + curr.amount, 0);
+    // USER REQUEST: Include LISTED (Realized) apps in the main list.
+    const displayApplications = applications;
+
+    // Capital stats should exclude LISTED (Realized) as that money is liquid again
+    const capitalApps = applications.filter(app => app.status !== 'LISTED');
+    const totalActiveCapital = capitalApps.reduce((acc, curr) => acc + curr.amount, 0);
 
     // Fix: Use totalActiveCapital as fallback for displayTotal to prevent NaN/Overflow if totalCash is 0 or < active amount
     const displayTotal = Math.max(totalCash || 0, totalActiveCapital);
@@ -99,19 +103,27 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
 
     const groupedApps = useMemo(() => {
         const groups: Record<string, IPOApplication[]> = {};
-        activeApplications.forEach(app => {
+        displayApplications.forEach(app => { // Use displayApplications (ALL) for list
             if (!groups[app.ipoName]) groups[app.ipoName] = [];
             groups[app.ipoName].push(app);
         });
         return groups;
-    }, [activeApplications]);
+    }, [displayApplications]);
 
-    // Stack Visualizer Data
-    const stackData = Object.entries(groupedApps).map(([name, apps]) => ({
-        name,
-        amount: apps.reduce((acc, curr) => acc + curr.amount, 0),
-        count: apps.length
-    })).sort((a, b) => b.amount - a.amount);
+    // Stack Visualizer Data (Should ONLY show Active/Blocked capital, not realized)
+    const stackData = useMemo(() => {
+        const activeGroups: Record<string, IPOApplication[]> = {};
+        capitalApps.forEach(app => {
+            if (!activeGroups[app.ipoName]) activeGroups[app.ipoName] = [];
+            activeGroups[app.ipoName].push(app);
+        });
+
+        return Object.entries(activeGroups).map(([name, apps]) => ({
+            name,
+            amount: apps.reduce((acc, curr) => acc + curr.amount, 0),
+            count: apps.length
+        })).sort((a, b) => b.amount - a.amount);
+    }, [capitalApps]);
 
     // Unique IPOs available for listing (must have at least one ALLOTTED)
     const availableForListing = useMemo(() => {
@@ -166,21 +178,21 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
         applicantInputRef.current?.focus();
     };
 
-    const updateStatus = async (id: number, status: IPOApplication['status']) => {
+    const updateStatus = useCallback(async (id: number, status: IPOApplication['status']) => {
         await db.ipo_applications.update(id, { status });
         loadApplications();
-    };
+    }, []);
 
-    const deleteApp = async (id: number) => {
+    const deleteApp = useCallback(async (id: number) => {
         await db.ipo_applications.delete(id);
         loadApplications();
-    };
+    }, []);
 
-    const toggleGroup = (ipoName: string) => {
+    const toggleGroup = useCallback((ipoName: string) => {
         setExpandedGroups(prev =>
             prev.includes(ipoName) ? prev.filter(n => n !== ipoName) : [...prev, ipoName]
         );
-    };
+    }, []);
 
     // --- LISTING DAY LOGIC ---
     const handleRealizeGains = async () => {
@@ -492,12 +504,12 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {activeApplications.length === 0 && (
+                                {displayApplications.length === 0 && (
                                     <tr><td colSpan={5} className="text-center py-6 text-slate-400 text-xs">No active syndicate applications.</td></tr>
                                 )}
 
                                 {viewMode === 'LIST' ? (
-                                    activeApplications.map(app => (
+                                    displayApplications.map(app => (
                                         <tr key={app.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                                             <td className="px-4 py-3">
                                                 <div className="font-medium text-slate-800 dark:text-white">{app.applicantName}</div>
@@ -518,7 +530,7 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
                                         const isExpanded = expandedGroups.includes(ipoName);
                                         const totalAmount = apps.reduce((sum, a) => sum + a.amount, 0);
                                         // Count status
-                                        const allottedCount = apps.filter(a => a.status === 'ALLOTTED').length;
+                                        const allottedCount = apps.filter(a => a.status === 'ALLOTTED' || a.status === 'LISTED').length;
 
                                         return (
                                             <React.Fragment key={ipoName}>
@@ -595,16 +607,23 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
     );
 };
 
-const StatusBadge = ({ status }: { status: string }) => (
-    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${status === 'BLOCKED' ? 'bg-amber-100 text-amber-600 border-amber-200' :
-        status === 'ALLOTTED' ? 'bg-emerald-100 text-emerald-600 border-emerald-200' :
-            'bg-slate-100 text-slate-500 border-slate-200'
-        }`}>
-        {status}
+const StatusBadge = React.memo(({ status }: { status: string }) => (
+    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${displayStatusColor(status)}`}>
+        {status === 'LISTED' ? 'REALIZED' : status}
     </span>
-);
+));
 
-const ActionButtons = ({ app, updateStatus, deleteApp }: any) => (
+const displayStatusColor = (status: string) => {
+    switch (status) {
+        case 'BLOCKED': return 'bg-amber-100 text-amber-600 border-amber-200';
+        case 'ALLOTTED': return 'bg-emerald-100 text-emerald-600 border-emerald-200';
+        case 'LISTED': return 'bg-emerald-100 text-emerald-600 border-emerald-200'; // Same as Allotted
+        case 'REFUNDED': return 'bg-slate-100 text-slate-500 border-slate-200';
+        default: return 'bg-slate-100 text-slate-500 border-slate-200';
+    }
+};
+
+const ActionButtons = React.memo(({ app, updateStatus, deleteApp }: any) => (
     <>
         {app.status === 'BLOCKED' && (
             <>
@@ -628,7 +647,7 @@ const ActionButtons = ({ app, updateStatus, deleteApp }: any) => (
             <Trash2 size={14} />
         </button>
     </>
-);
+));
 
 const AutocompleteInput = React.forwardRef<HTMLInputElement, {
     value: string;

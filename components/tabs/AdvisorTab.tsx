@@ -17,6 +17,7 @@ import { blobToBase64, compressImage } from '../../utils/helpers';
 import MorningBriefing from '../MorningBriefing';
 import { useConversations } from '../../hooks/useConversations';
 import { ConversationsSidebar } from '../ai/ConversationsSidebar';
+import { ChatBubble, VoiceOrb, AdvisorReportCard, type AdvisorData } from '../ai';
 
 interface AdvisorTabProps {
     investments: Investment[];
@@ -24,17 +25,7 @@ interface AdvisorTabProps {
     onNavigate: (tab: string) => void;
 }
 
-interface AdvisorData {
-    grades: {
-        diversification: string;
-        riskProfile: string;
-        assetQuality: string;
-    };
-    summary: string;
-    risks: string[];
-    opportunities: string[];
-    actions: string[];
-}
+// AdvisorData is now imported from '../ai'
 
 // --- Constants ---
 // --- Constants ---
@@ -127,25 +118,9 @@ const renderMarkdown = (text: string) => {
     return elements;
 };
 
-// --- Visual Components ---
+// VoiceOrb is now imported from '../ai'
 
-const VoiceOrb = ({ isActive }: { isActive: boolean }) => {
-    return (
-        <div className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
-            <div className={`absolute w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-[0_0_30px_rgba(99,102,241,0.6)] z-20 transition-all duration-500 ${isActive ? 'scale-110 shadow-[0_0_50px_rgba(99,102,241,0.8)]' : 'scale-100'}`}></div>
-            <div className={`absolute w-16 h-16 md:w-24 md:h-24 rounded-full border-2 border-indigo-400/30 border-t-indigo-400 z-10 transition-all duration-1000 ${isActive ? 'animate-[spin_3s_linear_infinite]' : ''}`}></div>
-            <div className={`absolute w-24 h-24 md:w-32 md:h-32 rounded-full border border-purple-400/20 border-b-purple-400 z-0 transition-all duration-1000 ${isActive ? 'animate-[spin_5s_linear_infinite_reverse]' : ''}`}></div>
-            {isActive && (
-                <>
-                    <div className="absolute w-full h-full rounded-full bg-indigo-500/20 animate-ping"></div>
-                    <div className="absolute w-full h-full rounded-full bg-purple-500/20 animate-ping delay-150"></div>
-                </>
-            )}
-        </div>
-    );
-};
-
-const GradeBadge = ({ grade, label, icon: Icon }: { grade: string, label: string, icon: any }) => {
+const GradeBadge = React.memo(({ grade, label, icon: Icon }: { grade: string, label: string, icon: any }) => {
     const getColor = (g: string) => {
         if (g.startsWith('A')) return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
         if (g.startsWith('B')) return 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20';
@@ -164,9 +139,9 @@ const GradeBadge = ({ grade, label, icon: Icon }: { grade: string, label: string
             <span className="text-4xl font-black tracking-tighter">{grade}</span>
         </div>
     );
-};
+});
 
-const ReportCard = ({ data }: { data: AdvisorData }) => {
+const ReportCard = React.memo(({ data }: { data: AdvisorData }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-in zoom-in duration-300">
             <GradeBadge grade={data.grades.diversification} label="Diversification" icon={PieChart} />
@@ -174,9 +149,9 @@ const ReportCard = ({ data }: { data: AdvisorData }) => {
             <GradeBadge grade={data.grades.assetQuality} label="Asset Quality" icon={Award} />
         </div>
     );
-};
+});
 
-const ActionList = ({ items, onNavigate, type }: { items: string[], onNavigate: (t: string) => void, type: 'RISK' | 'OPP' | 'ACTION' }) => {
+const ActionList = React.memo(({ items, onNavigate, type }: { items: string[], onNavigate: (t: string) => void, type: 'RISK' | 'OPP' | 'ACTION' }) => {
     const config = {
         RISK: { color: 'rose', icon: AlertTriangle, title: 'Critical Risks' },
         OPP: { color: 'emerald', icon: Lightbulb, title: 'Opportunities' },
@@ -199,37 +174,9 @@ const ActionList = ({ items, onNavigate, type }: { items: string[], onNavigate: 
             </div>
         </div>
     );
-};
+});
 
-// --- Chat Components ---
-
-interface ChatBubbleProps {
-    role: 'user' | 'model';
-    text?: string;
-    image?: string | null;
-}
-
-const ChatBubble: React.FC<ChatBubbleProps> = ({ role, text, image }) => {
-    const isUser = role === 'user';
-    return (
-        <div className={`flex w-full mb-6 ${isUser ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
-            {/* Width logic: User ~80%, AI ~98% (almost full width for reports) */}
-            <div className={`flex ${isUser ? 'max-w-[80%]' : 'max-w-[98%] w-full'} gap-4 items-start ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${isUser ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-800 text-indigo-600 border border-slate-200 dark:border-slate-700'}`}>
-                    {isUser ? <User size={16} /> : <Bot size={16} />}
-                </div>
-                <div className={`flex flex-col gap-2 ${!isUser ? 'flex-1 min-w-0' : ''}`}>
-                    <div className={`p-5 rounded-2xl shadow-sm border ${isUser ? 'bg-indigo-600 text-white border-indigo-600 rounded-tr-sm' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 rounded-tl-sm w-full'}`}>
-                        {image && (
-                            <img src={image} alt="Upload" className="rounded-lg max-h-64 object-cover border border-white/20 mb-3" />
-                        )}
-                        {text && <div className="text-sm">{renderMarkdown(text)}</div>}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+// ChatBubble is now imported from '../ai'
 
 const ModelSelector = ({ selected, onSelect }: { selected: string, onSelect: (id: string) => void }) => {
     const [isOpen, setIsOpen] = useState(false);

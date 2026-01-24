@@ -26,7 +26,7 @@ interface ComplianceShieldProps {
 const LTCG_LIMIT = 125000; // New ₹1.25L Limit for FY 24-25
 const TAX_RATE = 0.125; // 12.5% LTCG Rate
 
-const CircularProgress = ({ value, max, size = 60, strokeWidth = 4, color = "text-indigo-500" }: any) => {
+const CircularProgress = React.memo(({ value, max, size = 60, strokeWidth = 4, color = "text-indigo-500" }: any) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const offset = circumference - (Math.min(value / max, 1) * circumference);
@@ -61,7 +61,7 @@ const CircularProgress = ({ value, max, size = 60, strokeWidth = 4, color = "tex
             </div>
         </div>
     );
-};
+});
 
 const ComplianceShield: React.FC<ComplianceShieldProps> = ({ investments }) => {
     // Use Fiscal Engine
