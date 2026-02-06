@@ -1,10 +1,16 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useToast } from './shared/ToastProvider';
 import { db, IPOApplication } from '../database';
 import { Investment, InvestmentType } from '../types';
 import { Users, RefreshCw, ShieldCheck, Plus, Trash2, BarChart4, Rocket, CheckCircle2, ArrowRight, Wallet, ChevronDown, ChevronRight, LayoutList, GripVertical } from 'lucide-react';
 import { formatCurrency } from '../utils/helpers';
+import {
+    ListingDayEvent, CapitalStack, SyndicateForm, SyndicateTable, ArchivedList, AutocompleteInput, StatusBadge, ActionButtons
+} from './ipo';
+import { IPOCalendarWidget } from './market/IPOCalendarWidget';
+import { IPOVaultWidget } from './market/IPOVaultWidget';
 
 interface SyndicateTrackerProps {
     totalCash: number;
@@ -21,6 +27,9 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
         appliedDate: new Date().toISOString().split('T')[0]
     });
     const [formError, setFormError] = useState<string | null>(null);
+
+    // Vault Integration
+    const friends = useLiveQuery(() => db.friends.toArray());
 
     // View Mode: 'LIST' or 'GROUPED'
     const [viewMode, setViewMode] = useState<'LIST' | 'GROUPED'>('LIST');
@@ -137,6 +146,10 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
 
     // Memory for Autocomplete
     const pastApplicants = useMemo(() => Array.from(new Set(applications.map(a => a.applicantName).filter(Boolean))), [applications]);
+
+    // Vault: Filter friends with enough balance (optional visual cue, logic is strict)
+    const activeFriends = useMemo(() => friends || [], [friends]);
+
     const pastUPIs = useMemo(() => Array.from(new Set(applications.map(a => a.upiHandle).filter(Boolean))), [applications]);
 
     const STACK_COLORS = ['bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500', 'bg-teal-500', 'bg-orange-500'];
@@ -151,6 +164,32 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
 
         // Duplicate checks removed for faster bulk entry as per user request
 
+
+        // VAULT LOGIC: Auto-Debit
+        const friend = friends?.find(f => f.name === formData.applicantName);
+        if (friend) {
+            if (friend.balance < (formData.amount || 0)) {
+                if (!confirm(`⚠️ LOW BALANCE: ${friend.name} has only ₹${formatCurrency(friend.balance)}. Proceed anyway (negative balance)?`)) {
+                    return;
+                }
+            }
+
+            // Debit
+            const newBalance = friend.balance - (formData.amount || 0);
+            await db.friends.update(friend.id!, {
+                balance: newBalance,
+                history: [
+                    ...(friend.history || []),
+                    {
+                        date: new Date().toISOString(),
+                        amount: formData.amount || 0,
+                        type: 'BLOCKED',
+                        notes: `Applied for ${formData.ipoName}`
+                    }
+                ]
+            });
+            toast.success(`Debited ₹${formData.amount} from ${friend.name}'s Vault`);
+        }
 
         await db.ipo_applications.add(formData as IPOApplication);
 
@@ -179,9 +218,36 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
     };
 
     const updateStatus = useCallback(async (id: number, status: IPOApplication['status']) => {
+        // Vault Logic: Handle Refunds/Revocations
+        const app = await db.ipo_applications.get(id);
+        if (app) {
+            // Determine if money should be returned
+            const isRefund = status === 'REFUNDED' || status === 'Revoked' as any; // Handle loose typing if needed
+            const wasBlockedOrAllotted = app.status === 'BLOCKED' || app.status === 'ALLOTTED';
+
+            if (isRefund && wasBlockedOrAllotted) {
+                const friend = (await db.friends.toArray()).find(f => f.name === app.applicantName);
+                if (friend) {
+                    await db.friends.update(friend.id!, {
+                        balance: friend.balance + app.amount,
+                        history: [
+                            ...(friend.history || []),
+                            {
+                                date: new Date().toISOString(),
+                                amount: app.amount,
+                                type: 'REFUND',
+                                notes: `Refund/Revoke: ${app.ipoName}`
+                            }
+                        ]
+                    });
+                    toast.success(`Refunded ₹${app.amount} to ${friend.name}`);
+                }
+            }
+        }
+
         await db.ipo_applications.update(id, { status });
         loadApplications();
-    }, []);
+    }, [toast]);
 
     const deleteApp = useCallback(async (id: number) => {
         await db.ipo_applications.delete(id);
@@ -232,10 +298,30 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
             };
             await db.investments.add(newInvestment);
 
-            // 3. Archive Applications (Mark as LISTED)
-            const updatePromises = allottedApps.map(app =>
-                db.ipo_applications.update(app.id!, { status: 'LISTED' })
-            );
+            // 3. Archive Applications (Mark as LISTED) & Credit Vault
+            const updatePromises = allottedApps.map(async (app) => {
+                // Vault Credit Logic
+                const friend = (await db.friends.toArray()).find(f => f.name === app.applicantName);
+                if (friend) {
+                    const totalReturn = app.amount + (app.amount * calculatedGainMultiplier);
+                    const profitAmount = app.amount * calculatedGainMultiplier;
+
+                    await db.friends.update(friend.id!, {
+                        balance: friend.balance + totalReturn,
+                        totalProfits: (friend.totalProfits || 0) + profitAmount,
+                        history: [
+                            ...(friend.history || []),
+                            {
+                                date: new Date().toISOString(),
+                                amount: totalReturn,
+                                type: 'PROFIT',
+                                notes: `Listing Gain: ${app.ipoName} (+₹${profitAmount.toFixed(0)})`
+                            }
+                        ]
+                    });
+                }
+                return db.ipo_applications.update(app.id!, { status: 'LISTED' });
+            });
             await Promise.all(updatePromises);
 
             // 4. Reset & Notify
@@ -290,414 +376,79 @@ const SyndicateTracker: React.FC<SyndicateTrackerProps> = ({ totalCash, onPortfo
         <div className="space-y-6 animate-in fade-in">
 
             {/* LISTING DAY SIMULATOR */}
-            {availableForListing.length > 0 && (
-                <div className="bg-gradient-to-r from-emerald-900 to-teal-900 border border-emerald-500/30 rounded-2xl p-6 shadow-lg relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-6 opacity-10">
-                        <Rocket size={100} className="text-white" />
-                    </div>
+            {/* LISTING DAY SIMULATOR */}
+            <ListingDayEvent
+                availableForListing={availableForListing}
+                syncSuccess={syncSuccess}
+                selectedIPO={selectedIPO}
+                setSelectedIPO={setSelectedIPO}
+                listingMode={listingMode}
+                setListingMode={setListingMode}
+                listingGainPct={listingGainPct}
+                setListingGainPct={setListingGainPct}
+                listingPrice={listingPrice}
+                setListingPrice={setListingPrice}
+                issuePrice={issuePrice}
+                setIssuePrice={setIssuePrice}
+                previewProfit={previewProfit}
+                handleRealizeGains={handleRealizeGains}
+                isSyncing={isSyncing}
+            />
 
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="p-2 bg-emerald-500 text-white rounded-lg shadow-lg shadow-emerald-500/50 animate-pulse">
-                                <Rocket size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-white">Listing Day Event</h3>
-                                <p className="text-xs text-emerald-200 uppercase font-bold tracking-wider">Realize Profits</p>
-                            </div>
-                        </div>
-
-                        {!syncSuccess ? (
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                                <div className="md:col-span-1">
-                                    <label className="block text-xs font-bold text-emerald-200 uppercase mb-1">Select IPO</label>
-                                    <select
-                                        value={selectedIPO}
-                                        onChange={(e) => setSelectedIPO(e.target.value)}
-                                        className="w-full p-3 rounded-xl bg-black/30 border border-emerald-500/30 text-white outline-none focus:border-emerald-400"
-                                    >
-                                        <option value="">-- Allotted IPOs --</option>
-                                        {availableForListing.map(name => (
-                                            <option key={name} value={name}>{name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="md:col-span-2">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-xs font-bold text-emerald-200 uppercase">Performance</label>
-                                        <div className="flex bg-black/30 rounded-lg p-0.5">
-                                            <button onClick={() => setListingMode('PERCENT')} className={`px-2 py-0.5 text-[10px] uppercase font-bold rounded ${listingMode === 'PERCENT' ? 'bg-emerald-500 text-white' : 'text-emerald-400'}`}>% Gain</button>
-                                            <button onClick={() => setListingMode('PRICE')} className={`px-2 py-0.5 text-[10px] uppercase font-bold rounded ${listingMode === 'PRICE' ? 'bg-emerald-500 text-white' : 'text-emerald-400'}`}>Price</button>
-                                        </div>
-                                    </div>
-
-                                    {listingMode === 'PERCENT' ? (
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                value={listingGainPct}
-                                                onChange={(e) => setListingGainPct(e.target.value)}
-                                                placeholder="23"
-                                                className="w-full p-3 rounded-xl bg-black/30 border border-emerald-500/30 text-white outline-none focus:border-emerald-400 font-bold text-lg"
-                                            />
-                                            <span className="text-emerald-400 font-bold">%</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                value={issuePrice}
-                                                onChange={(e) => setIssuePrice(e.target.value)}
-                                                placeholder="Issue Px"
-                                                className="w-1/2 p-3 rounded-xl bg-black/30 border border-emerald-500/30 text-white outline-none focus:border-emerald-400 text-sm"
-                                            />
-                                            <input
-                                                type="number"
-                                                value={listingPrice}
-                                                onChange={(e) => setListingPrice(e.target.value)}
-                                                placeholder="List Px"
-                                                className="w-1/2 p-3 rounded-xl bg-black/30 border border-emerald-500/30 text-white outline-none focus:border-emerald-400 font-bold text-lg"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="md:col-span-1 space-y-2">
-                                    <div className="px-3 py-2 bg-emerald-500/20 rounded-xl border border-emerald-500/30 text-right">
-                                        <span className="text-[10px] uppercase text-emerald-300 block">Net Profit</span>
-                                        <span className="text-emerald-100 font-mono font-bold text-lg">+{formatCurrency(previewProfit)}</span>
-                                    </div>
-                                    <button
-                                        onClick={handleRealizeGains}
-                                        disabled={!selectedIPO || isSyncing || (listingMode === 'PERCENT' && !listingGainPct) || (listingMode === 'PRICE' && (!listingPrice || !issuePrice))}
-                                        className="w-full py-3 bg-white text-emerald-900 font-bold rounded-xl hover:bg-emerald-50 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                                    >
-                                        {isSyncing ? <RefreshCw className="animate-spin" size={18} /> : <Wallet size={18} />}
-                                        Realize
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-xl p-6 text-center animate-in zoom-in">
-                                <CheckCircle2 size={48} className="text-emerald-400 mx-auto mb-2" />
-                                <h3 className="text-xl font-bold text-white">Gains Secured!</h3>
-                                <p className="text-emerald-200">Profit added to portfolio. Applications archived.</p>
-                            </div>
-                        )}
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="lg:col-span-2">
+                    <IPOCalendarWidget />
                 </div>
-            )}
+                <div className="lg:col-span-1 h-[500px]">
+                    <IPOVaultWidget />
+                </div>
+            </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
 
                 {/* VISUALIZER: CAPITAL STACK */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <div className="flex justify-between items-end mb-3">
-                        <div>
-                            <p className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
-                                <BarChart4 size={14} /> Capital Stack
-                            </p>
-                            <p className="text-sm font-medium text-slate-400 mt-0.5">
-                                Total Liquidity: <span className="text-slate-900 dark:text-white font-mono font-bold">{formatCurrency(totalCash)}</span>
-                            </p>
-                        </div>
-                        <div className="text-right">
-                            <p className={`text-sm font-mono font-bold ${isCapitalDanger ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                {formatCurrency(availableCapital)}
-                            </p>
-                            <p className="text-xs uppercase font-bold text-slate-400">Available</p>
-                        </div>
-                    </div>
-
-                    <div className="w-full h-8 bg-slate-200 dark:bg-slate-800 rounded-lg overflow-hidden flex shadow-inner relative">
-                        {stackData.map((item, idx) => {
-                            const width = (item.amount / displayTotal) * 100;
-                            return (
-                                <div
-                                    key={item.name}
-                                    className={`h-full ${STACK_COLORS[idx % STACK_COLORS.length]} border-r border-slate-900/10 flex items-center justify-center text-[10px] font-bold text-white whitespace-nowrap overflow-hidden transition-all hover:opacity-90`}
-                                    style={{ width: `${width}%` }}
-                                    title={`${item.name}: ${formatCurrency(item.amount)}`}
-                                >
-                                    {width > 10 && `${item.name}`}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+                <CapitalStack
+                    totalCash={totalCash}
+                    availableCapital={availableCapital}
+                    displayTotal={displayTotal}
+                    isCapitalDanger={isCapitalDanger}
+                    stackData={stackData}
+                />
 
                 {/* Add Application Form */}
-                <form onSubmit={handleAdd} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3">
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
-                        <div className="md:col-span-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">IPO Name</label>
-                            <input
-                                placeholder="e.g. NTPC Green"
-                                value={formData.ipoName || ''}
-                                onChange={e => setFormData({ ...formData, ipoName: e.target.value })}
-                                className="w-full p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 text-xs outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Applicant</label>
-                            <AutocompleteInput
-                                ref={applicantInputRef}
-                                placeholder="e.g. Self/Wife"
-                                value={formData.applicantName || ''}
-                                onChange={val => setFormData({ ...formData, applicantName: val })}
-                                options={pastApplicants}
-                                className="w-full p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 text-xs outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">UPI ID</label>
-                            <AutocompleteInput
-                                placeholder="e.g. mobile@ybl"
-                                value={formData.upiHandle || ''}
-                                onChange={val => setFormData({ ...formData, upiHandle: val })}
-                                options={pastUPIs}
-                                className="w-full p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 text-xs outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase">Amount (₹)</label>
-                            <input
-                                type="number"
-                                placeholder="15000"
-                                value={formData.amount || ''}
-                                onChange={e => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
-                                className="w-full p-2 rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 text-xs outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                        <div className="md:col-span-1">
-                            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2 text-xs font-bold flex items-center justify-center gap-2">
-                                <Plus size={14} /> Add Application
-                            </button>
-                        </div>
-                    </div>
-                    {formError && <p className="text-xs text-rose-500 font-bold">{formError}</p>}
-                </form>
+                <SyndicateForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    handleAdd={handleAdd}
+                    formError={formError}
+                    applicantInputRef={applicantInputRef}
+                    pastApplicants={pastApplicants}
+                    pastUPIs={pastUPIs}
+                    setFormError={setFormError}
+                />
 
                 {/* Active Syndicate Table */}
-                <div className="min-h-[200px]">
-                    <div className="flex justify-between items-center mb-2 px-2">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase">Active Applications</h4>
-                        <button
-                            onClick={() => setViewMode(viewMode === 'LIST' ? 'GROUPED' : 'LIST')}
-                            className="text-xs font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1"
-                        >
-                            {viewMode === 'LIST' ? <LayoutList size={14} /> : <GripVertical size={14} />}
-                            {viewMode === 'LIST' ? 'Show Grouped' : 'Show All'}
-                        </button>
-                    </div>
-
-                    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-100 dark:bg-slate-800/50">
-                                <tr>
-                                    <th className="px-4 py-3">Applicant / IPO</th>
-                                    <th className="px-4 py-3">UPI</th>
-                                    <th className="px-4 py-3 text-right">Amount</th>
-                                    <th className="px-4 py-3">Status</th>
-                                    <th className="px-4 py-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {displayApplications.length === 0 && (
-                                    <tr><td colSpan={5} className="text-center py-6 text-slate-400 text-xs">No active syndicate applications.</td></tr>
-                                )}
-
-                                {viewMode === 'LIST' ? (
-                                    displayApplications.map(app => (
-                                        <tr key={app.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                            <td className="px-4 py-3">
-                                                <div className="font-medium text-slate-800 dark:text-white">{app.applicantName}</div>
-                                                <div className="text-xs text-slate-500">{app.ipoName}</div>
-                                            </td>
-                                            <td className="px-4 py-3 font-mono text-xs text-slate-500">{app.upiHandle}</td>
-                                            <td className="px-4 py-3 font-mono text-xs text-slate-900 dark:text-white font-bold text-right">{formatCurrency(app.amount)}</td>
-                                            <td className="px-4 py-3">
-                                                <StatusBadge status={app.status} />
-                                            </td>
-                                            <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
-                                                <ActionButtons app={app} updateStatus={updateStatus} deleteApp={deleteApp} />
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    Object.entries(groupedApps).map(([ipoName, apps]) => {
-                                        const isExpanded = expandedGroups.includes(ipoName);
-                                        const totalAmount = apps.reduce((sum, a) => sum + a.amount, 0);
-                                        // Count status
-                                        const allottedCount = apps.filter(a => a.status === 'ALLOTTED' || a.status === 'LISTED').length;
-
-                                        return (
-                                            <React.Fragment key={ipoName}>
-                                                {/* Parent Row */}
-                                                <tr
-                                                    onClick={() => toggleGroup(ipoName)}
-                                                    className="bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-                                                >
-                                                    <td className="px-4 py-3 font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                                        {isExpanded ? <ChevronDown size={14} className="text-indigo-500" /> : <ChevronRight size={14} className="text-slate-400" />}
-                                                        {ipoName}
-                                                        <span className="text-xs font-normal text-slate-500 ml-1">({apps.length} Apps)</span>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-xs text-slate-500">
-                                                        {allottedCount > 0 ? <span className="text-emerald-500 font-bold">{allottedCount} Allotted</span> : 'Pending'}
-                                                    </td>
-                                                    <td className="px-4 py-3 font-mono text-xs font-black text-right">{formatCurrency(totalAmount)}</td>
-                                                    <td className="px-4 py-3"></td>
-                                                    <td className="px-4 py-3 text-right text-xs font-bold text-indigo-500">
-                                                        {isExpanded ? 'Hide' : 'View'}
-                                                    </td>
-                                                </tr>
-
-                                                {/* Child Rows */}
-                                                {isExpanded && apps.map(app => (
-                                                    <tr key={app.id} className="bg-white dark:bg-slate-950/50 animate-in fade-in">
-                                                        <td className="px-4 py-2 pl-10 text-xs text-slate-600 dark:text-slate-300 border-l-4 border-indigo-500/10">
-                                                            {app.applicantName}
-                                                        </td>
-                                                        <td className="px-4 py-2 font-mono text-xs text-slate-500">{app.upiHandle}</td>
-                                                        <td className="px-4 py-2 font-mono text-xs text-slate-900 dark:text-white text-right">{formatCurrency(app.amount)}</td>
-                                                        <td className="px-4 py-2">
-                                                            <StatusBadge status={app.status} />
-                                                        </td>
-                                                        <td className="px-4 py-2 text-right flex items-center justify-end gap-2">
-                                                            <ActionButtons app={app} updateStatus={updateStatus} deleteApp={deleteApp} />
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </React.Fragment>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <SyndicateTable
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    displayApplications={displayApplications}
+                    groupedApps={groupedApps}
+                    expandedGroups={expandedGroups}
+                    toggleGroup={toggleGroup}
+                    updateStatus={updateStatus}
+                    deleteApp={deleteApp}
+                />
 
                 {/* Archived / Listed History */}
-                {listedApps.length > 0 && (
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center gap-2">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase">Recent Listings (Archived)</h4>
-                            </div>
-                            {realizedGains > 0 && (
-                                <span className="text-xs font-mono text-emerald-500 font-bold">
-                                    Total Realized: {formatCurrency(realizedGains)}
-                                </span>
-                            )}
-                        </div>
-                        <div className="space-y-2 opacity-60">
-                            {listedApps.map(app => (
-                                <div key={app.id} className="flex justify-between items-center text-xs text-slate-400">
-                                    <span>{app.ipoName} ({app.applicantName})</span>
-                                    <span>{formatCurrency(app.amount)} - <span className="text-emerald-500">Realized</span></span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <ArchivedList
+                    listedApps={listedApps}
+                    realizedGains={realizedGains}
+                />
             </div>
         </div>
     );
 };
 
-const StatusBadge = React.memo(({ status }: { status: string }) => (
-    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${displayStatusColor(status)}`}>
-        {status === 'LISTED' ? 'REALIZED' : status}
-    </span>
-));
-
-const displayStatusColor = (status: string) => {
-    switch (status) {
-        case 'BLOCKED': return 'bg-amber-100 text-amber-600 border-amber-200';
-        case 'ALLOTTED': return 'bg-emerald-100 text-emerald-600 border-emerald-200';
-        case 'LISTED': return 'bg-emerald-100 text-emerald-600 border-emerald-200'; // Same as Allotted
-        case 'REFUNDED': return 'bg-slate-100 text-slate-500 border-slate-200';
-        default: return 'bg-slate-100 text-slate-500 border-slate-200';
-    }
-};
-
-const ActionButtons = React.memo(({ app, updateStatus, deleteApp }: any) => (
-    <>
-        {app.status === 'BLOCKED' && (
-            <>
-                <button
-                    onClick={() => updateStatus(app.id!, 'REFUNDED')}
-                    className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors"
-                    title="Mark Refunded"
-                >
-                    <RefreshCw size={14} />
-                </button>
-                <button
-                    onClick={() => updateStatus(app.id!, 'ALLOTTED')}
-                    className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
-                    title="Mark Allotted"
-                >
-                    <ShieldCheck size={14} />
-                </button>
-            </>
-        )}
-        <button onClick={() => deleteApp(app.id!)} className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors">
-            <Trash2 size={14} />
-        </button>
-    </>
-));
-
-const AutocompleteInput = React.forwardRef<HTMLInputElement, {
-    value: string;
-    onChange: (val: string) => void;
-    placeholder: string;
-    options: string[];
-    className?: string;
-}>(({ value, onChange, placeholder, options, className }, ref) => {
-    const [show, setShow] = useState(false);
-
-    // Filter options based on input
-    const filtered = options.filter(opt =>
-        opt.toLowerCase().includes(value.toLowerCase()) && opt.toLowerCase() !== value.toLowerCase()
-    );
-
-    return (
-        <div className="relative">
-            <input
-                ref={ref}
-                type="text"
-                value={value}
-                onChange={(e) => {
-                    onChange(e.target.value);
-                    setShow(true);
-                }}
-                onFocus={() => setShow(true)}
-                // Delay blur to allow clicking the item
-                onBlur={() => setTimeout(() => setShow(false), 200)}
-                placeholder={placeholder}
-                className={className}
-                autoComplete="off"
-            />
-            {show && filtered.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-h-40 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                    {filtered.map(opt => (
-                        <div
-                            key={opt}
-                            className="px-3 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer font-medium border-b last:border-0 border-slate-100 dark:border-slate-800/50"
-                            onClick={() => {
-                                onChange(opt);
-                                setShow(false);
-                            }}
-                        >
-                            {opt}
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-});
+// Local components moved to ./ipo/index.ts
 
 export default SyndicateTracker;

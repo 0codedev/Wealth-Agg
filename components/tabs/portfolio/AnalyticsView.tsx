@@ -21,7 +21,7 @@ const inferSector = (name: string, type: InvestmentType, currentSector?: string)
     if (type === InvestmentType.CRYPTO) return 'Crypto';
     if (type === InvestmentType.DIGITAL_GOLD || type === InvestmentType.DIGITAL_SILVER) return 'Commodities';
     if (type === InvestmentType.REAL_ESTATE) return 'Real Estate';
-    if (type === InvestmentType.P2P_LENDING) return 'Lending';
+    if (type === InvestmentType.FD) return 'Lending/Debt';
 
     // 2. Keyword Matching for Stocks/MFs
     if (n.includes('tech') || n.includes('infosys') || n.includes('tcs') || n.includes('wipro') || n.includes('hcl') || n.includes('digital') || n.includes('soft') || n.includes('s&p 500')) return 'Technology';

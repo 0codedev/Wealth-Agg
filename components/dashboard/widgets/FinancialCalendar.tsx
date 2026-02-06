@@ -160,10 +160,26 @@ const FinancialCalendar: React.FC<FinancialCalendarProps> = ({ investments }) =>
                     </div>
                 )}
 
-                <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-                    {/* IPO Filters (Left Side as requested) */}
+                <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                    {/* Tabs */}
+                    <div className="flex items-center gap-1">
+                        {(['ALL', 'IPO', 'DIVIDENDS', 'BONDS'] as TabType[]).map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all whitespace-nowrap ${activeTab === tab
+                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-slate-500 hover:text-indigo-500'
+                                    }`}
+                            >
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* IPO Sub-Filters (Inline Right) */}
                     {activeTab === 'IPO' && (
-                        <div className="flex gap-1 shrink-0">
+                        <div className="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700 animate-in fade-in duration-300">
                             <button
                                 onClick={() => toggleIpoType('MAINBOARD')}
                                 className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${ipoTypes.includes('MAINBOARD')
@@ -182,24 +198,8 @@ const FinancialCalendar: React.FC<FinancialCalendarProps> = ({ investments }) =>
                             >
                                 SME
                             </button>
-                            <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
                         </div>
                     )}
-
-                    <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg shrink-0">
-                        {(['ALL', 'IPO', 'DIVIDENDS', 'BONDS'] as TabType[]).map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`px-3 py-1.5 rounded-md text-[10px] font-bold transition-all whitespace-nowrap ${activeTab === tab
-                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                    : 'text-slate-500 hover:text-indigo-500'
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
                 </div>
             </div>
 

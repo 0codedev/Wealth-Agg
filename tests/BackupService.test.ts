@@ -96,6 +96,7 @@ describe('BackupService', () => {
             await handleDownloadBackup();
 
             // Verify File Picker called
+            // @ts-expect-error - showSaveFilePicker is not in lib.dom.d.ts by default
             expect(window.showSaveFilePicker).toHaveBeenCalled();
 
             // Verify DB access
@@ -105,6 +106,7 @@ describe('BackupService', () => {
 
         it('should fallback to legacy download if FileSystem API fails', async () => {
             // Force FS API failure
+            // @ts-expect-error - showSaveFilePicker is not in lib.dom.d.ts by default
             (window.showSaveFilePicker as any).mockRejectedValue(new Error('Not supported'));
 
             // Mock createElement link

@@ -1,18 +1,6 @@
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { formatCurrency, calculateStreaks, getFiscalYearRange } from '../utils/helpers';
-// Mock Trade interface for testing
-interface Trade {
-    id?: number;
-    symbol: string;
-    entryPrice: number;
-    exitPrice: number;
-    quantity: number;
-    direction: 'LONG' | 'SHORT';
-    pnl?: number;
-    date: string; // YYYY-MM-DD
-    status?: 'OPEN' | 'CLOSED';
-}
 
 describe('Utility Helpers', () => {
 
@@ -33,7 +21,7 @@ describe('Utility Helpers', () => {
 
     describe('calculateStreaks', () => {
         it('calculates winning streaks correctly', () => {
-            const trades: Trade[] = [
+            const trades = [
                 { symbol: 'A', entryPrice: 100, exitPrice: 110, quantity: 1, direction: 'LONG', pnl: 10, date: '2024-01-01' } as any,
                 { symbol: 'A', entryPrice: 100, exitPrice: 110, quantity: 1, direction: 'LONG', pnl: 20, date: '2024-01-02' } as any,
                 { symbol: 'A', entryPrice: 100, exitPrice: 110, quantity: 1, direction: 'LONG', pnl: 30, date: '2024-01-03' } as any,
@@ -44,7 +32,7 @@ describe('Utility Helpers', () => {
         });
 
         it('calculates losing streaks correctly', () => {
-            const trades: Trade[] = [
+            const trades = [
                 { symbol: 'A', entryPrice: 100, exitPrice: 90, quantity: 1, direction: 'LONG', pnl: -10, date: '2024-01-01' } as any,
                 { symbol: 'A', entryPrice: 100, exitPrice: 90, quantity: 1, direction: 'LONG', pnl: -20, date: '2024-01-02' } as any,
             ];
@@ -55,7 +43,7 @@ describe('Utility Helpers', () => {
 
         it('resets streak on mixed results', () => {
             // Newest first order simulated by date? function sorts internally.
-            const trades: Trade[] = [
+            const trades = [
                 { symbol: 'A', pnl: 10, date: '2024-01-03' } as any, // Win (Newest)
                 { symbol: 'A', pnl: -10, date: '2024-01-02' } as any, // Loss
             ];
@@ -68,46 +56,26 @@ describe('Utility Helpers', () => {
 
     describe('getFiscalYearRange', () => {
         it('returns correct FY for current date', () => {
-            // Mock System Date
-            const mockDate = new Date('2024-05-15'); // May 2024
-            const OriginalDate = global.Date;
-
-            // @ts-ignore
-            global.Date = class extends OriginalDate {
-                constructor(...args: any[]) {
-                    if (args.length) {
-                        return new OriginalDate(...args as [any]);
-                    }
-                    return mockDate;
-                }
-            };
+            // Mock System Date using vi.useFakeTimers
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2024-05-15')); // May 2024
 
             const result = getFiscalYearRange(0);
             expect(result.label).toBe('FY 24-25');
             expect(result.startDate.getMonth()).toBe(3); // April
             expect(result.startDate.getDate()).toBe(1);
 
-            global.Date = OriginalDate;
+            vi.useRealTimers();
         });
 
         it('handles March correctly (previous FY)', () => {
-            const mockDate = new Date('2024-03-15'); // March 2024
-            const OriginalDate = global.Date;
-
-            // @ts-ignore
-            global.Date = class extends OriginalDate {
-                constructor(...args: any[]) {
-                    if (args.length) {
-                        return new OriginalDate(...args as [any]);
-                    }
-                    return mockDate;
-                }
-            };
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2024-03-15')); // March 2024
 
             const result = getFiscalYearRange(0);
             expect(result.label).toBe('FY 23-24');
 
-            global.Date = OriginalDate;
+            vi.useRealTimers();
         });
     });
 });

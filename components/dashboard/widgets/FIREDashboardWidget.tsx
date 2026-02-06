@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Target, TrendingUp, Calendar, Wallet, Calculator } from 'lucide-react';
+import { Flame, Target, TrendingUp, Calendar, Wallet, Calculator, Gauge, ChevronRight, Settings2 } from 'lucide-react';
 
 interface FIREDashboardWidgetProps {
     stats?: { totalCurrent?: number; totalInvested?: number };
@@ -17,9 +17,9 @@ const FIREDashboardWidget: React.FC<FIREDashboardWidgetProps> = ({
     const [targetAge, setTargetAge] = useState(45);
     const [expectedReturn, setExpectedReturn] = useState(12);
     const [withdrawalRate, setWithdrawalRate] = useState(4);
+    const [monthlyContribution, setMonthlyContribution] = useState(25000);
 
     const currentWealth = stats?.totalCurrent || 500000;
-    const monthlyContribution = 25000;
 
     // Calculate FIRE number and progress
     const fireMetrics = useMemo(() => {
@@ -38,92 +38,118 @@ const FIREDashboardWidget: React.FC<FIREDashboardWidgetProps> = ({
         return { fireNumber, progress, yearsToFire, fireAge, onTrack };
     }, [annualExpenses, currentWealth, expectedReturn, withdrawalRate, currentAge, targetAge, monthlyContribution]);
 
+    // Format Compact
+    const formatCompact = (value: number): string => {
+        if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)}Cr`;
+        if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
+        return `₹${(value / 1000).toFixed(0)}k`;
+    };
+
     return (
-        <div className="bg-gradient-to-br from-slate-900 via-orange-950/20 to-slate-900 rounded-2xl border border-orange-500/20 p-4 h-full">
+        <div className="bg-slate-950 rounded-2xl border border-slate-800 p-5 shadow-xl relative overflow-hidden h-full flex flex-col group hover:border-orange-500/30 transition-colors duration-500">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-                        <Flame size={16} className="text-white" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
+                        <Flame size={20} className="text-white fill-white animate-pulse" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold text-white">FIRE Dashboard</h3>
-                        <p className="text-[9px] text-slate-500">Financial Independence</p>
+                        <h3 className="text-sm font-black text-white uppercase tracking-wider">FIRE Control</h3>
+                        <p className="text-[10px] text-orange-400/80 font-mono">Freedom Flight Deck</p>
                     </div>
                 </div>
-                <span className={`text-[9px] px-2 py-0.5 rounded font-bold ${fireMetrics.onTrack ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                    }`}>
-                    {fireMetrics.onTrack ? 'ON TRACK' : 'ADJUST PLAN'}
-                </span>
-            </div>
-
-            {/* FIRE Number & Progress */}
-            <div className="bg-slate-800/50 rounded-xl p-3 mb-3 border border-slate-700/50">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">FIRE Number</span>
-                    <span className="text-lg font-black text-orange-400 font-mono">
-                        {formatCurrency(fireMetrics.fireNumber)}
-                    </span>
-                </div>
-                <div className="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${fireMetrics.progress}%` }}
-                        transition={{ duration: 1 }}
-                        className="h-full bg-gradient-to-r from-orange-500 to-red-500"
-                    />
-                </div>
-                <div className="flex justify-between text-[9px] text-slate-500">
-                    <span>{formatCurrency(currentWealth)}</span>
-                    <span>{fireMetrics.progress.toFixed(1)}% complete</span>
+                <div className={`px-2 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 ${fireMetrics.onTrack
+                    ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-400'
+                    : 'bg-rose-950/30 border-rose-500/30 text-rose-400'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${fireMetrics.onTrack ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
+                    {fireMetrics.onTrack ? 'On Trajectory' : 'Deviation'}
                 </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                    <div className="flex items-center gap-1 mb-1">
-                        <Calendar size={10} className="text-blue-400" />
-                        <span className="text-[9px] text-slate-500">Years to FIRE</span>
-                    </div>
-                    <p className="text-sm font-bold text-white">{fireMetrics.yearsToFire.toFixed(1)} yrs</p>
-                </div>
-                <div className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                    <div className="flex items-center gap-1 mb-1">
-                        <Target size={10} className="text-emerald-400" />
-                        <span className="text-[9px] text-slate-500">FIRE Age</span>
-                    </div>
-                    <p className="text-sm font-bold text-white">{Math.round(fireMetrics.fireAge)} years</p>
-                </div>
-            </div>
+            {/* Main Gauge & KPI */}
+            <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
+                {/* Progress Gauge */}
+                <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent pointer-events-none" />
 
-            {/* Quick Settings */}
-            <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">Annual Expenses</span>
-                    <input
-                        type="number"
-                        value={annualExpenses}
-                        onChange={(e) => setAnnualExpenses(Number(e.target.value))}
-                        className="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[10px] text-white text-right"
-                    />
-                </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">Withdrawal Rate</span>
-                    <div className="flex items-center gap-1">
-                        <input
-                            type="range"
-                            min="3"
-                            max="5"
-                            step="0.5"
-                            value={withdrawalRate}
-                            onChange={(e) => setWithdrawalRate(Number(e.target.value))}
-                            className="w-16 h-1"
+                    {/* Semi Circle Gauge Background */}
+                    <div className="relative w-32 h-16 overflow-hidden mb-2">
+                        <div className="w-32 h-32 rounded-full border-[10px] border-slate-800 absolute top-0 left-0" />
+                        <motion.div
+                            className="w-32 h-32 rounded-full border-[10px] border-transparent border-t-orange-500 border-r-orange-500 absolute top-0 left-0"
+                            style={{
+                                rotate: -45 + (fireMetrics.progress * 1.8), // Map 0-100 to rotation
+                            }}
+                            initial={{ rotate: -135 }}
+                            animate={{ rotate: -135 + (Math.min(100, fireMetrics.progress) * 1.8) }}
+                            transition={{ duration: 1.5, ease: "circOut" }}
                         />
-                        <span className="text-[10px] text-white w-8">{withdrawalRate}%</span>
+                    </div>
+
+                    <div className="text-center -mt-8 relative z-10">
+                        <span className="text-2xl font-black text-white">{fireMetrics.progress.toFixed(1)}%</span>
+                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Freedom Loading</p>
+                    </div>
+                </div>
+
+                {/* Key Metric: FIRE Number */}
+                <div className="flex flex-col gap-2">
+                    <div className="flex-1 bg-slate-900/50 rounded-xl p-3 border border-slate-800 flex flex-col justify-center">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Target Corpus</p>
+                        <p className="text-xl font-bold text-orange-400 font-mono tracking-tight">{formatCompact(fireMetrics.fireNumber)}</p>
+                    </div>
+                    <div className="flex-1 bg-slate-900/50 rounded-xl p-3 border border-slate-800 flex flex-col justify-center">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Est. Freedom Date</p>
+                        <p className="text-sm font-bold text-white flex items-center gap-2">
+                            {Math.round(fireMetrics.yearsToFire)} Years
+                            <span className="text-[10px] text-slate-500 font-mono bg-slate-800 px-1 rounded">Age {Math.round(fireMetrics.fireAge)}</span>
+                        </p>
                     </div>
                 </div>
             </div>
+
+            {/* Control Panel (Sliders) */}
+            <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 relative z-10 space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <Settings2 size={12} />
+                        <span className="text-[10px] font-bold uppercase">Flight Parameters</span>
+                    </div>
+                </div>
+
+                {/* Monthly Expenses Slider */}
+                <div className="space-y-1 group/slider">
+                    <div className="flex justify-between text-[10px]">
+                        <span className="text-slate-400">Monthly Expenses</span>
+                        <span className="text-orange-400 font-mono font-bold">{formatCompact(annualExpenses / 12)}/mo</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="20000" max="200000" step="5000"
+                        value={annualExpenses / 12}
+                        onChange={(e) => setAnnualExpenses(Number(e.target.value) * 12)}
+                        className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                    />
+                </div>
+
+                {/* Withdrawal Rate Slider */}
+                <div className="space-y-1 group/slider">
+                    <div className="flex justify-between text-[10px]">
+                        <span className="text-slate-400">Safe Withdrawal Rate</span>
+                        <span className="text-emerald-400 font-mono font-bold">{withdrawalRate}%</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="2" max="6" step="0.1"
+                        value={withdrawalRate}
+                        onChange={(e) => setWithdrawalRate(Number(e.target.value))}
+                        className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                    />
+                </div>
+            </div>
+
+            {/* Background Decor */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.03),transparent_70%)] pointer-events-none" />
         </div>
     );
 };

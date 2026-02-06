@@ -306,7 +306,9 @@ export function calculateHoldingsHealthScore(investment: Investment): {
         returns: Math.min(100, Math.max(0, 50 + gainPercent * 2)), // -25% to +25% maps to 0-100
         diversification: investment.type === 'Mutual Fund' ? 80 : 50, // MF more diversified
         liquidity: ['Stocks', 'Mutual Fund', 'Gold'].includes(investment.type) ? 90 : 50,
-        riskAdjusted: investment.riskLevel === 'Low' ? 80 : investment.riskLevel === 'Medium' ? 60 : 40,
+        // Infer risk from asset type since Investment doesn't have a riskLevel property
+        riskAdjusted: ['Fixed Deposit', 'Digital Gold'].includes(investment.type) ? 80 :
+            ['Mutual Fund', 'ETF'].includes(investment.type) ? 60 : 40,
     };
 
     const score = Object.values(factors).reduce((a, b) => a + b, 0) / Object.keys(factors).length;

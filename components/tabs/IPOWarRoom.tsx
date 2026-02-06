@@ -475,4 +475,5 @@ const IPOWarRoom: React.FC<IPOWarRoomProps> = ({ investments = [], onRefresh }) 
     );
 };
 
-export default IPOWarRoom;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(IPOWarRoom);

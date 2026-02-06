@@ -1,5 +1,6 @@
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 import { logger } from "./Logger";
+import { ChatPart } from "../types/ai";
 
 // --- API CONFIG ---
 const API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -17,14 +18,30 @@ const API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const getApiKey = (): string => {
     let apiKey: string | null | undefined = null;
 
-    // 1. Try Local Storage (user-provided)
+    // 1. PRIMARY: Try Zustand Settings Store (where LogicConfigModal saves)
     try {
-        apiKey = localStorage.getItem('gemini-api-key');
+        const storeData = localStorage.getItem('wealth-aggregator-logic');
+        if (storeData) {
+            const parsed = JSON.parse(storeData);
+            if (parsed.state?.geminiApiKey) {
+                apiKey = parsed.state.geminiApiKey.trim();
+                logger.debug('AI Service: Using API Key from Settings Store', undefined, 'AIService');
+            }
+        }
     } catch (e) {
-        logger.warn('AI Service: Unable to access localStorage');
+        logger.warn('AI Service: Unable to read from settings store');
     }
 
-    // 2. Try Environment Variables (Vite)
+    // 2. FALLBACK: Legacy localStorage key (used by ApiKeyManager)
+    if (!apiKey) {
+        try {
+            apiKey = localStorage.getItem('gemini-api-key');
+        } catch (e) {
+            logger.warn('AI Service: Unable to access legacy localStorage');
+        }
+    }
+
+    // 3. LAST RESORT: Environment Variables (Vite)
     if (!apiKey) {
         try {
             // @ts-ignore - Vite injects import.meta.env at build time
@@ -36,7 +53,7 @@ const getApiKey = (): string => {
         }
     }
 
-    // 3. No key found - throw helpful error
+    // 4. No key found - throw helpful error
     if (!apiKey) {
         throw new Error(
             'API_KEY_MISSING: No Gemini API key configured. ' +
@@ -47,7 +64,84 @@ const getApiKey = (): string => {
     return apiKey;
 };
 
-// --- ROBUST FETCH HELPER ---
+// --- RETRY WITH EXPONENTIAL BACKOFF ---
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+
+async function retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    retries = MAX_RETRIES,
+    delay = BASE_DELAY_MS
+): Promise<T> {
+    try {
+        return await fn();
+    } catch (error: any) {
+        // Don't retry on auth errors or blocked content
+        if (error.message?.includes('401') ||
+            error.message?.includes('403') ||
+            error.message?.includes('Blocked')) {
+            throw error;
+        }
+
+        if (retries > 0) {
+            logger.warn(`AI Service: Retrying in ${delay}ms... (${retries} retries left)`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return retryWithBackoff(fn, retries - 1, delay * 2);
+        }
+        throw error;
+    }
+}
+
+// --- AI RESPONSE CACHE ---
+const AI_CACHE_KEY = 'ai_response_cache';
+const AI_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+interface CacheEntry {
+    response: string;
+    timestamp: number;
+}
+
+function getCachedResponse(promptHash: string): string | null {
+    try {
+        const cache = JSON.parse(localStorage.getItem(AI_CACHE_KEY) || '{}');
+        const entry = cache[promptHash] as CacheEntry | undefined;
+        if (entry && (Date.now() - entry.timestamp) < AI_CACHE_TTL) {
+            logger.debug('AI Service: Cache hit');
+            return entry.response;
+        }
+    } catch (e) {
+        // Cache read error, continue without cache
+    }
+    return null;
+}
+
+function setCachedResponse(promptHash: string, response: string): void {
+    try {
+        const cache = JSON.parse(localStorage.getItem(AI_CACHE_KEY) || '{}');
+        // Limit cache size to 50 entries
+        const keys = Object.keys(cache);
+        if (keys.length > 50) {
+            delete cache[keys[0]];
+        }
+        cache[promptHash] = { response, timestamp: Date.now() };
+        localStorage.setItem(AI_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {
+        // Cache write error, continue without caching
+    }
+}
+
+function hashPrompt(prompt: string): string {
+    // Simple hash for cache key
+    let hash = 0;
+    for (let i = 0; i < prompt.length; i++) {
+        const char = prompt.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString(36);
+}
+
+// --- ROBUST FETCH HELPER (with retry) ---
 async function generateWithFallback(
     primaryModel: string,
     fallbackModel: string,
@@ -78,16 +172,15 @@ async function generateWithFallback(
     };
 
     try {
-        // logger.debug(`AI Service: Attempting primary model: ${primaryModel}`);
-        return await doFetch(primaryModel);
+        // Primary model with retry
+        return await retryWithBackoff(() => doFetch(primaryModel));
     } catch (error: any) {
         logger.warn(`AI Service: Primary model ${primaryModel} failed. Falling back to ${fallbackModel}.`, error);
         try {
-            // logger.debug(`AI Service: Attempting fallback model: ${fallbackModel}`);
-            return await doFetch(fallbackModel);
+            // Fallback model with retry
+            return await retryWithBackoff(() => doFetch(fallbackModel));
         } catch (fallbackError: any) {
             logger.error(`AI Service: Fallback model ${fallbackModel} also failed.`, fallbackError);
-            // Throw the actual error message so the UI can display it
             throw new Error(fallbackError.message || "Unable to process request with selected model.");
         }
     }
@@ -231,8 +324,8 @@ export class LiveVoiceSession {
             sessionPromise = connectSession('gemini-2.5-flash');
             await sessionPromise;
         } catch (e) {
-            logger.warn("Gemini Live: 2.5 failed, falling back to flash-latest", e);
-            sessionPromise = connectSession('gemini-flash-latest');
+            logger.warn("Gemini Live: 2.5 failed, falling back to 1.5-flash", e);
+            sessionPromise = connectSession('gemini-2.5-flash');
         }
 
         if (sessionPromise) {
@@ -258,8 +351,8 @@ export class LiveVoiceSession {
 export const searchWeb = async (query: string) => {
     // logger.debug("AI Service: Searching web for:", query);
     return await generateWithFallback(
+        'gemini-2.5-flash-lite',
         'gemini-2.5-flash',
-        'gemini-flash-latest',
         {
             contents: [{ parts: [{ text: query }] }],
             tools: [{ google_search: {} }] // Note: REST API uses google_search (snake_case)
@@ -269,19 +362,27 @@ export const searchWeb = async (query: string) => {
 
 // --- Feature 3: General Intelligence (Pro/Flash) ---
 export const askGemini = async (prompt: string, usePro: boolean = false) => {
-    // logger.debug(`AI Service: Asking Gemini (${usePro ? 'Pro' : 'Flash'}):`, prompt);
-    const primary = usePro ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
-    const fallback = usePro ? 'gemini-pro-latest' : 'gemini-flash-latest';
-    return await generateWithFallback(primary, fallback, {
+    // Check cache first (for repeatable prompts like reports)
+    const promptKey = hashPrompt(prompt);
+    const cached = getCachedResponse(promptKey);
+    if (cached) {
+        return cached;
+    }
+
+    const primary = usePro ? 'gemini-2.5-flash' : 'gemini-2.5-flash-lite';
+    const fallback = 'gemini-2.5-flash';
+    const result = await generateWithFallback(primary, fallback, {
         contents: [{ parts: [{ text: prompt }] }]
     });
+
+    // Cache the response
+    setCachedResponse(promptKey, result);
+    return result;
 }
 
 // --- Feature 4: AI Powered Chatbot (Multi-Modal) ---
-export interface ChatPart {
-    text?: string;
-    inlineData?: { mimeType: string; data: string; };
-}
+// --- Feature 4: AI Powered Chatbot (Multi-Modal) ---
+// ChatPart imported from ../types/ai
 
 export const chatWithGemini = async (
     model: string,
@@ -292,10 +393,13 @@ export const chatWithGemini = async (
     // logger.debug(`AI Service: Chatting... requested model: ${model}`);
 
     let primary = model;
-    let fallback = 'gemini-flash-latest';
-    if (model.includes('pro') || model.includes('2.5')) {
-        primary = model.replace('1.5', '2.5');
-        fallback = model.includes('pro') ? 'gemini-pro-latest' : 'gemini-flash-latest';
+    let fallback = 'gemini-2.5-flash';
+
+    // Smart Fallback Logic
+    if (model.includes('2.5')) {
+        fallback = 'gemini-2.5-flash';
+    } else if (model.includes('3')) {
+        fallback = 'gemini-2.5-flash';
     }
 
     // Format history for REST API
@@ -317,12 +421,102 @@ export const chatWithGemini = async (
     return await generateWithFallback(primary, fallback, payload);
 }
 
+/**
+ * Streaming chat with Gemini - yields tokens as they arrive.
+ * This provides the premium "typing" effect like ChatGPT.
+ */
+export const streamChatWithGemini = async (
+    model: string,
+    history: { role: string, parts: ChatPart[] }[],
+    message: string | ChatPart[],
+    systemInstruction: string | undefined,
+    onToken: (token: string, fullText: string) => void,
+    onComplete: (fullText: string) => void,
+    onError: (error: Error) => void
+): Promise<void> => {
+    try {
+        const apiKey = getApiKey();
+
+        // Format history for REST API
+        const contents = history.map(h => ({
+            role: h.role,
+            parts: h.parts
+        }));
+
+        // Add new message
+        const newParts = typeof message === 'string' ? [{ text: message }] :
+            Array.isArray(message) ? message : [message];
+        contents.push({ role: 'user', parts: newParts as any });
+
+        const payload: any = {
+            contents,
+            systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined
+        };
+
+        // Use streamGenerateContent endpoint
+        const url = `${API_BASE_URL}/${model}:streamGenerateContent?key=${apiKey}&alt=sse`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`API Error (${response.status}): ${errText}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+            throw new Error("No response body");
+        }
+
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            // Parse SSE format: data: {...}\n\n
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed === 'data: [DONE]') continue;
+
+                if (trimmed.startsWith('data: ')) {
+                    try {
+                        const json = JSON.parse(trimmed.slice(6));
+                        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (text) {
+                            fullText += text;
+                            onToken(text, fullText);
+                        }
+                    } catch (e) {
+                        // Ignore parse errors for incomplete chunks
+                    }
+                }
+            }
+        }
+
+        onComplete(fullText);
+    } catch (error: any) {
+        onError(error);
+    }
+}
+
 // --- Feature 5: Analyze Images ---
 export const analyzeImage = async (base64Image: string, prompt: string = "Analyze this image") => {
     // logger.debug("AI Service: Analyzing image...");
     const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
     return await generateWithFallback(
-        'gemini-2.5-pro',
+        'gemini-1.5-pro',
         'gemini-pro-latest',
         {
             contents: [{
@@ -340,7 +534,7 @@ export const quickAsk = async (prompt: string) => {
     // logger.debug("AI Service: Quick ask (Flash-Lite):", prompt);
     return await generateWithFallback(
         'gemini-2.5-flash-lite',
-        'gemini-flash-lite-latest',
+        'gemini-2.5-flash',
         { contents: [{ parts: [{ text: prompt }] }] }
     );
 }
@@ -352,7 +546,7 @@ export const deepThink = async (prompt: string) => {
     // Note: Thinking config might not be supported in v1beta REST API yet or requires specific field
     // We'll omit thinkingConfig for safety in REST fallback or pass it if known working
     return await generateWithFallback(
-        'gemini-2.5-pro',
+        'gemini-1.5-pro',
         'gemini-pro-latest',
         {
             contents: [{ parts: [{ text: fullPrompt }] }]

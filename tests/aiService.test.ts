@@ -79,7 +79,7 @@ describe('aiService', () => {
             expect(result).toBe('Fallback Success');
             expect(mockFetch).toHaveBeenCalledTimes(2);
             // Verify models in URL
-            expect(mockFetch.mock.calls[0][0]).toContain('gemini-2.5-flash');
+            expect(mockFetch.mock.calls[0][0]).toContain('gemini-1.5-flash');
             expect(mockFetch.mock.calls[1][0]).toContain('gemini-flash-latest');
         });
 

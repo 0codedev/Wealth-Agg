@@ -1,12 +1,17 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import LoginPage from './components/auth/LoginPage';
+import { FamilyProvider, useFamily } from './contexts/FamilyContext';
+import ProfileMenu from './components/layout/ProfileMenu';
 import {
     LayoutDashboard, Wallet, Globe, Bot,
     Menu, Search, Bell,
     Compass, TrendingUp, ShieldCheck, Clipboard,
-    Activity, Zap, BookOpen, Brain, Eye, EyeOff, Moon, Sun, Target, Heart
+    Activity, Zap, BookOpen, Brain, Eye, EyeOff, Moon, Sun, Target, Heart, Lightbulb, Crown, AlertTriangle, Layers, Shield
 } from 'lucide-react';
 
-// Layout
+// Components
+import { CommandPalette } from './components/ui/CommandPalette';
 import Sidebar from './components/layout/Sidebar';
 
 // Critical Path - Load eagerly
@@ -28,6 +33,13 @@ const AlphaPredator = lazy(() => import('./components/growth/AlphaPredator'));
 const PaperTrading = lazy(() => import('./components/tabs/market/PaperTrading').then(m => ({ default: m.PaperTrading })));
 const RetirementPlanner = lazy(() => import('./components/tabs/RetirementPlanner'));
 const LegacyVault = lazy(() => import('./components/tabs/LegacyVault'));
+const Boardroom = lazy(() => import('./components/innovation/Boardroom').then(m => ({ default: m.Boardroom })));
+const BlackSwan = lazy(() => import('./components/innovation/BlackSwan').then(m => ({ default: m.BlackSwan })));
+const OpportunityCost = lazy(() => import('./components/innovation/OpportunityCost').then(m => ({ default: m.OpportunityCost })));
+const DynastyMode = lazy(() => import('./components/innovation/DynastyMode').then(m => ({ default: m.DynastyMode })));
+const ImpulseCheck = lazy(() => import('./components/innovation/ImpulseCheck').then(m => ({ default: m.ImpulseCheck })));
+const QuantDashboard = lazy(() => import('./components/analytics/QuantDashboard').then(m => ({ default: m.QuantDashboard })));
+const FortressDashboard = lazy(() => import('./components/fortress/FortressDashboard').then(m => ({ default: m.FortressDashboard })));
 
 // Modals
 import AddInvestmentModal from './components/AddInvestmentModal';
@@ -38,6 +50,7 @@ import { PrivacyValue } from './components/shared/PrivacyComponents';
 import { CustomTooltip } from './components/shared/CustomTooltip';
 import { DashboardSkeleton } from './components/shared/Skeleton';
 import { Tabs } from './components/ui/AnimatedTabs';
+import OfflineIndicator from './components/shared/OfflineIndicator';
 
 // Hooks & Store
 import { usePortfolio } from './hooks/usePortfolio';
@@ -75,6 +88,19 @@ const SUB_TABS: Record<string, { id: string, label: string, icon: any }[]> = {
     planning: [
         { id: 'retirement', label: 'Retirement & FIRE', icon: Target },
         { id: 'legacy', label: 'Legacy Vault', icon: Heart }
+    ],
+    innovation: [
+        { id: 'boardroom', label: 'AI Boardroom', icon: Brain },
+        { id: 'blackswan', label: 'Stress Test Lab', icon: ShieldCheck },
+        { id: 'oppcost', label: 'Regret Engine', icon: Compass },
+        { id: 'dynasty', label: 'Dynasty View', icon: Crown },
+        { id: 'impulse', label: 'Anti-Impulse', icon: AlertTriangle },
+    ],
+    analytics: [
+        { id: 'quant', label: 'Deep Quant', icon: Layers },
+    ],
+    fortress: [
+        { id: 'dashboard', label: 'Command Center', icon: Shield },
     ]
 };
 
@@ -85,11 +111,26 @@ const CATEGORY_LABELS: Record<string, string> = {
     ipo: 'IPO War Room',
     journal: 'Psych Dashboard',
     growth: 'Growth Engine',
-    planning: 'Life Planner'
+    planning: 'Life Planner',
+    innovation: 'Moonshot Lab',
+    analytics: 'Analytics Center',
+    fortress: 'The Fortress'
 };
 
-const App: React.FC = () => {
+
+
+// ... (keep existing imports)
+
+const AppContent: React.FC = () => {
+    // --- Auth Check ---
+    const { isAuthenticated, isLocked } = useAuth();
+
+    if (!isAuthenticated || isLocked) {
+        return <LoginPage />;
+    }
+
     // --- UI State ---
+    const { activeEntity, setActiveEntity } = useFamily(); // Get active entity
     const [activeCategory, setActiveCategory] = useState<string>('dashboard');
     const [activeSubTab, setActiveSubTab] = useState<string>('dashboard');
     // Hoisted Dashboard State for Global Hotkey Access
@@ -97,7 +138,7 @@ const App: React.FC = () => {
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isPrivacyMode, setIsPrivacyMode] = useState(false);
-    const { isDarkMode, updateSetting } = useSettingsStore();
+    const { isDarkMode, isHighContrast, updateSetting } = useSettingsStore();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
     // --- Modals ---
@@ -109,15 +150,52 @@ const App: React.FC = () => {
 
     // --- Data ---
     const {
-        investments, stats, allocationData, assetClassData, platformData,
+        investments: allInvestments, // Rename to allInvestments
+        stats: globalStats, // Rename to globalStats (Note: stats might need re-calc if they are pre-calculated)
+        allocationData, assetClassData, platformData,
         projectionData, history, lifeEvents,
         addInvestment, updateInvestment, deleteInvestment,
         addLifeEvent, deleteLifeEvent, refreshRecurringInvestments, refreshData
     } = usePortfolio();
 
+    // --- Filter logic ---
+    const investments = React.useMemo(() => {
+        if (activeEntity === 'ALL') return allInvestments;
+        return allInvestments.filter(inv => {
+            const owner = inv.owner || 'SELF';
+            return owner === activeEntity;
+        });
+    }, [allInvestments, activeEntity]);
+
+    // Recalculate basic stats for the filtered View
+    // Note: This relies on simple summation. Sophisticated stats from backend/hook might be inaccurate if not re-fetched.
+    // Assuming 'stats' object structure from usePortfolio, let's try to patch `totalCurrent`.
+    const stats = React.useMemo(() => {
+        if (activeEntity === 'ALL') return globalStats;
+
+        // Calculate stats for the specific entity, explicitly excluding hidden assets to match global logic
+        const activeInvestments = investments.filter(inv => !inv.isHiddenFromTotals);
+        const totalCurrent = activeInvestments.reduce((sum, inv) => sum + (inv.currentValue || 0), 0);
+        const totalInvested = activeInvestments.reduce((sum, inv) => sum + (inv.investedAmount || 0), 0);
+        const totalPL = totalCurrent - totalInvested;
+        const totalPLPercent = totalInvested > 0 ? ((totalPL / totalInvested) * 100).toFixed(2) : '0.00';
+
+        return {
+            ...globalStats,
+            totalCurrent,
+            totalAssets: totalCurrent,
+            totalInvested,
+            totalPL,
+            totalPLPercent,
+            totalGain: totalPL,
+            totalGainPercent: totalPLPercent
+        };
+    }, [globalStats, investments, activeEntity]);
+
+
     const { vix, status: marketStatus } = useMarketSentiment();
 
-    // --- Effects & Hotkeys ---
+    // ... (keep existing Effects & Hotkeys)
     // Search (Cmd+K)
     useHotkeys('ctrl+k', (e) => {
         e.preventDefault();
@@ -165,6 +243,14 @@ const App: React.FC = () => {
         }
     }, [isDarkMode]);
 
+    useEffect(() => {
+        if (isHighContrast) {
+            document.documentElement.classList.add('high-contrast');
+        } else {
+            document.documentElement.classList.remove('high-contrast');
+        }
+    }, [isHighContrast]);
+
     // --- Handlers ---
     const handleAddAsset = async (asset: any) => {
         await addInvestment(asset);
@@ -180,8 +266,8 @@ const App: React.FC = () => {
     // --- Render Content ---
     const renderContent = () => {
         const commonProps = {
-            investments,
-            stats,
+            investments, // PASSING FILTERED INVESTMENTS
+            stats,       // PASSING FILTERED STATS
             allocationData,
             assetClassData,
             platformData,
@@ -226,6 +312,13 @@ const App: React.FC = () => {
             case 'academy': return <Academy />;
             case 'retirement': return <RetirementPlanner {...commonProps} currentCorpus={stats?.totalCurrent || 0} />;
             case 'legacy': return <LegacyVault {...commonProps} />;
+            case 'boardroom': return <Boardroom />;
+            case 'blackswan': return <BlackSwan />;
+            case 'oppcost': return <OpportunityCost />;
+            case 'dynasty': return <DynastyMode />;
+            case 'impulse': return <ImpulseCheck />;
+            case 'quant': return <QuantDashboard />;
+            case 'fortress': return <FortressDashboard />;
             default: return <DashboardTab {...commonProps} view={dashboardView} onViewChange={setDashboardView} />;
         }
     };
@@ -255,7 +348,7 @@ const App: React.FC = () => {
                     className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent flex flex-col"
                 >
                     {/* Header - Sticky on mobile, scrolls on desktop */}
-                    <header className="mobile-sticky-header h-16 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shrink-0 z-20">
+                    <header className="mobile-sticky-header h-16 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shrink-0 z-[60]">
                         <div className="flex items-center gap-4">
                             {/* Mobile Toggle Button */}
                             <button
@@ -417,7 +510,8 @@ const App: React.FC = () => {
                             {/* Smart Alerts Dropdown */}
                             <AlertsDropdown investments={investments} />
 
-                            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full ring-2 ring-slate-100 dark:ring-slate-800 cursor-pointer hover:shadow-lg transition-transform hover:scale-105" title="User Profile"></div>
+                            {/* PROFILE MENU REPLACED HERE */}
+                            <ProfileMenu />
                         </div>
                     </header>
 
@@ -452,11 +546,30 @@ const App: React.FC = () => {
                 onClose={() => setIsSettingsOpen(false)}
             />
             {/* Jarvis Voice Interface */}
-            <JarvisOrb onNavigate={(tab) => {
-                setActiveCategory(tab); // Assuming 'tab' here refers to a main category
-                // Also ensure we scroll to top or handle specific sub-tabs if needed
-            }} />
+            <CommandPalette />
+            <JarvisOrb
+                onNavigate={(tab) => {
+                    setActiveCategory(tab);
+                    // Also ensure we scroll to top or handle specific sub-tabs if needed
+                }}
+                onSwitchProfile={(id) => {
+                    // Type safety cast, though Jarvis service sends valid strings
+                    setActiveEntity(id as any);
+                }}
+            />
+            <OfflineIndicator />
         </div>
+    );
+};
+
+// Wrap AppContent in FamilyProvider
+const App: React.FC = () => {
+    return (
+        <AuthProvider>
+            <FamilyProvider>
+                <AppContent />
+            </FamilyProvider>
+        </AuthProvider>
     );
 };
 

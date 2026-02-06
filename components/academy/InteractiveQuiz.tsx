@@ -20,7 +20,24 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({ onClose }) => 
     const [score, setScore] = useState(0);
     const [correctAnswers, setCorrectAnswers] = useState(0);
     const [startTime, setStartTime] = useState<number>(0);
-    const [progress, setProgress] = useState<UserProgress>(quizEngine.loadProgress());
+    const [progress, setProgress] = useState<UserProgress>({
+        totalXP: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        quizzesCompleted: 0,
+        categoryProgress: {},
+        lastQuizDate: null,
+        badges: [],
+    });
+
+    // Load progress on mount
+    useEffect(() => {
+        const load = async () => {
+            const saved = await quizEngine.loadProgress();
+            setProgress(saved);
+        };
+        load();
+    }, []);
 
     const categories = quizEngine.getCategories();
     const badges = quizEngine.getBadges();
@@ -64,7 +81,7 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({ onClose }) => 
         setIsAnswerRevealed(true);
     };
 
-    const handleNextQuestion = () => {
+    const handleNextQuestion = async () => {
         if (currentIndex + 1 >= questions.length) {
             // Quiz complete - calculate results
             const timeTaken = Math.floor((Date.now() - startTime) / 1000);
@@ -81,7 +98,7 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({ onClose }) => 
                 xpEarned,
             };
 
-            const newProgress = quizEngine.recordResult(result);
+            const newProgress = await quizEngine.recordResult(result);
             setProgress(newProgress);
             setMode('results');
         } else {
@@ -223,8 +240,8 @@ export const InteractiveQuiz: React.FC<InteractiveQuizProps> = ({ onClose }) => 
                         {/* Difficulty Badge */}
                         <div className="flex items-center justify-between mb-4">
                             <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${currentQuestion.difficulty === 'beginner' ? 'bg-emerald-100 text-emerald-700' :
-                                    currentQuestion.difficulty === 'intermediate' ? 'bg-amber-100 text-amber-700' :
-                                        'bg-rose-100 text-rose-700'
+                                currentQuestion.difficulty === 'intermediate' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-rose-100 text-rose-700'
                                 }`}>
                                 {currentQuestion.difficulty}
                             </span>

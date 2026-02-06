@@ -307,11 +307,12 @@ const Academy: React.FC = () => {
                                 })}
                             </div>
                         </div>
-                        </div>
                     )}
+                </div>
             </div>
         </div>
     );
 };
 
-export default Academy;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(Academy);

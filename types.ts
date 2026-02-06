@@ -35,11 +35,13 @@ export interface Investment {
   country?: string;
   tags?: string[];
   category?: 'PORTFOLIO' | 'TRADING_WALLET';
+  quantity?: number;
   investedAmount: number;
   currentValue: number;
   lastUpdated: string; // ISO Date string
   recurring?: RecurringConfig;
   isHiddenFromTotals?: boolean;
+  owner?: 'SELF' | 'SPOUSE' | 'HUF' | 'KIDS' | 'JOINT' | 'MOM'; // Family Office Support
 }
 
 export interface HistoryEntry {

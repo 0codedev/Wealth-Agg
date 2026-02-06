@@ -54,8 +54,8 @@ export const TradeJournal: React.FC<TradeJournalProps> = ({ onAddTrade, onEditTr
                 return true;
             })
             .filter(t =>
-                t.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                t.strategy?.toLowerCase().includes(searchTerm.toLowerCase())
+                t.ticker.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.setup?.toLowerCase().includes(searchTerm.toLowerCase())
             )
             .sort((a, b) => {
                 if (sortBy === 'pnl') return calculatePnL(b) - calculatePnL(a);
@@ -175,17 +175,17 @@ export const TradeJournal: React.FC<TradeJournalProps> = ({ onAddTrade, onEditTr
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-bold text-slate-900 dark:text-white">
-                                                        {trade.symbol}
+                                                        {trade.ticker}
                                                     </span>
-                                                    <span className={`px-2 py-0.5 text-xs rounded-full ${trade.type === 'LONG'
+                                                    <span className={`px-2 py-0.5 text-xs rounded-full ${trade.direction === 'Long'
                                                         ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400'
                                                         : 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400'
                                                         }`}>
-                                                        {trade.type}
+                                                        {trade.direction}
                                                     </span>
-                                                    {trade.strategy && (
+                                                    {trade.setup && (
                                                         <span className="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
-                                                            {trade.strategy}
+                                                            {trade.setup}
                                                         </span>
                                                     )}
                                                 </div>

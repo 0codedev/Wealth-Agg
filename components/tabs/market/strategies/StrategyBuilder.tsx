@@ -7,6 +7,7 @@ import {
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart
 } from 'recharts';
+import { formatCurrencyCompact as formatCurrency } from '../../../../utils/helpers';
 
 // ==================== TYPES ====================
 interface BacktestResult {
@@ -32,6 +33,7 @@ interface Strategy {
 
 // ==================== MOCK HISTORICAL DATA ====================
 // Simulated Nifty 50 monthly returns (2014-2024)
+// Simulated Nifty 50 monthly returns (2014-2025)
 const NIFTY_MONTHLY_RETURNS = [
     0.07, 0.03, 0.05, -0.02, 0.04, 0.01, 0.06, -0.03, 0.02, 0.04, -0.01, 0.03, // 2014
     0.02, 0.01, -0.04, 0.03, 0.02, -0.01, 0.05, -0.06, -0.02, 0.03, 0.01, 0.02, // 2015
@@ -44,6 +46,7 @@ const NIFTY_MONTHLY_RETURNS = [
     -0.01, -0.03, 0.04, -0.02, -0.03, -0.05, 0.09, 0.04, -0.03, -0.02, 0.04, -0.04, // 2022
     -0.03, -0.01, -0.01, 0.04, 0.03, 0.04, 0.03, -0.03, 0.02, -0.03, 0.06, 0.08, // 2023
     0.02, 0.00, 0.02, -0.01, 0.04, 0.05, 0.04, 0.01, 0.02, -0.06, 0.00, 0.01, // 2024
+    -0.05, 0.02, 0.03 // 2025 (Partial)
 ];
 
 // ==================== PRESET STRATEGIES ====================
@@ -254,11 +257,7 @@ const StrategyBuilder: React.FC = () => {
         }, 500);
     };
 
-    const formatCurrency = (val: number) => {
-        if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;
-        if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
-        return `₹${val.toLocaleString()}`;
-    };
+
 
     return (
         <div className="bg-gradient-to-br from-slate-900 to-purple-950 rounded-2xl border border-purple-900/50 p-6 shadow-xl">
@@ -294,8 +293,8 @@ const StrategyBuilder: React.FC = () => {
                             key={strategy.id}
                             onClick={() => setSelectedStrategy(strategy.id)}
                             className={`p-3 rounded-xl border text-left transition-all ${selectedStrategy === strategy.id
-                                    ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
-                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
+                                ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
+                                : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'
                                 }`}
                         >
                             <p className="text-sm font-bold truncate">{strategy.name}</p>

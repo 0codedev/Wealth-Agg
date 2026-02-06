@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Settings, AlertTriangle, Save, RefreshCw, Cpu, Database, Signal } from 'lucide-react';
+import { X, Settings, AlertTriangle, Save, RefreshCw, Cpu, Database, Signal, Eye } from 'lucide-react';
 import { useSettingsStore } from '../store/settingsStore';
 import DataBackupSettings from './DataBackupSettings';
 
@@ -15,7 +15,8 @@ const LogicConfigModal: React.FC<LogicConfigModalProps> = ({ isOpen, onClose }) 
     if (!isOpen) return null;
 
     const handleChange = (key: keyof typeof settings, value: string) => {
-        if (key === 'targetDate' || key === 'geminiApiKey') {
+        // String fields that should NOT be parsed as numbers
+        if (key === 'targetDate' || key === 'geminiApiKey' || key === 'groqApiKey') {
             settings.updateSetting(key, value);
             return;
         }
@@ -159,6 +160,26 @@ const LogicConfigModal: React.FC<LogicConfigModalProps> = ({ isOpen, onClose }) 
                         <DataBackupSettings />
                     </div>
 
+
+                    {/* Section 5: Accessibility */}
+                    <div className="mt-6 border-t border-slate-800 pt-6">
+                        <h3 className="text-xs font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
+                            <Eye size={14} /> Accessibility
+                        </h3>
+                        <div className="flex items-center justify-between p-4 bg-slate-900 rounded-xl border border-slate-800">
+                            <div>
+                                <label className="text-sm font-bold text-white">High Contrast Mode</label>
+                                <p className="text-xs text-slate-500 mt-1">Maximizes contrast for better readability in bright environments.</p>
+                            </div>
+                            <button
+                                onClick={() => settings.updateSetting('isHighContrast', !settings.isHighContrast)}
+                                className={`w-12 h-6 rounded-full transition-colors relative ${settings.isHighContrast ? 'bg-yellow-400' : 'bg-slate-700'}`}
+                            >
+                                <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-black shadow-sm transition-transform ${settings.isHighContrast ? 'translate-x-6' : 'translate-x-0'}`} />
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Section 0: AI & Cloud Services (Lifetime Access) - Moved to Bottom */}
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -183,17 +204,17 @@ const LogicConfigModal: React.FC<LogicConfigModalProps> = ({ isOpen, onClose }) 
 
                             <div className="space-y-3">
                                 <div>
-                                    <label className="block text-xs text-slate-400 mb-1">RapidAPI Key (Bulk Deals)</label>
+                                    <label className="block text-xs text-slate-400 mb-1">RapidAPI Key (Indian Stocks)</label>
                                     <input
                                         type="password"
-                                        placeholder="Yahoo Finance Core Key..."
+                                        placeholder="Indian Stock Exchange API Key..."
                                         value={settings.apiKeys?.rapidApi || ''}
                                         onChange={(e) => settings.updateSetting('apiKeys', { ...settings.apiKeys, rapidApi: e.target.value })}
                                         className="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 focus:border-emerald-500 outline-none font-mono text-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs text-slate-400 mb-1">AlphaVantage Key (Insider)</label>
+                                    <label className="block text-xs text-slate-400 mb-1">Alpha Vantage Key (Commodities)</label>
                                     <input
                                         type="password"
                                         placeholder="Free API Key..."
@@ -202,8 +223,31 @@ const LogicConfigModal: React.FC<LogicConfigModalProps> = ({ isOpen, onClose }) 
                                         className="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 focus:border-emerald-500 outline-none font-mono text-sm"
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1">Finnhub Key (Global Indices)</label>
+                                    <input
+                                        type="password"
+                                        placeholder="Free API Key..."
+                                        value={settings.apiKeys?.finnhub || ''}
+                                        onChange={(e) => settings.updateSetting('apiKeys', { ...settings.apiKeys, finnhub: e.target.value })}
+                                        className="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 focus:border-emerald-500 outline-none font-mono text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs text-slate-400 mb-1">FMP Key (Earnings Calendar)</label>
+                                    <input
+                                        type="password"
+                                        placeholder="Free API Key..."
+                                        value={settings.apiKeys?.fmp || ''}
+                                        onChange={(e) => settings.updateSetting('apiKeys', { ...settings.apiKeys, fmp: e.target.value })}
+                                        className="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 focus:border-emerald-500 outline-none font-mono text-sm"
+                                    />
+                                </div>
                                 <p className="text-[10px] text-slate-500 mt-1">
-                                    Need keys? Check the <span className="text-emerald-400">Setup Guide</span> in docs.
+                                    All keys are FREE. Get them from <a href="https://rapidapi.com" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">RapidAPI</a>,
+                                    <a href="https://alphavantage.co" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline ml-1">Alpha Vantage</a>,
+                                    <a href="https://finnhub.io" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline ml-1">Finnhub</a>,
+                                    <a href="https://financialmodelingprep.com" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline ml-1">FMP</a>
                                 </p>
                             </div>
                         </div>
@@ -231,7 +275,27 @@ const LogicConfigModal: React.FC<LogicConfigModalProps> = ({ isOpen, onClose }) 
                                 </div>
                                 <p className="text-[10px] text-slate-500 mt-1">
                                     Get a free key from <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-indigo-400 hover:underline">Google AI Studio</a>.
-                                    This ensures the Advisor works forever.
+                                </p>
+                            </div>
+                            <div className="mt-4">
+                                <label className="block text-xs text-slate-400 mb-1">Groq API Key</label>
+                                <div className="relative">
+                                    <input
+                                        type="password"
+                                        placeholder="gsk_... (For Llama, DeepSeek, Qwen models)"
+                                        value={settings.groqApiKey}
+                                        onChange={(e) => handleChange('groqApiKey', e.target.value)}
+                                        className="w-full bg-slate-900 border border-slate-700 text-white rounded p-2 pl-3 pr-10 focus:border-orange-500 outline-none font-mono text-sm"
+                                    />
+                                    {settings.groqApiKey && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
+                                            <Save size={14} />
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="text-[10px] text-slate-500 mt-1">
+                                    Get a free key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-orange-400 hover:underline">Groq Console</a>.
+                                    Ultra-fast Llama & DeepSeek models.
                                 </p>
                             </div>
                         </div>

@@ -4,7 +4,7 @@ import { useSettingsStore } from '../store/settingsStore';
 import { compressImage } from '../utils/helpers';
 import { useToast } from '../components/shared/ToastProvider';
 
-export const useTradeForm = (isOpen: boolean, onSave: () => void, onClose: () => void) => {
+export const useTradeForm = (isOpen: boolean, onSave: () => void, onClose: () => void, tradeToEdit?: Trade | null) => {
     const { toast } = useToast();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<Partial<Trade>>({
@@ -34,6 +34,31 @@ export const useTradeForm = (isOpen: boolean, onSave: () => void, onClose: () =>
 
     const riskPerTrade = useSettingsStore(state => state.riskPerTrade);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Edit Mode: Auto-Populate
+    useEffect(() => {
+        if (isOpen && tradeToEdit) {
+            setFormData(tradeToEdit);
+            // If checking rules needs to be synced, it would be complex (no stored checked state). 
+            // We'll skip rule re-checking implementation for now or just init as is.
+            setStep(1);
+        } else if (isOpen && !tradeToEdit) {
+            // Reset for New Trade
+            setFormData({
+                direction: 'Long',
+                date: new Date().toISOString().split('T')[0],
+                entryTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                mistakes: [],
+                quantity: 1,
+                grade: 'B',
+                fees: 0,
+                mae: 0,
+                mfe: 0,
+                complianceScore: 0
+            });
+            setStep(1);
+        }
+    }, [isOpen, tradeToEdit]);
 
     // Load Strategies on Open
     useEffect(() => {
@@ -158,7 +183,17 @@ export const useTradeForm = (isOpen: boolean, onSave: () => void, onClose: () =>
 
         try {
             const tradeToSave = { ...formData, riskRewardRatio: riskData.rMultiple } as Trade;
-            await db.trades.add(tradeToSave);
+
+            // Edit Mode: Update existing
+            if (tradeToSave.id) {
+                await db.trades.put(tradeToSave);
+                toast.success('Trade updated successfully');
+            } else {
+                // New Mode: Add new
+                await db.trades.add(tradeToSave);
+                toast.success('Trade logged successfully');
+            }
+
             onSave();
             onClose();
         } catch (error) {

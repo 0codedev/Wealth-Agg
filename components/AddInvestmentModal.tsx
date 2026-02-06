@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Camera, Loader2, Upload, Repeat, Calendar, Tag, Globe, Briefcase, Eye, EyeOff } from 'lucide-react';
 import { Investment, InvestmentType, RecurringFrequency } from '../types';
 import * as AIService from '../services/aiService';
+import { useFamily } from '../contexts/FamilyContext';
 
 interface AddInvestmentModalProps {
   isOpen: boolean;
@@ -11,6 +12,9 @@ interface AddInvestmentModalProps {
 }
 
 const AddInvestmentModal: React.FC<AddInvestmentModalProps> = ({ isOpen, onClose, onSave, editingInvestment }) => {
+  // Family Profile Context
+  const { activeEntity } = useFamily();
+
   // Basic Info
   const [name, setName] = useState('');
   const [type, setType] = useState<InvestmentType>(InvestmentType.MUTUAL_FUND);
@@ -87,6 +91,9 @@ const AddInvestmentModal: React.FC<AddInvestmentModalProps> = ({ isOpen, onClose
       return;
     }
 
+    // Determine owner: if editing, keep existing owner; if adding, use active profile (default to SELF for ALL view)
+    const investmentOwner = editingInvestment?.owner || (activeEntity === 'ALL' ? 'SELF' : activeEntity);
+
     const investmentData: Omit<Investment, 'id'> = {
       name,
       type,
@@ -98,6 +105,7 @@ const AddInvestmentModal: React.FC<AddInvestmentModalProps> = ({ isOpen, onClose
       country: country || undefined,
       tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
       isHiddenFromTotals, // NEW
+      owner: investmentOwner as Investment['owner'], // Assign owner based on active profile
       recurring: isRecurring ? {
         isEnabled: true,
         frequency: recurringFrequency,

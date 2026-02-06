@@ -14,14 +14,18 @@ export interface SettingsState {
   allocationTargets: Record<string, number>; // New Field
   isEditMode: boolean; // Global dashboard edit mode
   isDarkMode: boolean;
+  isHighContrast: boolean;
 
   // Real-Time Data Config
   dataMode: 'SIMULATION' | 'LIVE';
   apiKeys: {
     rapidApi?: string;
     alphaVantage?: string;
+    finnhub?: string;
+    fmp?: string;
   };
   geminiApiKey: string; // BYOK Support
+  groqApiKey: string; // Groq API Key
 
   // Google Drive Sync
   googleDriveClientId: string;
@@ -53,16 +57,20 @@ const DEFAULTS = {
   dataMode: 'SIMULATION' as const,
   apiKeys: {
     rapidApi: '',
-    alphaVantage: ''
+    alphaVantage: '',
+    finnhub: '',
+    fmp: ''
   },
 
   geminiApiKey: "",
+  groqApiKey: "",
 
   // Google Drive Sync
   googleDriveClientId: "",
   lastGoogleSyncTime: null as string | null,
 
   isDarkMode: true, // Default to Dark Mode
+  isHighContrast: false,
 };
 
 export const useSettingsStore = create<SettingsState>()(

@@ -31,7 +31,7 @@ export const MonthlySpendTrendWidget: React.FC<MonthlySpendTrendWidgetProps> = (
 
         // Map daily totals
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const chartData = [];
+        const chartData: { day: string, current: number | null, previous: number }[] = [];
         let cumCurrent = 0;
         let cumPrevious = 0;
 
@@ -103,7 +103,7 @@ export const MonthlySpendTrendWidget: React.FC<MonthlySpendTrendWidgetProps> = (
 
             <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data.data || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <LineChart data={data || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
                         <XAxis
                             dataKey="day"

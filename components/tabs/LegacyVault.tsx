@@ -250,7 +250,7 @@ const LegacyVault: React.FC<LegacyVaultProps> = ({ investments, totalNetWorth })
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={beneficiaries}
+                                    data={beneficiaries.map(b => ({ name: b.name, allocation: b.allocation, color: b.color }))}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={60}

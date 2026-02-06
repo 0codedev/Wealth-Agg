@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { jarvisCommandService, JarvisAction } from '../services/JarvisCommandService';
+import { logger } from '../services/Logger';
 
 // Browser Speech Recognition Types
 interface IWindow extends Window {
@@ -7,7 +8,14 @@ interface IWindow extends Window {
     SpeechRecognition: any;
 }
 
-export const useJarvis = (onNavigate: (tab: string) => void) => {
+// Define handlers interface
+export interface JarvisHandlers {
+    onNavigate: (tab: string) => void;
+    onSwitchProfile?: (profileId: string) => void;
+}
+
+export const useJarvis = (handlers: JarvisHandlers) => {
+    const { onNavigate, onSwitchProfile } = handlers;
     const [isListening, setIsListening] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [transcript, setTranscript] = useState('');
@@ -39,8 +47,10 @@ export const useJarvis = (onNavigate: (tab: string) => void) => {
         setLastResponse(text);
     }, []);
 
-    const processCommand = useCallback((text: string) => {
-        console.log("Jarvis Processing:", text);
+    const processText = useCallback((text: string) => {
+        logger.debug('Processing text', { text }, 'Jarvis');
+        setTranscript(text); // Show what was typed/heard
+
         const action = jarvisCommandService.processCommand(text);
 
         if (action.response) {
@@ -51,8 +61,16 @@ export const useJarvis = (onNavigate: (tab: string) => void) => {
             onNavigate(action.payload);
         }
 
+        if (action.type === 'SWITCH_PROFILE' && action.payload) {
+            if (onSwitchProfile) {
+                onSwitchProfile(action.payload);
+            } else {
+                speak("I can't switch profiles right now. Feature unavailable.");
+            }
+        }
+
         // Handle other types (REFRESH, QUERY) via callback or extended logic later
-    }, [onNavigate, speak]);
+    }, [onNavigate, onSwitchProfile, speak]);
 
     // Initialize Recognition
     useEffect(() => {
@@ -76,20 +94,20 @@ export const useJarvis = (onNavigate: (tab: string) => void) => {
 
                 // Robustness: Process immediately if "Final" flag is set by browser
                 if (result.isFinal) {
-                    console.log("Jarvis Heard (Final):", transcriptText);
-                    processCommand(transcriptText);
+                    logger.debug('Heard final transcript', { transcriptText }, 'Jarvis');
+                    processText(transcriptText); // Use unified processText
                     setIsListening(false);
                     recognition.stop();
                 }
             };
 
             recognition.onerror = (event: any) => {
-                console.warn("Jarvis Speech Error:", event.error);
+                logger.warn('Speech error', { error: event.error }, 'Jarvis');
 
                 // AUTO-RETRY LOGIC
                 if (event.error === 'no-speech') {
                     if (retryCountRef.current < 1) {
-                        console.log("Jarvis: No speech detected, retrying once...");
+                        logger.debug('No speech detected, retrying once', undefined, 'Jarvis');
                         retryCountRef.current += 1;
                         // Small delay to reset internal state
                         setTimeout(() => {
@@ -97,21 +115,16 @@ export const useJarvis = (onNavigate: (tab: string) => void) => {
                         }, 100);
                         return; // Don't stop yet
                     } else {
-                        setLastResponse("Mic timed out. Please speak closer.");
+                        setLastResponse("Mic timed out. Try typing.");
                     }
                 } else if (event.error === 'not-allowed') {
-                    setLastResponse("Microphone blocked. Check permissions.");
+                    setLastResponse("Mic blocked. Use text input.");
                 }
 
                 setIsListening(false);
             };
 
             recognition.onend = () => {
-                // Only stop state if we are truly done (not mid-retry)
-                // However, onend fires even before onerror sometimes.
-                // We rely on the start() call in onerror to flip isListening back to true if it went false.
-                // But better to manage isListening carefully.
-                // For simplicity:
                 if (retryCountRef.current >= 1 || !isListening) {
                     setIsListening(false);
                 }
@@ -119,9 +132,7 @@ export const useJarvis = (onNavigate: (tab: string) => void) => {
 
             recognitionRef.current = recognition;
         }
-    }, [processCommand]); // Dependency added for processCommand inclusion
-
-    // Removed the fragile useEffect that watched !isListening
+    }, [processText]);
 
     const toggleListening = () => {
         if (isListening) {
@@ -141,6 +152,7 @@ export const useJarvis = (onNavigate: (tab: string) => void) => {
         transcript,
         lastResponse,
         toggleListening,
+        processText, // Expose for manual input
         speak
     };
 };

@@ -296,8 +296,11 @@ const BADGES = [
     { id: 'xp_500', name: 'Scholar', icon: '🎓', description: 'Earn 500 XP' },
 ];
 
+import { db, QuizProgress } from '../database';
+
 export class QuizEngine {
     private storageKey = 'wealth_quiz_progress';
+
 
     // Get questions by category and difficulty
     getQuestions(category?: string, difficulty?: string, count: number = 5): QuizQuestion[] {
@@ -325,12 +328,27 @@ export class QuizEngine {
         ];
     }
 
-    // Load user progress from localStorage
-    loadProgress(): UserProgress {
-        const saved = localStorage.getItem(this.storageKey);
-        if (saved) {
-            return JSON.parse(saved);
+    // Load user progress from DB (with localStorage fallback)
+    async loadProgress(): Promise<UserProgress> {
+        try {
+            // Try DB first
+            const fromDb = await db.quiz_progress.get({ userId: 'default' });
+            if (fromDb) {
+                return fromDb as unknown as UserProgress;
+            }
+
+            // Fallback to localStorage (Migration)
+            const saved = localStorage.getItem(this.storageKey);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Migrate to DB
+                await this.saveProgress(parsed);
+                return parsed;
+            }
+        } catch (error) {
+            console.error('Failed to load quiz progress', error);
         }
+
         return {
             totalXP: 0,
             currentStreak: 0,
@@ -343,13 +361,20 @@ export class QuizEngine {
     }
 
     // Save user progress
-    saveProgress(progress: UserProgress): void {
-        localStorage.setItem(this.storageKey, JSON.stringify(progress));
+    async saveProgress(progress: UserProgress): Promise<void> {
+        try {
+            // @ts-ignore - Schema matches but types might be strict
+            await db.quiz_progress.put({ ...progress, userId: 'default' });
+            // Keep Backup
+            localStorage.setItem(this.storageKey, JSON.stringify(progress));
+        } catch (error) {
+            console.error('Failed to save quiz progress', error);
+        }
     }
 
     // Record quiz result and update progress
-    recordResult(result: QuizResult): UserProgress {
-        const progress = this.loadProgress();
+    async recordResult(result: QuizResult): Promise<UserProgress> {
+        const progress = await this.loadProgress();
 
         // Update XP
         progress.totalXP += result.xpEarned;
@@ -371,7 +396,7 @@ export class QuizEngine {
         // Check for new badges
         this.checkBadges(progress, result);
 
-        this.saveProgress(progress);
+        await this.saveProgress(progress);
         return progress;
     }
 

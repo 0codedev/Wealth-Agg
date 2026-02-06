@@ -16,7 +16,10 @@ const STORAGE_KEYS = [
   'academy_completed_items',   // Education Progress
   'fortress_notes',            // Fortress Private Notes
   'fortress_hash',             // Fortress Security Hash
-  'dashboard-widget-order-v8'  // Dashboard Layout Preference (v8: Refactored Layout with Smart Actions + Phase 8 Widgets)
+  'dashboard-widget-order-v8', // Dashboard Layout Preference (v8: Refactored Layout with Smart Actions + Phase 8 Widgets)
+  'trading-journal-prefs',     // Trading Journal View Settings (Sort, Filter, View Mode)
+  'wealth-aggregator-alerts',  // Smart Alerts Store
+  'category-rules-storage'     // Transaction Categorization Rules
 ];
 
 /**
@@ -131,5 +134,76 @@ export const restoreFromJSON = async (jsonData: any): Promise<void> => {
       }
     });
     logger.info("[BACKUP SERVICE] LocalStorage restored.");
+  }
+};
+
+
+/**
+ * Convert JSON array to CSV string
+ */
+const exportToCSV = (data: any[], filename: string) => {
+  if (!data || !data.length) {
+    logger.warn("No data to export");
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const csvContent = [
+    headers.join(','),
+    ...data.map(row => headers.map(fieldName => {
+      const val = row[fieldName];
+      // Escape quotes and wrap in quotes if contains comma
+      if (typeof val === 'string') {
+        return `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    }).join(','))
+  ].join('\n');
+
+  try {
+    // Create Blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (err) {
+    logger.error("CSV Export Failed:", err);
+  }
+}
+
+/**
+ * Exports current holdings as CSV
+ */
+export const handleExportHoldings = async () => {
+  try {
+    const holdings = await db.investments.toArray();
+    if (holdings.length === 0) {
+      alert("No holdings to export.");
+      return;
+    }
+
+    // Format for readability
+    const formatted = holdings.map(h => ({
+      Name: h.name,
+      Ticker: h.ticker || '',
+      Type: h.type,
+      Platform: h.platform,
+      Quantity: h.quantity || 0,
+      Invested: h.investedAmount,
+      CurrentValue: h.currentValue,
+      NetPL: h.currentValue - h.investedAmount,
+      Sector: h.sector || '',
+      LastUpdated: h.lastUpdated
+    }));
+
+    exportToCSV(formatted, `WealthHoldings_${new Date().toISOString().split('T')[0]}.csv`);
+    logger.info("Holdings exported successfully");
+  } catch (err) {
+    logger.error("Failed to export holdings:", err);
+    alert("Failed to export holdings");
   }
 };

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTransactions } from '../../../contexts/TransactionContext';
 import { findSubscriptionTraps } from '../../../utils/liabilityDetector';
-import { AlertOctagon, RefreshCw, XCircle } from 'lucide-react';
+import { ShieldCheck, Calendar, Zap, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '../../../utils/helpers';
 
 export const LiabilityWatchdogWidget: React.FC = () => {
@@ -14,64 +14,67 @@ export const LiabilityWatchdogWidget: React.FC = () => {
 
     const totalYearlyDrag = traps.reduce((sum, t) => sum + t.yearlyImpact, 0);
 
-    if (traps.length === 0) {
-        return (
-            <div className="glass-panel p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-3 opacity-60 hover:opacity-100 transition-opacity">
-                <div className="p-3 bg-emerald-500/10 rounded-full text-emerald-500">
-                    <RefreshCw size={24} />
-                </div>
-                <h3 className="text-slate-300 font-bold">No Traps Detected</h3>
-                <p className="text-xs text-slate-500 max-w-[200px]">
-                    Your cash flow looks clean. No hidden subscriptions found.
-                </p>
-            </div>
-        );
-    }
-
     return (
-        <div className="glass-panel p-6 rounded-2xl border border-rose-500/20 relative overflow-hidden">
+        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 relative overflow-hidden h-full flex flex-col group hover:border-emerald-500/20 transition-all">
             {/* Header */}
-            <div className="flex justify-between items-start mb-4">
-                <div>
-                    <h3 className="text-rose-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                        <AlertOctagon size={14} /> Liability Watchdog
-                    </h3>
-                    <p className="text-2xl font-black text-white mt-1">
-                        {formatCurrency(totalYearlyDrag)}
-                        <span className="text-xs font-bold text-slate-500 ml-1">/YR DRAG</span>
-                    </p>
+            <div className="flex justify-between items-start mb-6 w-full">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500">
+                        <ShieldCheck size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-black text-white uppercase tracking-wider">DEBT RADAR</h3>
+                        <p className="text-[10px] text-slate-500 font-mono font-bold uppercase">Perimeter Secure</p>
+                    </div>
                 </div>
-                <div className="px-2 py-1 bg-rose-500/10 rounded text-rose-500 text-xs font-bold animate-pulse">
-                    {traps.length} ALERTS
+
+                <div className="px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    SECURE
                 </div>
             </div>
 
-            {/* List */}
-            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                {traps.map((trap, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl border border-rose-500/10 group hover:border-rose-500/30 transition-all">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">
-                                {trap.merchant.charAt(0)}
-                            </div>
-                            <div>
-                                <p className="text-sm font-bold text-slate-200 capitalize">{trap.merchant}</p>
-                                <p className="text-[10px] text-slate-500 uppercase flex items-center gap-1">
-                                    <RefreshCw size={10} /> {trap.frequency}
-                                </p>
-                            </div>
+            {/* Content Area */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10">
+                {traps.length === 0 ? (
+                    <div className="space-y-4 py-4">
+                        <div className="w-20 h-20 mx-auto rounded-full border-2 border-slate-800 flex items-center justify-center bg-slate-900/50">
+                            <ShieldCheck size={40} className="text-emerald-900" style={{ opacity: 0.5 }} />
                         </div>
-                        <div className="text-right">
-                            <p className="font-mono font-bold text-rose-400">{formatCurrency(trap.amount)}</p>
-                            <p className="text-[10px] text-slate-500">{trap.riskLevel} Risk</p>
+                        <div>
+                            <h4 className="text-slate-300 font-bold text-sm mb-1">No Active Traps</h4>
+                            <p className="text-[10px] text-slate-600 max-w-[180px] mx-auto leading-relaxed">
+                                Cash flow signals are clean. No recurring leaks found.
+                            </p>
                         </div>
                     </div>
-                ))}
+                ) : (
+                    <div className="w-full space-y-3">
+                        {traps.slice(0, 3).map((trap, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-slate-800 rounded flex items-center justify-center text-xs font-bold text-slate-500 uppercase">
+                                        {trap.merchant.charAt(0)}
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-xs font-bold text-slate-300 capitalize">{trap.merchant}</p>
+                                        <p className="text-[10px] text-slate-600 font-mono">{trap.frequency}</p>
+                                    </div>
+                                </div>
+                                <p className="text-xs font-mono font-bold text-rose-500">{formatCurrency(trap.amount)}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
-            <p className="mt-4 text-[10px] text-slate-500 text-center uppercase font-bold tracking-wider">
-                Kill these to save {formatCurrency(totalYearlyDrag)}/yr
-            </p>
+            {/* Background Radar Rings */}
+            {traps.length === 0 && (
+                <div className="absolute inset-0 pointer-events-none opacity-20">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border border-slate-800 rounded-full" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-slate-800 rounded-full" />
+                </div>
+            )}
         </div>
     );
 };

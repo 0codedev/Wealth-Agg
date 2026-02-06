@@ -5,11 +5,15 @@
 import { Transaction } from '../contexts/TransactionContext';
 
 export interface RecurringPattern {
+    id: string; // Unique identifier
     merchant: string;
     amount: number;
+    avgAmount?: number; // Average amount for display
     frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
+    patternType?: 'SIP' | 'Subscription' | 'Bill' | 'Other'; // Type of recurring pattern
     lastDate: string;
     nextExpected: string;
+    nextExpectedDate?: string; // Alias for nextExpected for widget compatibility
     count: number;
 }
 
@@ -18,6 +22,37 @@ export interface AnomalyResult {
     reason: string;
     severity: 'low' | 'medium' | 'high';
     deviation: number;
+    avgAmount?: number;
+}
+
+/**
+ * Helper to detect the type of recurring pattern
+ */
+function detectPatternType(merchant: string, amount: number): RecurringPattern['patternType'] {
+    const lowerMerchant = merchant.toLowerCase();
+
+    // SIP patterns (investment-related)
+    if (lowerMerchant.includes('sip') || lowerMerchant.includes('mutual') ||
+        lowerMerchant.includes('zerodha') || lowerMerchant.includes('groww') ||
+        lowerMerchant.includes('invest') || lowerMerchant.includes('coin')) {
+        return 'SIP';
+    }
+
+    // Subscription patterns
+    if (lowerMerchant.includes('netflix') || lowerMerchant.includes('spotify') ||
+        lowerMerchant.includes('amazon prime') || lowerMerchant.includes('youtube') ||
+        lowerMerchant.includes('hotstar') || lowerMerchant.includes('subscription')) {
+        return 'Subscription';
+    }
+
+    // Bill patterns
+    if (lowerMerchant.includes('electricity') || lowerMerchant.includes('water') ||
+        lowerMerchant.includes('gas') || lowerMerchant.includes('internet') ||
+        lowerMerchant.includes('mobile') || lowerMerchant.includes('bill')) {
+        return 'Bill';
+    }
+
+    return 'Other';
 }
 
 /**
@@ -63,11 +98,15 @@ export function detectRecurringPatterns(transactions: Transaction[]): RecurringP
                 const nextExpected = new Date(lastDate.getTime() + avgInterval * 24 * 60 * 60 * 1000);
 
                 patterns.push({
+                    id: `pattern_${merchant.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}`,
                     merchant,
                     amount: avgAmount,
+                    avgAmount, // For widget display
                     frequency,
+                    patternType: detectPatternType(merchant, avgAmount),
                     lastDate: lastDate.toISOString(),
                     nextExpected: nextExpected.toISOString(),
+                    nextExpectedDate: nextExpected.toISOString(), // Alias for widget
                     count: txns.length
                 });
             }
@@ -110,7 +149,8 @@ export function detectAnomalies(transactions: Transaction[]): AnomalyResult[] {
                     transaction: txn,
                     reason: deviation > 0 ? 'Unusually high spending' : 'Unusually low spending',
                     severity: Math.abs(deviation) > 3 ? 'high' : 'medium',
-                    deviation
+                    deviation,
+                    avgAmount: stats.avg
                 });
             }
         }

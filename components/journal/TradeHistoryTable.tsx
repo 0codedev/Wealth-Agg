@@ -6,9 +6,10 @@ import { TrendingUp, TrendingDown, MoreHorizontal, Calendar, Target, Brain } fro
 
 interface TradeHistoryTableProps {
     trades: Trade[];
+    onTradeClick?: (trade: Trade) => void;
 }
 
-const TradeHistoryTable: React.FC<TradeHistoryTableProps> = ({ trades }) => {
+const TradeHistoryTable: React.FC<TradeHistoryTableProps> = ({ trades, onTradeClick }) => {
     if (trades.length === 0) {
         return (
             <div className="text-center py-20 text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
@@ -36,7 +37,11 @@ const TradeHistoryTable: React.FC<TradeHistoryTableProps> = ({ trades }) => {
                         {trades.map((trade) => {
                             const isWin = (trade.pnl || 0) >= 0;
                             return (
-                                <tr key={trade.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                                <tr
+                                    key={trade.id}
+                                    onClick={() => onTradeClick?.(trade)}
+                                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
+                                >
                                     <td className="py-4 px-6 whitespace-nowrap">
                                         <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                                             <Calendar size={14} className="text-slate-400" />

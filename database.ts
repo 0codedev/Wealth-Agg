@@ -213,6 +213,31 @@ export interface Transaction {
   excluded?: boolean;
 }
 
+// P3: IPO Vault Synergies
+export interface Friend {
+  id?: number;
+  name: string;
+  balance: number;
+  totalProfits?: number;
+  history?: { date: string, amount: number, type: 'DEPOSIT' | 'WITHDRAW' | 'PROFIT' | 'REFUND' | 'BLOCKED', notes?: string }[];
+  color?: string;
+  notes?: string;
+}
+
+// Module 8: Academy (Quiz Progress)
+export interface QuizProgress {
+  id?: number;
+  userId: string; // 'default'
+  totalXP: number;
+  currentStreak: number;
+  longestStreak: number;
+  quizzesCompleted: number;
+  lastQuizDate: string | null;
+  badges: string[];
+  categoryProgress: Record<string, { correct: number; total: number }>;
+}
+
+
 export class TradeDatabase extends Dexie {
   trades!: Table<Trade>;
   dividends!: Table<Dividend>;
@@ -230,6 +255,9 @@ export class TradeDatabase extends Dexie {
   alerts!: Table<Alert>;
   transactions!: Table<Transaction>;
   goals!: Table<Goal>;
+  friends!: Table<Friend>;
+  quiz_progress!: Table<QuizProgress>;
+
 
   constructor() {
     super('WealthAggregatorDB');
@@ -260,6 +288,22 @@ export class TradeDatabase extends Dexie {
     (this as any).version(17).stores({
       goals: '++id, name, priority, category, targetDate, createdAt'
     });
+
+    // Version 18: IPO Vault (Friends Synergy)
+    (this as any).version(18).stores({
+      friends: '++id, name, balance'
+    });
+
+    // Version 19: Add owner index to investments for Family Office filtering
+    (this as any).version(19).stores({
+      investments: 'id, type, platform, *tags, sector, country, owner'
+    });
+
+    // Version 20: Academy Persistence
+    (this as any).version(20).stores({
+      quiz_progress: '++id, userId, totalXP'
+    });
+
 
     (this as any).on('populate', () => {
       this.strategies.bulkAdd([

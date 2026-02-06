@@ -11,13 +11,14 @@ import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip
 } from 'recharts';
 import { CustomTooltip } from '../shared/CustomTooltip';
-import { formatCurrency } from '../../utils/helpers';
+import { formatCurrency, getISTDate, calculateDaysDiff, calculateDaysHeld } from '../../utils/helpers';
 import DividendTracker from '../DividendTracker';
 import { useFiscalYear } from '../../hooks/useFiscalYear';
 import { db, Trade } from '../../database';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuditLog from '../AuditLog';
 import { ITRPreFillPanel } from '../compliance/ITRPreFillPanel';
+import { CircularProgress, TaxCalculator, WashSaleDetector } from '../../components/compliance';
 
 interface ComplianceShieldProps {
     investments: Investment[];
@@ -26,42 +27,7 @@ interface ComplianceShieldProps {
 const LTCG_LIMIT = 125000; // New ₹1.25L Limit for FY 24-25
 const TAX_RATE = 0.125; // 12.5% LTCG Rate
 
-const CircularProgress = React.memo(({ value, max, size = 60, strokeWidth = 4, color = "text-indigo-500" }: any) => {
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * 2 * Math.PI;
-    const offset = circumference - (Math.min(value / max, 1) * circumference);
-
-    return (
-        <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-            <svg className="transform -rotate-90 w-full h-full">
-                <circle
-                    className="text-slate-200 dark:text-slate-800"
-                    strokeWidth={strokeWidth}
-                    stroke="currentColor"
-                    fill="transparent"
-                    r={radius}
-                    cx={size / 2}
-                    cy={size / 2}
-                />
-                <circle
-                    className={`${color} transition-all duration-1000 ease-out`}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={circumference}
-                    strokeDashoffset={offset}
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="transparent"
-                    r={radius}
-                    cx={size / 2}
-                    cy={size / 2}
-                />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-[10px] font-bold">
-                {value >= max ? <CheckCircle2 size={16} className={color} /> : <span>{Math.round((value / max) * 100)}%</span>}
-            </div>
-        </div>
-    );
-});
+// CircularProgress moved to ../../components/compliance
 
 const ComplianceShield: React.FC<ComplianceShieldProps> = ({ investments }) => {
     // Use Fiscal Engine
@@ -151,9 +117,9 @@ const ComplianceShield: React.FC<ComplianceShieldProps> = ({ investments }) => {
         }
     };
 
-    // Logic: Dates & FY
-    const today = new Date();
-    const daysToDeadline = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    // Logic: Dates & FY (IST-aware for tax compliance)
+    const today = getISTDate();
+    const daysToDeadline = calculateDaysDiff(today, endDate);
 
     // Logic: Harvesting Candidates & Action Card
     const taxableExcess = Math.max(0, realizedLTCG - LTCG_LIMIT);
@@ -219,12 +185,8 @@ const ComplianceShield: React.FC<ComplianceShieldProps> = ({ investments }) => {
         };
     }, [investments]);
 
-    // Logic: Holding Periods
-    const calculateDaysHeld = (dateStr: string) => {
-        const purchaseDate = new Date(dateStr);
-        const diff = Math.abs(today.getTime() - purchaseDate.getTime());
-        return Math.ceil(diff / (1000 * 60 * 60 * 24));
-    };
+    // Logic: Holding Periods (Using centralized IST-aware utility)
+    // calculateDaysHeld is now imported from helpers
 
     const equityAssets = investments.filter(i =>
         [InvestmentType.STOCKS, InvestmentType.MUTUAL_FUND, InvestmentType.ETF, InvestmentType.SMALLCASE].includes(i.type)
@@ -326,112 +288,23 @@ const ComplianceShield: React.FC<ComplianceShieldProps> = ({ investments }) => {
                 </div>
 
                 {/* 2. Wash Sale Detector */}
-                <div className={`rounded-2xl p-6 border shadow-sm relative overflow-hidden flex flex-col ${washSaleWarnings.length > 0 ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <Gavel size={100} className={washSaleWarnings.length > 0 ? "text-amber-500" : "text-slate-400"} />
-                    </div>
-
-                    <div>
-                        <h3 className={`font-bold flex items-center gap-2 ${washSaleWarnings.length > 0 ? 'text-amber-700 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>
-                            <Gavel size={18} /> Wash Sale Detector
-                        </h3>
-                        <p className={`text-xs mb-4 ${washSaleWarnings.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500'}`}>
-                            Monitoring disallowed loss claims.
-                        </p>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto max-h-[120px] md:max-h-[200px] pr-2">
-                        {washSaleWarnings.length > 0 ? (
-                            <div className="space-y-2">
-                                {washSaleWarnings.map((w, idx) => (
-                                    <div key={idx} className="bg-white dark:bg-slate-950 p-3 rounded-xl border border-amber-200 dark:border-amber-800/50 flex justify-between items-center animate-in slide-in-from-bottom-2">
-                                        <div>
-                                            <p className="font-bold text-sm text-slate-800 dark:text-slate-200">{w.ticker}</p>
-                                            <p className="text-[10px] text-slate-500">Sold loss on {w.lossDate}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-xs font-bold text-rose-500 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded">
-                                                Re-Entry Risk
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
-                                <CheckCircle2 size={32} className="text-emerald-500 mb-2" />
-                                <p className="text-sm text-slate-500">No wash sale risks detected.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <WashSaleDetector warnings={washSaleWarnings} />
             </div>
 
             {/* TOP ROW: TAX BAR & ACTION CARD */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* 1. TAX BAR (Realized Gain Monitor) */}
-                <div className="lg:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <Calculator size={18} className="text-indigo-500" /> LTCG Exemption
-                            </h3>
-                            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-500">
-                                Limit: {formatCurrency(LTCG_LIMIT)}
-                            </span>
-                        </div>
-
-                        <div className="relative pt-2 pb-6">
-                            <div className="flex justify-between text-xs font-bold mb-2">
-                                <span className="text-slate-500">Used</span>
-                                <span className={`${realizedLTCG > LTCG_LIMIT ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                    {Math.min((realizedLTCG / LTCG_LIMIT) * 100, 100).toFixed(0)}%
-                                </span>
-                            </div>
-                            <div className="w-full h-4 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div
-                                    className={`h-full transition-all duration-1000 ${realizedLTCG > LTCG_LIMIT ? 'bg-rose-500' : 'bg-gradient-to-r from-emerald-400 to-emerald-600'}`}
-                                    style={{ width: `${Math.min((realizedLTCG / LTCG_LIMIT) * 100, 100)}%` }}
-                                ></div>
-                            </div>
-                            {realizedLTCG > LTCG_LIMIT ? (
-                                <p className="text-[10px] text-rose-500 mt-2 font-medium flex items-center gap-1">
-                                    <AlertTriangle size={12} /> Taxable Excess: {formatCurrency(taxableExcess)}
-                                </p>
-                            ) : (
-                                <p className="text-[10px] text-emerald-500 mt-2 font-medium flex items-center gap-1">
-                                    <CheckCircle2 size={12} /> {formatCurrency(LTCG_LIMIT - realizedLTCG)} remaining tax-free.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-2">Realized Gains (Manual)</p>
-                        {isEditingTax ? (
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    value={tempTaxVal}
-                                    onChange={(e) => setTempTaxVal(e.target.value)}
-                                    className="w-full bg-white dark:bg-slate-900 border border-indigo-500 rounded px-2 py-1 text-sm outline-none"
-                                    autoFocus
-                                />
-                                <button onClick={saveTax} className="bg-indigo-600 text-white px-3 rounded text-xs font-bold">Save</button>
-                            </div>
-                        ) : (
-                            <div className="flex justify-between items-center group cursor-pointer" onClick={() => setIsEditingTax(true)}>
-                                <span className="text-xl font-mono font-bold text-slate-900 dark:text-white border-b border-dashed border-slate-300 dark:border-slate-700">
-                                    {formatCurrency(realizedLTCG)}
-                                </span>
-                                <div className="p-1.5 bg-white dark:bg-slate-800 rounded text-slate-400 group-hover:text-indigo-500 transition-colors">
-                                    <RefreshCw size={14} />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <TaxCalculator
+                    realizedLTCG={realizedLTCG}
+                    ltcgLimit={LTCG_LIMIT}
+                    taxableExcess={taxableExcess}
+                    saveTax={saveTax}
+                    isEditing={isEditingTax}
+                    setIsEditing={setIsEditingTax}
+                    tempVal={tempTaxVal}
+                    setTempVal={setTempTaxVal}
+                />
 
                 {/* 2. ACTION CARD (Harvesting Sniper) */}
                 <div className="lg:col-span-2">
@@ -615,4 +488,5 @@ const ComplianceShield: React.FC<ComplianceShieldProps> = ({ investments }) => {
     );
 };
 
-export default ComplianceShield;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(ComplianceShield);

@@ -11,21 +11,36 @@ import { HoldingsView } from './portfolio/HoldingsView';
 import { RiskEngineView } from './portfolio/RiskEngineView';
 import { PassiveIncomeView } from './portfolio/PassiveIncomeView';
 import { PortfolioExportPanel } from '../portfolio/PortfolioExportPanel';
-// DashboardTabComponent removed as it was redundant with the main dashboard
 import { useMarketSentiment } from '../../hooks/useMarketSentiment';
 import { Investment, ASSET_CLASS_COLORS } from '../../types';
 import { Tabs } from '../ui/AnimatedTabs';
 import { AnimatedToggle } from '../ui/AnimatedToggle';
 import { ContextMenu, ContextMenuItem } from '../ui/ContextMenu';
+import { useFamily } from '../../contexts/FamilyContext';
 
 // Lazy Loaded Modals for Performance
 const AssetSimulatorModal = React.lazy(() => import('../AssetSimulatorModal'));
 const XRayModal = React.lazy(() => import('./portfolio/XRayModal').then(module => ({ default: module.XRayModal })));
 const RebalancingTool = React.lazy(() => import('../tools/RebalancingTool').then(module => ({ default: module.RebalancingTool })));
 
+// Type-safe Portfolio Stats interface
+interface PortfolioStats {
+    totalInvested: number;
+    totalCurrent: number;
+    totalValue?: number;
+    totalPL: number;
+    totalPLPercent: number | string; // Can be string from toFixed()
+    loanBalance?: number;
+    investmentCount?: number;
+    totalAssets?: number;
+    diversityScore?: number;
+    distributionData?: { name: string; value: number }[];
+    [key: string]: any; // Allow additional properties from App.tsx
+}
+
 interface PortfolioTabProps {
     investments: Investment[];
-    stats: any;
+    stats: PortfolioStats;
     onAddAsset: () => void;
     onEditAsset: (inv: Investment, e: React.MouseEvent) => void;
     onDeleteAsset: (inv: Investment, e: React.MouseEvent) => void;
@@ -42,13 +57,19 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
     formatCurrency, calculatePercentage, isPrivacyMode, PrivacyValue
 }) => {
     const { toast } = useToast();
-    const { status: marketStatus, vix: marketVix } = useMarketSentiment(); // RESTORED
-    const [activeTab, setActiveTab] = useState('HOLDINGS'); // Default to Holdings (Overview removed)
+    const { status: marketStatus, vix: marketVix } = useMarketSentiment();
+    const { activeEntity } = useFamily();
+
+    const [activeTab, setActiveTab] = useState('HOLDINGS');
     const [simulatorAsset, setSimulatorAsset] = useState<Investment | null>(null);
     const [isRebalanceOpen, setIsRebalanceOpen] = useState(false);
     const [isCompareOpen, setIsCompareOpen] = useState(false);
     const [isXRayOpen, setIsXRayOpen] = useState(false);
+
     const [selectedForCompare, setSelectedForCompare] = useState<Investment[]>([]);
+
+    // Undo Delete State
+    const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
 
     // --- Hoisted State for Unified Toolbar ---
     const [searchTerm, setSearchTerm] = useState('');
@@ -56,17 +77,26 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
     const [groupBy, setGroupBy] = useState<'NONE' | 'TYPE' | 'PLATFORM'>('NONE');
     const [viewMode, setViewMode] = useState<'CARD' | 'TERMINAL'>('CARD');
     const [isSpotlightEnabled, setIsSpotlightEnabled] = useState(true);
-    const [dashboardView, setDashboardView] = useState<'MAIN' | 'SPENDING' | 'MARKETS' | 'COMMUNITY'>('MAIN');
 
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tab: string } | null>(null);
 
-    // Memoized handlers (prevent child re-renders)
+    // Filter Logic moved to App.tsx Global State
+    // const filteredInvestments = ...
+    // Filter Logic moved to App.tsx Global State
+    // const filteredInvestments = ...
+    // Optimistic Delete: Exclude pending deletes
+    const filteredInvestments = useMemo(() =>
+        investments.filter(inv => !pendingDeletes.has(inv.id)),
+        [investments, pendingDeletes]);
+
+
+    // Memoized handlers
     const handleAutoSip = useCallback(() => {
         if (!onQuickUpdate) return;
         let sipCount = 0;
 
-        investments.forEach(inv => {
+        filteredInvestments.forEach(inv => {
             if (inv.recurring?.isEnabled && inv.recurring.amount > 0) {
                 const newCurrent = inv.currentValue + inv.recurring.amount;
                 const newInvested = inv.investedAmount + inv.recurring.amount;
@@ -80,20 +110,20 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
 
         if (sipCount > 0) toast.success(`Auto - SIP executed for ${sipCount} asset${sipCount > 1 ? 's' : ''} !`);
         else toast.info('No active SIPs found.');
-    }, [investments, onQuickUpdate, toast]);
+    }, [filteredInvestments, onQuickUpdate, toast]);
 
     const downloadCSV = useCallback(() => {
-        const headers = ["Name", "Type", "Platform", "Invested", "Current", "Last Updated"];
-        const rows = investments.map(i => [i.name, i.type, i.platform, i.investedAmount, i.currentValue, i.lastUpdated]);
+        const headers = ["Name", "Type", "Platform", "Invested", "Current", "Last Updated", "Owner"];
+        const rows = filteredInvestments.map(i => [i.name, i.type, i.platform, i.investedAmount, i.currentValue, i.lastUpdated, i.owner || 'Self']);
         const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "wealth_aggregator_data.csv");
+        link.setAttribute("download", `wealth_aggregator_${activeEntity}_data.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    }, [investments]);
+    }, [filteredInvestments, activeEntity]);
 
     // Context Menu Trigger
     const handleTabContextMenu = (e: React.MouseEvent, tab: string) => {
@@ -118,6 +148,49 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
             onClick: () => toast.success("Tab pinned to sidebar")
         }
     ];
+
+    // Undo-capable Delete Handler
+    const handleUndoableDelete = useCallback((inv: Investment, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        // 1. Optimistic Hide
+        setPendingDeletes(prev => {
+            const next = new Set(prev);
+            next.add(inv.id);
+            return next;
+        });
+
+        // 2. Show Undo Toast
+        toast.success(`Deleted ${inv.name}`, {
+            duration: 4000,
+            action: {
+                label: 'Undo',
+                onClick: () => {
+                    // Restore
+                    setPendingDeletes(prev => {
+                        const next = new Set(prev);
+                        next.delete(inv.id);
+                        return next;
+                    });
+                }
+            }
+        });
+
+        // 3. Commit Delete after delay
+        setTimeout(() => {
+            setPendingDeletes(prev => {
+                // If still pending (not undone), commit
+                if (prev.has(inv.id)) {
+                    onDeleteAsset(inv, e);
+                    // Cleanup set
+                    const next = new Set(prev);
+                    next.delete(inv.id);
+                    return next;
+                }
+                return prev;
+            });
+        }, 4500);
+    }, [onDeleteAsset, toast]);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-300 pb-20 md:pb-0 font-sans">
@@ -172,10 +245,6 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                                     <Plus size={16} strokeWidth={2.5} className="relative z-10" />
                                 </motion.button>
 
-
-
-
-
                                 {/* View Mode Toggle */}
                                 <AnimatedToggle
                                     items={[
@@ -187,7 +256,7 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                                     layoutId="portfolioViewMode"
                                 />
 
-                                {/* Filter Toggle - Converted from Select for better UX if few options */}
+                                {/* Filter Toggle */}
                                 <AnimatedToggle
                                     items={[
                                         { id: 'ALL', label: 'All' },
@@ -202,7 +271,7 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
 
                                 <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
 
-                                {/* Group By Toggle - RESTORED */}
+                                {/* Group By Toggle */}
                                 <AnimatedToggle
                                     items={[
                                         { id: 'NONE', label: 'List' },
@@ -217,7 +286,7 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
 
                                 <button
                                     onClick={() => setIsSpotlightEnabled(!isSpotlightEnabled)}
-                                    className={`p - 1.5 rounded - lg transition - colors ${isSpotlightEnabled ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'} `}
+                                    className={`p-1.5 rounded-lg transition-colors ${isSpotlightEnabled ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'} `}
                                 >
                                     <Circle size={16} fill={isSpotlightEnabled ? "currentColor" : "none"} />
                                 </button>
@@ -260,15 +329,13 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                             exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                         >
-                            {/* We use Tabs.Content loosely here or just render logic as before since we need props passing */}
-
                             {activeTab === 'HOLDINGS' && (
                                 <HoldingsView
-                                    investments={investments}
+                                    investments={filteredInvestments}
                                     totalAssets={stats.totalAssets}
                                     onAddAsset={onAddAsset}
                                     onEditAsset={onEditAsset}
-                                    onDeleteAsset={onDeleteAsset}
+                                    onDeleteAsset={handleUndoableDelete}
                                     onQuickUpdate={onQuickUpdate}
                                     formatCurrency={formatCurrency}
                                     calculatePercentage={calculatePercentage}
@@ -286,20 +353,20 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                             {activeTab === 'ANALYTICS' && (
                                 <>
                                     <AnalyticsView
-                                        investments={investments}
+                                        investments={filteredInvestments}
                                         formatCurrency={formatCurrency}
                                         isPrivacyMode={isPrivacyMode}
                                     />
                                     <div className="mt-6">
-                                        <PortfolioExportPanel investments={investments} />
+                                        <PortfolioExportPanel investments={filteredInvestments} />
                                     </div>
                                 </>
                             )}
 
                             {activeTab === 'KILL_SWITCH' && (
                                 <RiskEngineView
-                                    investments={investments}
-                                    totalAssets={stats.totalAssets}
+                                    investments={filteredInvestments}
+                                    totalAssets={filteredInvestments.reduce((acc, i) => acc + i.currentValue, 0)}
                                     formatCurrency={formatCurrency}
                                     setSimulatorAsset={setSimulatorAsset}
                                 />
@@ -307,7 +374,7 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
 
                             {activeTab === 'PASSIVE_INCOME' && (
                                 <PassiveIncomeView
-                                    investments={investments}
+                                    investments={filteredInvestments}
                                     totalAssets={stats.totalAssets}
                                     formatCurrency={formatCurrency}
                                 />
@@ -340,7 +407,7 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
 
                 {isXRayOpen && (
                     <XRayModal
-                        investments={investments}
+                        investments={filteredInvestments}
                         totalAssets={stats?.totalAssets || 0}
                         onClose={() => setIsXRayOpen(false)}
                         formatCurrency={formatCurrency}
@@ -363,100 +430,97 @@ export const PortfolioTab: React.FC<PortfolioTabProps> = ({
                 )}
             </Suspense>
 
-            {/* Asset Comparison Modal (Keep inline or refactor later) */}
-            {
-                isCompareOpen && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsCompareOpen(false)}>
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
-                            <div className="sticky top-0 bg-white dark:bg-slate-900 p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <Scale className="text-emerald-500" size={24} /> Compare Assets
-                                </h2>
-                                <button onClick={() => setIsCompareOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-                                    <X size={20} />
-                                </button>
+            {/* Asset Comparison Modal */}
+            {isCompareOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsCompareOpen(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-white dark:bg-slate-900 p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <Scale className="text-emerald-500" size={24} /> Compare Assets
+                            </h2>
+                            <button onClick={() => setIsCompareOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-sm text-slate-500 mb-4">Select up to 3 assets to compare side-by-side</p>
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                {[0, 1, 2].map(idx => (
+                                    <select
+                                        key={idx}
+                                        value={selectedForCompare[idx]?.id || ''}
+                                        onChange={(e) => {
+                                            const asset = investments.find(i => i.id === e.target.value);
+                                            const newSelected = [...selectedForCompare];
+                                            if (asset) newSelected[idx] = asset;
+                                            else newSelected.splice(idx, 1);
+                                            setSelectedForCompare(newSelected.filter(Boolean));
+                                        }}
+                                        className="p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                    >
+                                        <option value="">Select Asset {idx + 1}</option>
+                                        {filteredInvestments.map(inv => (
+                                            <option key={inv.id} value={inv.id} disabled={selectedForCompare.some(s => s.id === inv.id)}>
+                                                {inv.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ))}
                             </div>
-                            <div className="p-6">
-                                {/* Asset Selection */}
-                                <p className="text-sm text-slate-500 mb-4">Select up to 3 assets to compare side-by-side</p>
-                                <div className="grid grid-cols-3 gap-4 mb-6">
-                                    {[0, 1, 2].map(idx => (
-                                        <select
-                                            key={idx}
-                                            value={selectedForCompare[idx]?.id || ''}
-                                            onChange={(e) => {
-                                                const asset = investments.find(i => i.id === e.target.value);
-                                                const newSelected = [...selectedForCompare];
-                                                if (asset) newSelected[idx] = asset;
-                                                else newSelected.splice(idx, 1);
-                                                setSelectedForCompare(newSelected.filter(Boolean));
-                                            }}
-                                            className="p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                                        >
-                                            <option value="">Select Asset {idx + 1}</option>
-                                            {investments.map(inv => (
-                                                <option key={inv.id} value={inv.id} disabled={selectedForCompare.some(s => s.id === inv.id)}>
-                                                    {inv.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    ))}
-                                </div>
 
-                                {/* Comparison Table */}
-                                {/* Reusing existing table logic */}
-                                {selectedForCompare.length >= 2 && (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full border-collapse">
-                                            <thead>
-                                                <tr className="border-b border-slate-200 dark:border-slate-700">
-                                                    <th className="text-left p-3 text-xs font-bold text-slate-500 uppercase">Metric</th>
-                                                    {(selectedForCompare || []).map(asset => (
-                                                        <th key={asset.id} className="text-center p-3 text-sm font-bold text-slate-900 dark:text-white">{asset.name}</th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr className="border-b border-slate-100 dark:border-slate-800">
-                                                    <td className="p-3 text-sm text-slate-500">Invested</td>
-                                                    {(selectedForCompare || []).map(asset => (
-                                                        <td key={asset.id} className="text-center p-3 font-mono text-slate-900 dark:text-white">{formatCurrency(asset.investedAmount)}</td>
-                                                    ))}
-                                                </tr>
-                                                <tr className="border-b border-slate-100 dark:border-slate-800">
-                                                    <td className="p-3 text-sm text-slate-500">Current Value</td>
-                                                    {(selectedForCompare || []).map(asset => (
-                                                        <td key={asset.id} className="text-center p-3 font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(asset.currentValue)}</td>
-                                                    ))}
-                                                </tr>
-                                                <tr className="border-b border-slate-100 dark:border-slate-800">
-                                                    <td className="p-3 text-sm text-slate-500">P/L</td>
-                                                    {(selectedForCompare || []).map(asset => {
-                                                        const pl = asset.currentValue - asset.investedAmount;
-                                                        return (
-                                                            <td key={asset.id} className={`text-center p-3 font-mono font-bold ${pl >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                                {pl >= 0 ? '+' : ''}{formatCurrency(pl)}
-                                                            </td>
-                                                        );
-                                                    })}
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                                {selectedForCompare.length < 2 && (
-                                    <div className="text-center py-12 text-slate-400">
-                                        <Scale size={48} className="mx-auto mb-4 opacity-30" />
-                                        <p>Select at least 2 assets to compare</p>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Comparison Table */}
+                            {selectedForCompare.length >= 2 && (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-slate-200 dark:border-slate-700">
+                                                <th className="text-left p-3 text-xs font-bold text-slate-500 uppercase">Metric</th>
+                                                {(selectedForCompare || []).map(asset => (
+                                                    <th key={asset.id} className="text-center p-3 text-sm font-bold text-slate-900 dark:text-white">{asset.name}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                                                <td className="p-3 text-sm text-slate-500">Invested</td>
+                                                {(selectedForCompare || []).map(asset => (
+                                                    <td key={asset.id} className="text-center p-3 font-mono text-slate-900 dark:text-white">{formatCurrency(asset.investedAmount)}</td>
+                                                ))}
+                                            </tr>
+                                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                                                <td className="p-3 text-sm text-slate-500">Current Value</td>
+                                                {(selectedForCompare || []).map(asset => (
+                                                    <td key={asset.id} className="text-center p-3 font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(asset.currentValue)}</td>
+                                                ))}
+                                            </tr>
+                                            <tr className="border-b border-slate-100 dark:border-slate-800">
+                                                <td className="p-3 text-sm text-slate-500">P/L</td>
+                                                {(selectedForCompare || []).map(asset => {
+                                                    const pl = asset.currentValue - asset.investedAmount;
+                                                    return (
+                                                        <td key={asset.id} className={`text-center p-3 font-mono font-bold ${pl >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                            {pl >= 0 ? '+' : ''}{formatCurrency(pl)}
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                            {selectedForCompare.length < 2 && (
+                                <div className="text-center py-12 text-slate-400">
+                                    <Scale size={48} className="mx-auto mb-4 opacity-30" />
+                                    <p>Select at least 2 assets to compare</p>
+                                </div>
+                            )}
                         </div>
                     </div>
-                )
-            }
-        </div >
+                </div>
+            )}
+        </div>
     );
 };
 
-export default PortfolioTab;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(PortfolioTab);

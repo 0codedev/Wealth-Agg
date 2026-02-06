@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import RoutineClock from '../RoutineClock';
 import { MarketStatus } from '../../hooks/useMarketSentiment';
+import { logger } from '../../services/Logger';
 
 interface CommandCenterProps {
     marketStatus: MarketStatus;
@@ -178,7 +179,7 @@ const CommandCenter: React.FC<CommandCenterProps> = ({ marketStatus, marketVix, 
     const statusBg = isRed ? 'bg-rose-500/10 border-rose-500/20' : marketStatus === 'AMBER' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/10 border-emerald-500/20';
 
     const handleQuickAction = useCallback((actionId: string) => {
-        console.log('Quick action:', actionId);
+        logger.debug('Quick action triggered', { actionId }, 'CommandCenter');
         onQuickAction?.(actionId);
     }, [onQuickAction]);
 

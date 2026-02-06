@@ -109,7 +109,7 @@ export const RebalancingTool: React.FC<RebalancingToolProps> = ({
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={tableData}
+                                    data={tableData.map(d => ({ name: d.name, targetValue: d.targetValue }))}
                                     dataKey="targetValue"
                                     nameKey="name"
                                     cx="50%"

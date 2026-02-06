@@ -1,7 +1,7 @@
 
 import https from 'https';
 
-const API_KEY = "AIzaSyCLOar4MBIcCQsRfEJxW6JFMYdP2OdEqRw";
+const API_KEY = process.env.GEMINI_API_KEY || "YOUR_API_KEY_HERE";
 
 async function listModels() {
     return new Promise((resolve) => {

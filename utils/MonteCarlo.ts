@@ -61,6 +61,11 @@ export const BLACK_SWAN_EVENTS: BlackSwanEvent[] = [
     { name: 'Tech Bubble Burst', impact: -0.45, recoveryYears: 3, probability: 0.04 },
     { name: 'Currency Crisis', impact: -0.30, recoveryYears: 2, probability: 0.06 },
     { name: 'Hyperinflation', impact: -0.60, recoveryYears: 5, probability: 0.02 },
+    // New Scenarios
+    { name: '1997 Asian Financial Crisis', impact: -0.35, recoveryYears: 2.5, probability: 0.04 },
+    { name: 'Eurozone Debt Crisis (2011)', impact: -0.25, recoveryYears: 1.5, probability: 0.05 },
+    { name: 'Flash Crash (2010)', impact: -0.10, recoveryYears: 0.1, probability: 0.08 },
+    { name: 'Geopolitical Shock (War)', impact: -0.28, recoveryYears: 1, probability: 0.06 },
 ];
 
 // Box-Muller transform for standard normal distribution

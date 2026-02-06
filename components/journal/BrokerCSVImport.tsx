@@ -4,6 +4,9 @@ import {
     Upload, FileText, CheckCircle2, AlertTriangle, X, Download, Eye,
     Loader2, Building2, Filter
 } from 'lucide-react';
+import { useVirtualScroll } from '../../hooks/useVirtualScroll';
+import { formatCurrencyPrecise as formatCurrency } from '../../utils/helpers';
+import { usePortfolio } from '../../hooks/usePortfolio';
 
 // ==================== TYPES ====================
 export interface ParsedTrade {
@@ -208,27 +211,64 @@ export const BrokerCSVImport: React.FC<BrokerCSVImportProps> = ({ isOpen, onClos
     const [error, setError] = useState<string>('');
     const [selectedTrades, setSelectedTrades] = useState<Set<number>>(new Set());
 
+    const { containerRef, onScroll, visibleItems, totalHeight, offsetY, startIndex } = useVirtualScroll({
+        itemHeight: 50,
+        itemsCount: parsedTrades.length,
+        containerHeight: 400
+    });
+
+    const { investments } = usePortfolio();
+
+    const checkDuplicateTrades = useCallback((trades: ParsedTrade[]): ParsedTrade[] => {
+        // Create a fast lookup set of existing assignments: Symbol-Date-Qty
+        // Note: Real-world duplicate checking might need more fuzziness, but this catches exact double-imports
+        const existingSet = new Set(
+            investments.map(inv => {
+                // Approximate matching: Name should contain Symbol, and quantity should match
+                // Since 'investments' aggregates current holdings, this is tricky for 'trades' history.
+                // ideally we check against 'db.investments' for holdings, or 'db.trades' if we were importing into a trade log.
+                // Assuming this imports into 'Investments' (Portfolio holdings), we check if we already hold this.
+                // A better duplicate check for *Holdings* import is:
+                // If we already have "HDFC Bank" and we import "HDFC Bank", warn the user.
+                return `${inv.name.toUpperCase()}-${inv.quantity || 0}`;
+            })
+        );
+
+        return trades.map(t => {
+            // Check if we already hold this exact quantity of this symbol
+            const key = `${t.symbol.toUpperCase()}-${t.quantity}`;
+            if (existingSet.has(key)) {
+                return { ...t, status: 'duplicate', errorMessage: 'Possible duplicate holding' };
+            }
+            return t;
+        });
+    }, [investments]);
+
     const handleFile = useCallback(async (file: File) => {
         setIsProcessing(true);
         setError('');
 
         try {
             const content = await file.text();
-            const { trades, broker } = autoParseCSV(content, file.name);
+            let { trades, broker } = autoParseCSV(content, file.name);
 
             if (trades.length === 0) {
                 setError('No valid trades found in the CSV. Please check the file format.');
             } else {
+                // Run Duplicate Check
+                trades = checkDuplicateTrades(trades);
+
                 setParsedTrades(trades);
                 setDetectedBroker(broker);
-                setSelectedTrades(new Set(trades.map((_, i) => i)));
+                // Select only non-duplicates by default
+                setSelectedTrades(new Set(trades.map((t, i) => t.status !== 'duplicate' ? i : -1).filter(i => i !== -1)));
             }
         } catch (e) {
             setError('Failed to parse CSV file. Please ensure it\'s a valid trade history file.');
         }
 
         setIsProcessing(false);
-    }, []);
+    }, [checkDuplicateTrades]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -263,7 +303,7 @@ export const BrokerCSVImport: React.FC<BrokerCSVImportProps> = ({ isOpen, onClos
         onClose();
     };
 
-    const formatCurrency = (val: number) => `₹${val.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
 
     if (!isOpen) return null;
 
@@ -308,8 +348,8 @@ export const BrokerCSVImport: React.FC<BrokerCSVImportProps> = ({ isOpen, onClos
                                 onDragLeave={() => setIsDragging(false)}
                                 onDrop={handleDrop}
                                 className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all ${isDragging
-                                        ? 'border-emerald-500 bg-emerald-500/10'
-                                        : 'border-slate-700 hover:border-slate-600'
+                                    ? 'border-emerald-500 bg-emerald-500/10'
+                                    : 'border-slate-700 hover:border-slate-600'
                                     }`}
                             >
                                 {isProcessing ? (
@@ -364,9 +404,13 @@ export const BrokerCSVImport: React.FC<BrokerCSVImportProps> = ({ isOpen, onClos
                                 </div>
 
                                 {/* Trades Table */}
-                                <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+                                <div
+                                    className="bg-slate-800/50 rounded-xl border border-slate-700 h-[400px] overflow-y-auto relative"
+                                    ref={containerRef}
+                                    onScroll={onScroll}
+                                >
                                     <table className="w-full text-sm">
-                                        <thead className="bg-slate-800/80">
+                                        <thead className="bg-slate-800/80 sticky top-0 z-10 shadow-sm">
                                             <tr>
                                                 <th className="p-3 text-left text-slate-500 font-bold uppercase text-xs">
                                                     <input
@@ -391,43 +435,46 @@ export const BrokerCSVImport: React.FC<BrokerCSVImportProps> = ({ isOpen, onClos
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {parsedTrades.slice(0, 50).map((trade, index) => (
-                                                <tr
-                                                    key={index}
-                                                    className={`border-t border-slate-700/50 hover:bg-slate-800/50 cursor-pointer ${selectedTrades.has(index) ? '' : 'opacity-50'
-                                                        }`}
-                                                    onClick={() => toggleTradeSelection(index)}
-                                                >
-                                                    <td className="p-3">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedTrades.has(index)}
-                                                            onChange={() => toggleTradeSelection(index)}
-                                                            className="accent-emerald-500"
-                                                        />
-                                                    </td>
-                                                    <td className="p-3 font-mono font-bold text-white">{trade.symbol}</td>
-                                                    <td className="p-3">
-                                                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${trade.type === 'BUY'
+                                            {offsetY > 0 && <tr style={{ height: offsetY }}></tr>}
+                                            {visibleItems.map((index) => {
+                                                const trade = parsedTrades[index];
+                                                if (!trade) return null;
+                                                return (
+                                                    <tr
+                                                        key={index}
+                                                        className={`border-t border-slate-700/50 hover:bg-slate-800/50 cursor-pointer ${selectedTrades.has(index) ? '' : 'opacity-50'
+                                                            }`}
+                                                        onClick={() => toggleTradeSelection(index)}
+                                                    >
+                                                        <td className="p-3">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedTrades.has(index)}
+                                                                onChange={() => toggleTradeSelection(index)}
+                                                                className="accent-emerald-500"
+                                                            />
+                                                        </td>
+                                                        <td className="p-3 font-mono font-bold text-white">{trade.symbol}</td>
+                                                        <td className="p-3">
+                                                            <span className={`px-2 py-0.5 rounded text-xs font-bold ${trade.type === 'BUY'
                                                                 ? 'bg-emerald-500/20 text-emerald-400'
                                                                 : 'bg-rose-500/20 text-rose-400'
-                                                            }`}>
-                                                            {trade.type}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 text-right font-mono text-slate-300">{trade.quantity}</td>
-                                                    <td className="p-3 text-right font-mono text-slate-300">{formatCurrency(trade.price)}</td>
-                                                    <td className="p-3 text-right font-mono font-bold text-white">{formatCurrency(trade.quantity * trade.price)}</td>
-                                                    <td className="p-3 text-slate-400">{trade.date}</td>
-                                                </tr>
-                                            ))}
+                                                                }`}>
+                                                                {trade.type}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-3 text-right font-mono text-slate-300">{trade.quantity}</td>
+                                                        <td className="p-3 text-right font-mono text-slate-300">{formatCurrency(trade.price)}</td>
+                                                        <td className="p-3 text-right font-mono font-bold text-white">{formatCurrency(trade.quantity * trade.price)}</td>
+                                                        <td className="p-3 text-slate-400">{trade.date}</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {totalHeight - offsetY - (visibleItems.length * 50) > 0 && (
+                                                <tr style={{ height: totalHeight - offsetY - (visibleItems.length * 50) }}></tr>
+                                            )}
                                         </tbody>
                                     </table>
-                                    {parsedTrades.length > 50 && (
-                                        <div className="p-3 text-center text-slate-500 text-sm border-t border-slate-700">
-                                            Showing first 50 of {parsedTrades.length} trades
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}

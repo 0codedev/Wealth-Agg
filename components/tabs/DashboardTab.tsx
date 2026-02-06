@@ -1,26 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import {
     TrendingUp, TrendingDown, Target,
     Wallet, Coins, Gauge, Plus, LayoutList, Table as TableIcon,
     Filter, Layers, RefreshCw, ArrowUpRight, Search, PieChart, Bot, Circle, Dot, Scale, X,
-    Activity, History, Clock, Trophy, Crosshair, Flame, Pencil, CheckCircle2 // Restored icons
+    Activity, History, Clock, Trophy, Crosshair, Flame, Pencil, CheckCircle2, FileText
 } from 'lucide-react';
-import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent
-} from '@dnd-kit/core';
-import {
-    arrayMove,
-    SortableContext,
-    sortableKeyboardCoordinates,
-    rectSortingStrategy
-} from '@dnd-kit/sortable';
-import { SortableWidget } from '../dashboard/SortableWidget';
 import { Investment, AggregatedData, CHART_COLORS } from '../../types';
 import * as AIService from '../../services/aiService';
 import { calculateProgress5L, getCountdownToTarget } from '../../utils/helpers';
@@ -28,19 +12,26 @@ import { MarketStatus } from '../../hooks/useMarketSentiment';
 import { useSettingsStore } from '../../store/settingsStore';
 import { LifeEvent } from '../../database';
 import { generateMonthlyReport } from '../../services/ReportService';
+import { logger } from '../../services/Logger';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 // New Components
 import CommandCenter from '../dashboard/CommandCenter';
 import HeroSection from '../dashboard/HeroSection';
 import WealthSimulator from '../dashboard/WealthSimulator';
-import FinancialCalendar from '../dashboard/widgets/FinancialCalendar';
-import HeatmapWidget from '../dashboard/widgets/HeatmapWidget';
+const FinancialCalendar = lazy(() => import('../dashboard/widgets/FinancialCalendar'));
+const HeatmapWidget = lazy(() => import('../dashboard/widgets/HeatmapWidget'));
+import WidgetSkeleton from '../shared/WidgetSkeleton';
 import {
     TotalPLWidget, TopPerformerWidget, LoanWidgetWrapper,
     Project5LWidget, ExposureChartWidget, PlatformChartWidget,
     SpendingWidget, MarketWidget, CommunityWidget
 } from '../dashboard/StandardWidgets';
 import TaxHarvestingWidget from '../dashboard/widgets/TaxHarvestingWidget';
+import { DashboardGrid } from '../dashboard/DashboardGrid';
+import { AlphaTicker } from '../dashboard/AlphaTicker';
+import ReportGenerationModal from '../reports/ReportGenerationModal';
+import DataHealthHub from '../data/DataHealthHub';
 
 // God-Tier Widgets
 import {
@@ -57,28 +48,43 @@ import {
 import { SpendingAnalyticsHub } from '../dashboard/hubs/SpendingAnalyticsHub';
 import { MarketInsightsHub } from '../dashboard/hubs/MarketInsightsHub';
 import { CommunityHub } from '../dashboard/hubs/CommunityHub';
-import AlertsManager from '../dashboard/widgets/AlertsManager';
+const AlertsManager = lazy(() => import('../dashboard/widgets/AlertsManager'));
 import OracleHub from '../dashboard/hubs/OracleHub';
-import FortressHub from '../dashboard/hubs/FortressHub';
-import Project5LWidgetEnhanced from '../dashboard/widgets/Project5LWidget';
-import AICopilotWidget from '../dashboard/widgets/AICopilotWidget';
-import FIREDashboardWidget from '../dashboard/widgets/FIREDashboardWidget';
-import CorrelationMatrixWidget from '../dashboard/widgets/CorrelationMatrixWidget';
-import RebalancingWizard from '../dashboard/widgets/RebalancingWizard';
-import SmartActionsWidget from '../dashboard/widgets/SmartActionsWidget';
+const FortressHub = lazy(() => import('../dashboard/hubs/FortressHub'));
+const Project5LWidgetEnhanced = lazy(() => import('../dashboard/widgets/Project5LWidget'));
+const AICopilotWidget = lazy(() => import('../dashboard/widgets/AICopilotWidget'));
+const FIREDashboardWidget = lazy(() => import('../dashboard/widgets/FIREDashboardWidget'));
+const CorrelationMatrixWidget = lazy(() => import('../dashboard/widgets/CorrelationMatrixWidget'));
+const RebalancingWizard = lazy(() => import('../dashboard/widgets/RebalancingWizard'));
+const SmartActionsWidget = lazy(() => import('../dashboard/widgets/SmartActionsWidget'));
 import { RunwayGauge } from '../dashboard/RunwayGauge';
 import { LiabilityWatchdogWidget } from '../dashboard/widgets/LiabilityWatchdogWidget';
 import { GoalThermometer } from '../dashboard/widgets/GoalThermometer';
+const MilestoneTimelineWidget = lazy(() => import('../dashboard/widgets/MilestoneTimelineWidget'));
 
 
+
+// Type-safe Portfolio Stats interface
+interface PortfolioStats {
+    totalInvested: number;
+    totalCurrent: number;
+    totalValue?: number;
+    totalPL: number;
+    totalPLPercent: number | string; // Can be string from toFixed()
+    loanBalance?: number;
+    investmentCount?: number;
+    totalAssets?: number;
+    diversityScore?: number;
+    [key: string]: any; // Allow additional properties from App.tsx
+}
 
 interface DashboardTabProps {
     investments: Investment[];
-    stats: any;
+    stats: PortfolioStats;
     allocationData: AggregatedData[];
     assetClassData: AggregatedData[];
     platformData: AggregatedData[];
-    projectionData: any[];
+    projectionData: any[]; // Kept for interface compatibility but we compute dynamic inside
     isPrivacyMode: boolean;
     isDarkMode: boolean;
     onAddFirstAsset: () => void;
@@ -86,7 +92,7 @@ interface DashboardTabProps {
     formatCurrencyPrecise: (val: number) => string;
     calculatePercentage: (part: number, total: number) => string;
     ASSET_CLASS_COLORS: Record<string, string>;
-    CustomTooltip: any;
+    CustomTooltip: React.ComponentType<any>;
     marketVix: number;
     marketStatus: MarketStatus;
     // Synced Life Events
@@ -107,21 +113,30 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
     lifeEvents, addLifeEvent, deleteLifeEvent, history,
     view, onViewChange
 }) => {
-    const [aiInsight, setAiInsight] = useState<{ risk: string, tip: string } | null>(null);
-    const [isAiLoading, setIsAiLoading] = useState(false);
-    // Local view state removed in favor of props
+    // Global Toggle State: false = Gross, true = Net
+    const [showNetWorth, setShowNetWorth] = useState(false);
+
+    // Dynamic Projection based on Toggle
+    const dynamicProjectionData = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const startValue = showNetWorth ? (stats?.totalValue || 0) : (stats?.totalAssets || 0);
+
+        // Generate 10 years of data (Monte Carlo styled)
+        return Array.from({ length: 11 }, (_, i) => {
+            const year = currentYear + i;
+            // Base: 12% | Bull: 18% | Bear: 6% CAGR
+            return {
+                date: year.toString(),
+                base: Math.round(startValue * Math.pow(1.12, i)),
+                bull: Math.round(startValue * Math.pow(1.18, i)),
+                bear: Math.round(startValue * Math.pow(1.06, i)),
+                eventMarker: i === 3 || i === 7 // Mock markers
+            };
+        });
+    }, [stats, showNetWorth]);
 
     // --- TIME TRAVELER STATE ---
-    // Index 0 to history.length - 1 = Past
-    // Index history.length = Present
-    // Index history.length + 1 to end = Future
     const [timeTravelIndex, setTimeTravelIndex] = useState<number>(0);
-
-    const [isTimeTraveling, setIsTimeTraveling] = useState(false);
-
-    // --- EDIT MODE STATE ---
-    // --- EDIT MODE STATE ---
-    // Now controlled globally via settingsStore
     const { targetNetWorth, targetDate, isEditMode } = useSettingsStore();
 
     // Initialize Time Traveler to Present
@@ -133,248 +148,291 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 
     const dynamicHealthScore = useMemo(() => {
         const dScore = (stats?.diversityScore || 0) * 0.5;
-        const pScore = (stats?.totalPLPercent ? Math.min(100, 50 + parseFloat(stats.totalPLPercent)) : 50) * 0.5;
+        const pScore = (stats?.totalPLPercent ? Math.min(100, 50 + parseFloat(String(stats.totalPLPercent))) : 50) * 0.5;
         return Math.min(100, Math.round(dScore + pScore));
     }, [stats]);
 
-    // Project 5L State
-    const progress5L = parseFloat(calculateProgress5L(stats?.totalAssets || 0, targetNetWorth));
-    const countdown = getCountdownToTarget(targetDate);
-    const isGrindMode = progress5L < 10;
-
-    const getProgressColor = (pct: number) => {
-        if (pct < 30) return 'bg-rose-500';
-        if (pct < 70) return 'bg-amber-500';
-        return 'bg-emerald-500';
-    };
-
-    const progressColorClass = getProgressColor(progress5L);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [showHealthHub, setShowHealthHub] = useState(false);
 
     // --- TIME TRAVELER LOGIC ---
     const timeTravelData = useMemo(() => {
         const totalPoints = (history?.length || 0) + 1 + (projectionData?.length || 0); // Past + Present + Future
         const currentIndex = history?.length || 0;
 
-        if (timeTravelIndex === currentIndex) {
-            return {
-                type: 'PRESENT',
-                value: stats?.totalCurrent || 0
-            };
-        } else if (timeTravelIndex < currentIndex) {
+        // Detailed State Logic
+        let type = 'PRESENT';
+        let value = stats?.totalCurrent || 0;
+        let date = 'Today';
+
+        if (timeTravelIndex < currentIndex) {
             const h = history[timeTravelIndex];
-            return {
-                date: h?.date || 'Past',
-                value: h?.value || 0,
-                type: 'PAST'
-            };
-        } else {
+            type = 'PAST';
+            value = h?.value || 0;
+            date = h?.date || 'Past';
+        } else if (timeTravelIndex > currentIndex) {
             const pIndex = timeTravelIndex - currentIndex - 1;
             const p = projectionData[pIndex];
-            return {
-                date: p?.year ? `Year ${p.year}` : 'Future',
-                value: p?.amount || 0,
-                type: 'FUTURE'
-            };
+            type = 'FUTURE';
+            value = p?.amount || 0;
+            date = p?.year ? `Year ${p.year}` : 'Future';
         }
-    }, [timeTravelIndex, history, projectionData, stats.totalCurrent]);
+
+        return { totalPoints, currentIndex, type, value, date };
+    }, [history, projectionData, timeTravelIndex, stats.totalCurrent]);
 
     const isPresent = timeTravelIndex === (history?.length || 0);
 
     // --- DRAGGABLE GRID STATE ---
-    // --- DRAGGABLE GRID STATE ---
     const DEFAULT_WIDGETS = [
-        // Row 1: The "What's Happening" row
         'market-widget', 'community-widget', 'spending-widget',
-
-        // Row 2: Visual & Planning - Gold Tier Features
-        // 'oracle-hub', // Moved to Goal GPS
         'calendar',
         'wealth-simulator',
-
-        // Row 3: Metrics & Tax Optimization
         'tax-harvesting', 'total-pl', 'top-performer', 'loan-widget',
-
-        // Row 4: Deep Dives
         'project-5l', 'exposure-chart', 'platform-chart',
         'heatmap', 'alerts-widget',
-
-        // Row 5: Security - Gold Tier Fortress
         'fortress-hub',
-
-        // Row 6: Phase 8 New Widgets
         'ai-copilot', 'fire-dashboard', 'correlation-matrix', 'rebalancing-wizard',
-
-        // Financial Skeptic
         'runway-gauge', 'liability-watchdog',
-
-        // Goal Tracking
         'goal-thermometer',
-
-        // Refactor: Smart Actions Standalone
-        'smart-actions-widget'
+        'smart-actions-widget',
+        'milestone-timeline'
     ];
 
     const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
         try {
-            const saved = localStorage.getItem('dashboard-widget-order-v8'); // Bump to v8 - Refactoring layout
+            const saved = localStorage.getItem('dashboard-widget-order-v8');
             return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
         } catch {
             return DEFAULT_WIDGETS;
         }
     });
 
-    // Ensure all widgets are present if recovering from old state
     useEffect(() => {
         if (widgetOrder.length < DEFAULT_WIDGETS.length) {
-            // Force reset if missing items (easier than merging for now since we changed layout logic)
             setWidgetOrder(DEFAULT_WIDGETS);
         }
-    }, [DEFAULT_WIDGETS.length]); // Added dependency
+    }, [DEFAULT_WIDGETS.length]);
 
-    // Sensors for drag detection
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // Prevent accidental drag on click
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-    );
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (active.id !== over?.id) {
-            setWidgetOrder((items) => {
-                const oldIndex = items.indexOf(active.id as string);
-                const newIndex = items.indexOf(over?.id as string);
-                const newOrder = arrayMove(items, oldIndex, newIndex);
-                localStorage.setItem('dashboard-widget-order-v8', JSON.stringify(newOrder));
-                return newOrder;
-            });
+    useEffect(() => {
+        if (widgetOrder.length < DEFAULT_WIDGETS.length) {
+            setWidgetOrder(DEFAULT_WIDGETS);
         }
-    };
+    }, [DEFAULT_WIDGETS.length]);
 
     // Registry for Widgets
     const renderWidget = (id: string) => {
+        const commonProps = { dragHandle: isEditMode };
+
         switch (id) {
             case 'total-pl':
-                return <TotalPLWidget key={id} id={id} dragHandle={isEditMode} stats={stats} isPrivacyMode={isPrivacyMode} formatCurrency={formatCurrency} formatCurrencyPrecise={formatCurrencyPrecise} />;
+                return (
+                    <ErrorBoundary key={id}>
+                        <TotalPLWidget id={id} {...commonProps} stats={stats} isPrivacyMode={isPrivacyMode} formatCurrency={formatCurrency} formatCurrencyPrecise={formatCurrencyPrecise} />
+                    </ErrorBoundary>
+                );
             case 'top-performer':
-                return <TopPerformerWidget key={id} id={id} dragHandle={isEditMode} stats={stats} calculatePercentage={calculatePercentage} />;
+                return (
+                    <ErrorBoundary key={id}>
+                        <TopPerformerWidget id={id} {...commonProps} stats={stats} investments={investments} calculatePercentage={calculatePercentage} />
+                    </ErrorBoundary>
+                );
             case 'loan-widget':
-                return <LoanWidgetWrapper key={id} id={id} dragHandle={isEditMode} />;
+                return (
+                    <ErrorBoundary key={id}>
+                        <LoanWidgetWrapper id={id} {...commonProps} />
+                    </ErrorBoundary>
+                );
             case 'project-5l':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
-                        <Project5LWidgetEnhanced
-                            currentWealth={stats?.totalCurrent || 0}
-                            targetWealth={targetNetWorth}
-                            monthlyContribution={25000}
-                            expectedReturn={12}
-                        />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Project 5L" />}>
+                                <Project5LWidgetEnhanced
+                                    currentWealth={showNetWorth ? (stats?.totalValue || 0) : (stats?.totalAssets || 0)}
+                                    targetWealth={targetNetWorth}
+                                    monthlyContribution={25000}
+                                    expectedReturn={12}
+                                    isNetWorth={showNetWorth}
+                                />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'exposure-chart':
-                return <ExposureChartWidget key={id} id={id} dragHandle={isEditMode} allocationData={allocationData} investments={investments} CustomTooltip={CustomTooltip} isPrivacyMode={isPrivacyMode} formatCurrency={formatCurrency} calculatePercentage={calculatePercentage} />;
+                // Using assetClassData for "Asset Type" view
+                return (
+                    <ErrorBoundary key={id}>
+                        <ExposureChartWidget id={id} {...commonProps} allocationData={assetClassData} investments={investments} CustomTooltip={CustomTooltip} isPrivacyMode={isPrivacyMode} formatCurrency={formatCurrency} calculatePercentage={calculatePercentage} />
+                    </ErrorBoundary>
+                );
             case 'platform-chart':
-                return <PlatformChartWidget key={id} id={id} dragHandle={isEditMode} platformData={platformData} isDarkMode={isDarkMode} isPrivacyMode={isPrivacyMode} CustomTooltip={CustomTooltip} />;
+                return (
+                    <ErrorBoundary key={id}>
+                        <PlatformChartWidget id={id} {...commonProps} platformData={platformData} isDarkMode={isDarkMode} isPrivacyMode={isPrivacyMode} CustomTooltip={CustomTooltip} />
+                    </ErrorBoundary>
+                );
             case 'tax-harvesting':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 md:row-span-2 h-full">
+                    <ErrorBoundary key={id}>
                         <div className="h-full min-h-[300px]">
                             <TaxHarvestingWidget investments={investments} />
                         </div>
-                    </SortableWidget>
+                    </ErrorBoundary>
                 );
             case 'fortress-hub':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-6 h-full">
-                        <FortressHub />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Fortress Hub" />}>
+                                <FortressHub />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
-            // Complex/Custom Widgets kept inline or wrapped here
-            // Independent Widgets (Replacing Power Grid)
             case 'spending-widget':
-                return <SpendingWidget key={id} id={id} dragHandle={isEditMode} onClick={() => onViewChange('SPENDING')} />;
+                return (
+                    <ErrorBoundary key={id}>
+                        <SpendingWidget id={id} {...commonProps} onClick={() => onViewChange('SPENDING')} />
+                    </ErrorBoundary>
+                );
             case 'market-widget':
-                return <MarketWidget key={id} id={id} dragHandle={isEditMode} onClick={() => onViewChange('MARKETS')} />;
+                return (
+                    <ErrorBoundary key={id}>
+                        <MarketWidget id={id} {...commonProps} onClick={() => onViewChange('MARKETS')} />
+                    </ErrorBoundary>
+                );
             case 'community-widget':
-                return <CommunityWidget key={id} id={id} dragHandle={isEditMode} onClick={() => onViewChange('COMMUNITY')} />;
+                return (
+                    <ErrorBoundary key={id}>
+                        <CommunityWidget id={id} {...commonProps} onClick={() => onViewChange('COMMUNITY')} />
+                    </ErrorBoundary>
+                );
             case 'calendar':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                    <ErrorBoundary key={id}>
                         <div className="h-full min-h-[400px]">
-                            <FinancialCalendar investments={investments} />
+                            <Suspense fallback={<WidgetSkeleton title="Financial Calendar" />}>
+                                <FinancialCalendar investments={investments} />
+                            </Suspense>
                         </div>
-                    </SortableWidget>
+                    </ErrorBoundary>
                 );
             case 'wealth-simulator':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                    <ErrorBoundary key={id}>
                         <div className="h-full">
-                            <WealthSimulator projectionData={projectionData} isDarkMode={isDarkMode} formatCurrency={formatCurrency} />
+                            <WealthSimulator projectionData={dynamicProjectionData} isDarkMode={isDarkMode} formatCurrency={formatCurrency} />
                         </div>
-                    </SortableWidget>
+                    </ErrorBoundary>
                 );
-            case 'oracle-hub':
-                return null; // Removed from dashboard
             case 'smart-actions-widget':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
-                        <SmartActionsWidget onQuickAction={(action) => console.log('Action:', action)} />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Smart Actions" />}>
+                                <SmartActionsWidget onQuickAction={(action) => logger.debug('Smart Action triggered', { action }, 'DashboardTab')} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'heatmap':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
+                    <ErrorBoundary key={id}>
                         <div className="h-full min-h-[400px]">
-                            <HeatmapWidget history={history} isDarkMode={isDarkMode} />
+                            <Suspense fallback={<WidgetSkeleton title="Market Heatmap" />}>
+                                <HeatmapWidget history={history} isDarkMode={isDarkMode} />
+                            </Suspense>
                         </div>
-                    </SortableWidget>
+                    </ErrorBoundary>
                 );
             case 'alerts-widget':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
-                        <AlertsManager investments={investments} formatCurrency={formatCurrency} />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Alerts" />}>
+                                <AlertsManager investments={investments} formatCurrency={formatCurrency} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'ai-copilot':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
-                        <AICopilotWidget formatCurrency={formatCurrency} />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="AI Copilot" />}>
+                                <AICopilotWidget formatCurrency={formatCurrency} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'fire-dashboard':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
-                        <FIREDashboardWidget stats={stats} formatCurrency={formatCurrency} />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="FIRE Dashboard" />}>
+                                <FIREDashboardWidget stats={stats} formatCurrency={formatCurrency} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'correlation-matrix':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
-                        <CorrelationMatrixWidget investments={investments} />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Correlation Matrix" />}>
+                                <CorrelationMatrixWidget investments={investments} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'rebalancing-wizard':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
-                        <RebalancingWizard investments={investments} formatCurrency={formatCurrency} />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Rebalancing Wizard" />}>
+                                <RebalancingWizard investments={investments} />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'runway-gauge':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
-                        <RunwayGauge />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <RunwayGauge />
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'liability-watchdog':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-3 h-full">
-                        <LiabilityWatchdogWidget />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className={`h-full transition-opacity duration-300 ${!showNetWorth ? 'opacity-50 grayscale' : 'opacity-100'}`}>
+                            <LiabilityWatchdogWidget />
+                        </div>
+                    </ErrorBoundary>
                 );
             case 'goal-thermometer':
                 return (
-                    <SortableWidget key={id} id={id} dragHandle={isEditMode} className="md:col-span-2 h-full">
-                        <GoalThermometer currentNetWorth={stats?.totalCurrent} />
-                    </SortableWidget>
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <GoalThermometer currentNetWorth={stats?.totalCurrent} />
+                        </div>
+                    </ErrorBoundary>
+                );
+            case 'milestone-timeline':
+                return (
+                    <ErrorBoundary key={id}>
+                        <div className="h-full">
+                            <Suspense fallback={<WidgetSkeleton title="Milestone Timeline" />}>
+                                <MilestoneTimelineWidget
+                                    lifeEvents={lifeEvents}
+                                    addLifeEvent={addLifeEvent}
+                                    deleteLifeEvent={deleteLifeEvent}
+                                />
+                            </Suspense>
+                        </div>
+                    </ErrorBoundary>
                 );
             default:
                 return null;
@@ -413,7 +471,32 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
     return (
         <div className="space-y-6 animate-in fade-in duration-300 pb-20 md:pb-0">
 
+            {/* Actions Bar */}
+            <div className="flex justify-end px-2 gap-2">
+                <button
+                    onClick={() => setShowHealthHub(!showHealthHub)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm"
+                >
+                    <Activity size={14} />
+                    Data Health
+                </button>
+                <button
+                    onClick={() => setShowReportModal(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-sm"
+                >
+                    <FileText size={14} />
+                    Generate Report
+                </button>
+            </div>
+
+            {showHealthHub && (
+                <div className="mb-6 animate-in slide-in-from-top-4 duration-300">
+                    <DataHealthHub onClose={() => setShowHealthHub(false)} />
+                </div>
+            )}
+
             <CommandCenter marketStatus={marketStatus} marketVix={marketVix} />
+            <AlphaTicker />
 
             {investments.length > 0 && (
                 <>
@@ -450,6 +533,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                             lifeEvents={lifeEvents}
                             addLifeEvent={addLifeEvent}
                             deleteLifeEvent={deleteLifeEvent}
+                            showLiability={showNetWorth}
+                            setShowLiability={setShowNetWorth}
                         />
                     )}
 
@@ -489,20 +574,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                                 </div>
                             )}
 
-                            <DndContext
-                                sensors={sensors}
-                                collisionDetection={closestCenter}
-                                onDragEnd={handleDragEnd}
-                            >
-                                <SortableContext
-                                    items={widgetOrder}
-                                    strategy={rectSortingStrategy}
-                                >
-                                    <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-6">
-                                        {(widgetOrder || []).map(id => renderWidget(id))}
-                                    </div>
-                                </SortableContext>
-                            </DndContext>
+                            <DashboardGrid renderWidget={renderWidget} />
                         </>
                     )}
                 </>
@@ -515,8 +587,17 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 )
             }
 
+            {/* Report Modal */}
+            <ReportGenerationModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                currentStats={stats}
+                investments={investments}
+                allocationData={allocationData}
+            />
         </div >
     );
 };
 
-export default DashboardTab;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(DashboardTab);

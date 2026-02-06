@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Target, TrendingUp, Calendar, Flame, Trophy, Zap } from 'lucide-react';
+import { Target, TrendingUp, Calendar, Rocket, Flag, Zap } from 'lucide-react';
 import { useSettingsStore } from '../../../store/settingsStore';
 import { usePortfolio } from '../../../hooks/usePortfolio';
 import { formatCurrency } from '../../../utils/helpers';
@@ -27,102 +27,79 @@ export const GoalThermometer: React.FC<GoalThermometerProps> = ({ currentNetWort
         return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     }, [targetDate]);
 
-    const monthsRemaining = Math.ceil(daysRemaining / 30);
+    const monthsRemaining = Math.max(1, Math.ceil(daysRemaining / 30));
     const gap = targetNetWorth - currentNetWorth;
-    const monthlySavingsNeeded = monthsRemaining > 0 ? gap / monthsRemaining : 0;
-
-    // Persona based on progress
-    const getPersona = () => {
-        if (progress >= 100) return { label: 'GOAL ACHIEVED!', color: 'text-emerald-500', bg: 'bg-emerald-500', icon: Trophy };
-        if (progress >= 75) return { label: 'Almost There', color: 'text-indigo-500', bg: 'bg-indigo-500', icon: Zap };
-        if (progress >= 50) return { label: 'Halfway Point', color: 'text-amber-500', bg: 'bg-amber-500', icon: TrendingUp };
-        if (progress >= 25) return { label: 'Building Momentum', color: 'text-blue-500', bg: 'bg-blue-500', icon: Flame };
-        return { label: 'Just Getting Started', color: 'text-slate-400', bg: 'bg-slate-500', icon: Target };
-    };
-
-    const persona = getPersona();
-    const PersonaIcon = persona.icon;
+    const monthlySavingsNeeded = gap > 0 ? gap / monthsRemaining : 0;
 
     return (
-        <div className="glass-panel rounded-2xl p-5 h-full flex flex-col">
+        <div className="h-full bg-slate-950 border border-slate-800 rounded-2xl p-5 relative overflow-hidden group flex flex-col hover:border-cyan-500/30 transition-colors duration-500">
+            {/* Background Sky */}
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 to-slate-950 pointer-events-none" />
+
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <div className={`p-2 rounded-lg ${persona.bg}/20`}>
-                        <Target className={persona.color} size={18} />
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-cyan-950/50 rounded-xl flex items-center justify-center border border-cyan-500/20 shadow-lg shadow-cyan-900/10">
+                        <Rocket size={20} className="text-cyan-400" />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-700 dark:text-white">Goal Thermometer</h3>
+                    <div>
+                        <h3 className="text-sm font-black text-white uppercase tracking-wider">Ascension</h3>
+                        <p className="text-[10px] text-cyan-400/80 font-mono">Goal Tracker</p>
+                    </div>
                 </div>
-                <span className={`text-xs font-bold px-2 py-1 rounded-full ${persona.bg}/20 ${persona.color}`}>
-                    {progress.toFixed(0)}%
-                </span>
+
+                <div className="flex flex-col items-end">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase">Completion</span>
+                    <span className="text-2xl font-black text-cyan-400 font-mono tracking-tight">{progress.toFixed(0)}<span className="text-sm">%</span></span>
+                </div>
             </div>
 
-            {/* Thermometer Visual */}
-            <div className="flex-1 flex items-center gap-4 mb-4">
-                {/* Vertical Thermometer */}
-                <div className="relative w-8 h-32 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden border-2 border-slate-300 dark:border-slate-700">
+            <div className="flex-1 flex gap-4 relative z-10">
+                {/* Vertical Tracker */}
+                <div className="w-10 relative">
+                    <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-1.5 bg-slate-800 rounded-full" />
                     {/* Fill */}
                     <div
-                        className={`absolute bottom-0 left-0 right-0 ${persona.bg} transition-all duration-1000 ease-out`}
+                        className="absolute left-1/2 -translate-x-1/2 bottom-0 w-1.5 bg-gradient-to-t from-cyan-600 to-blue-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)] transition-all duration-1000"
                         style={{ height: `${progress}%` }}
                     />
-                    {/* Markers */}
-                    {[25, 50, 75, 100].map(mark => (
-                        <div
-                            key={mark}
-                            className="absolute left-0 right-0 h-px bg-slate-400/50"
-                            style={{ bottom: `${mark}%` }}
-                        />
-                    ))}
-                    {/* Bulb at bottom */}
-                    <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full ${persona.bg} border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center`}>
-                        <PersonaIcon className="text-white" size={16} />
+
+                    {/* Moving Rocket */}
+                    <div
+                        className="absolute left-1/2 -translate-x-1/2 transition-all duration-1000"
+                        style={{ bottom: `calc(${progress}% - 12px)` }}
+                    >
+                        <div className="w-6 h-6 bg-slate-950 border-2 border-cyan-400 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/50 z-20 relative">
+                            <Rocket size={12} className="text-white fill-current -rotate-45 ml-0.5 mt-0.5" />
+                        </div>
+                    </div>
+
+                    {/* Top Flag */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border border-slate-700 p-1 rounded z-10">
+                        <Flag size={10} className="text-amber-400 fill-current" />
                     </div>
                 </div>
 
-                {/* Stats */}
-                <div className="flex-1 space-y-3">
-                    <div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">Current</p>
-                        <p className="text-lg font-black text-slate-800 dark:text-white">
-                            {formatCurrency(currentNetWorth)}
-                        </p>
+                {/* Metrics */}
+                <div className="flex-1 flex flex-col justify-between py-1">
+                    {/* Gap Analysis */}
+                    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-800">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-[9px] text-slate-500 font-bold uppercase">To Go</span>
+                            <span className="text-[9px] text-slate-500 font-mono">{monthsRemaining} mos left</span>
+                        </div>
+                        <p className="text-lg font-bold text-white font-mono">{formatCurrency(gap)}</p>
                     </div>
-                    <div>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">Target</p>
-                        <p className="text-lg font-black text-indigo-500">
-                            {formatCurrency(targetNetWorth)}
-                        </p>
-                    </div>
-                    <div className={`p-2 rounded-lg ${persona.bg}/10`}>
-                        <p className={`text-xs font-bold ${persona.color} flex items-center gap-1`}>
-                            <PersonaIcon size={12} />
-                            {persona.label}
-                        </p>
-                    </div>
-                </div>
-            </div>
 
-            {/* Footer Stats */}
-            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
-                <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-slate-500">
-                        <Calendar size={12} />
-                        <span className="text-[10px] font-bold uppercase">Time Left</span>
+                    {/* Required Rate */}
+                    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-800">
+                        <div className="flex items-center gap-2 mb-1">
+                            <TrendingUp size={12} className="text-emerald-400" />
+                            <span className="text-[9px] text-slate-500 font-bold uppercase">Req. Monthly</span>
+                        </div>
+                        <p className="text-xl font-black text-emerald-400 font-mono">{formatCurrency(monthlySavingsNeeded)}</p>
+                        <p className="text-[9px] text-slate-600 mt-1">to hit target by date</p>
                     </div>
-                    <p className="text-sm font-black text-slate-700 dark:text-white">
-                        {monthsRemaining} months
-                    </p>
-                </div>
-                <div className="text-center">
-                    <div className="flex items-center justify-center gap-1 text-slate-500">
-                        <TrendingUp size={12} />
-                        <span className="text-[10px] font-bold uppercase">Monthly Gap</span>
-                    </div>
-                    <p className={`text-sm font-black ${gap > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                        {gap > 0 ? formatCurrency(monthlySavingsNeeded) : 'Done!'}
-                    </p>
                 </div>
             </div>
         </div>

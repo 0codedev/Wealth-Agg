@@ -7,7 +7,7 @@ interface CorpusGoalWidgetProps {
 }
 
 export const CorpusGoalWidget: React.FC<CorpusGoalWidgetProps> = ({ formatCurrency = (v) => `₹${v.toLocaleString('en-IN')}` }) => {
-    const { targetNetWorth, setTargetNetWorth, targetDate, setTargetDate } = useSettingsStore();
+    const { targetNetWorth, targetDate, updateSetting } = useSettingsStore();
     const [localTarget, setLocalTarget] = useState(targetNetWorth.toString());
     const [localDate, setLocalDate] = useState(targetDate);
     const [saved, setSaved] = useState(false);
@@ -15,8 +15,8 @@ export const CorpusGoalWidget: React.FC<CorpusGoalWidgetProps> = ({ formatCurren
     const handleSave = () => {
         const parsed = parseFloat(localTarget.replace(/,/g, ''));
         if (!isNaN(parsed) && parsed > 0) {
-            setTargetNetWorth(parsed);
-            setTargetDate(localDate);
+            updateSetting('targetNetWorth', parsed);
+            updateSetting('targetDate', localDate);
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
         }
@@ -65,8 +65,8 @@ export const CorpusGoalWidget: React.FC<CorpusGoalWidgetProps> = ({ formatCurren
                     <button
                         onClick={handleSave}
                         className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${saved
-                                ? 'bg-emerald-500 text-white'
-                                : 'bg-white text-indigo-600 hover:bg-white/90'
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-white text-indigo-600 hover:bg-white/90'
                             }`}
                     >
                         {saved ? (

@@ -7,6 +7,24 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 // @ts-ignore
 import { registerSW } from 'virtual:pwa-register';
 
+// Dev Tools: Expose MOM Portfolio import functions to browser console
+import { seedMomPortfolio, clearMomPortfolio, getMomPortfolioSummary } from './utils/seedMomPortfolio';
+
+// Make available via browser console for easy data import
+// Usage: window.momPortfolio.seed() or window.momPortfolio.clear()
+(window as any).momPortfolio = {
+  seed: seedMomPortfolio,
+  clear: clearMomPortfolio,
+  summary: getMomPortfolioSummary,
+  help: () => console.log(`
+    🏠 MOM Portfolio Import Functions
+    ─────────────────────────────────
+    window.momPortfolio.seed()    → Import Zerodha holdings for MOM
+    window.momPortfolio.clear()   → Remove all MOM assets
+    window.momPortfolio.summary() → View MOM portfolio summary
+  `)
+};
+
 // Register PWA Service Worker
 const updateSW = registerSW({
   onNeedRefresh() {

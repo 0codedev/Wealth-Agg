@@ -82,7 +82,7 @@ const ConfidenceBandChart: React.FC<{ paths: YearlyPath[]; targetWealth: number 
                     <Line type="monotone" dataKey="p50" stroke="#818cf8" strokeWidth={2} dot={false} />
 
                     {/* Target Line */}
-                    <ReferenceLine y={targetWealth} stroke="#f59e0b" strokeDashed strokeWidth={2} />
+                    <ReferenceLine y={targetWealth} stroke="#f59e0b" strokeDasharray="3 3" strokeWidth={2} />
                 </AreaChart>
             </ResponsiveContainer>
         </div>
@@ -99,14 +99,14 @@ const ScenarioCard: React.FC<{
     <button
         onClick={onClick}
         className={`p-3 rounded-xl border text-left transition-all w-full ${isActive
-                ? 'border-indigo-500 bg-indigo-950/50 shadow-lg shadow-indigo-500/20'
-                : 'border-slate-800 bg-slate-950/30 hover:border-slate-700'
+            ? 'border-indigo-500 bg-indigo-950/50 shadow-lg shadow-indigo-500/20'
+            : 'border-slate-800 bg-slate-950/30 hover:border-slate-700'
             }`}
     >
         <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-bold text-white">{scenario.name}</span>
             <span className={`text-lg font-black font-mono ${result.successProbability > 70 ? 'text-emerald-400' :
-                    result.successProbability > 40 ? 'text-amber-400' : 'text-rose-400'
+                result.successProbability > 40 ? 'text-amber-400' : 'text-rose-400'
                 }`}>
                 {result.successProbability.toFixed(0)}%
             </span>
@@ -143,8 +143,8 @@ const BlackSwanTester: React.FC<{
                         key={event.name}
                         onClick={() => setSelectedEvent(event)}
                         className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${selectedEvent.name === event.name
-                                ? 'bg-rose-600 text-white'
-                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            ? 'bg-rose-600 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                             }`}
                     >
                         {event.name.split(' ').slice(0, 2).join(' ')}
@@ -372,8 +372,8 @@ const OracleHub: React.FC<OracleHubProps> = ({ totalPortfolioValue, monthlyInves
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === tab.id
-                                    ? 'bg-indigo-600 text-white shadow-lg'
-                                    : 'text-slate-400 hover:text-white'
+                                ? 'bg-indigo-600 text-white shadow-lg'
+                                : 'text-slate-400 hover:text-white'
                                 }`}
                         >
                             {tab.icon}
@@ -416,8 +416,8 @@ const OracleHub: React.FC<OracleHubProps> = ({ totalPortfolioValue, monthlyInves
                                             key={val}
                                             onClick={() => setTargetWealth(val)}
                                             className={`px-2 py-1 rounded text-[10px] font-bold ${targetWealth === val
-                                                    ? 'bg-indigo-600 text-white'
-                                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                                 }`}
                                         >
                                             {(val / 10000000).toFixed(1)}Cr

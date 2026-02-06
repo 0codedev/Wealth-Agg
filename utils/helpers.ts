@@ -39,6 +39,12 @@ export const formatCurrencyPrecise = (value: number) => {
   }).format(value);
 };
 
+export const formatCurrencyCompact = (val: number) => {
+  if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;
+  if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
+  return `₹${val.toLocaleString('en-IN')}`;
+};
+
 export const calculatePercentage = (part: number, total: number) => {
   if (!total || total === 0) return '0.0';
   return ((part / total) * 100).toFixed(1);
@@ -79,6 +85,43 @@ export const calculateStreaks = (trades: Trade[]) => {
   const bestTrade = trades.length > 0 ? trades.reduce((prev, current) => ((prev.pnl || 0) > (current.pnl || 0)) ? prev : current) : null;
 
   return { currentWinStreak, currentLoseStreak, bestTrade };
+};
+
+// --- Timezone Utilities (IST for Tax Compliance) ---
+
+/**
+ * Get current date in IST (Indian Standard Time) timezone.
+ * Critical for tax deadline calculations to ensure consistency regardless of user's local timezone.
+ */
+export const getISTDate = (): Date => {
+  const now = new Date();
+  // IST is UTC+5:30
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const istOffset = 5.5 * 60 * 60000; // 5 hours 30 minutes in milliseconds
+  return new Date(utc + istOffset);
+};
+
+/**
+ * Calculate days difference between two dates, IST-aware.
+ * @param fromDate Start date
+ * @param toDate End date
+ * @returns Number of days (rounded up)
+ */
+export const calculateDaysDiff = (fromDate: Date, toDate: Date): number => {
+  const diff = toDate.getTime() - fromDate.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+};
+
+/**
+ * Calculate days held for an asset based on purchase date (IST-aware).
+ * @param dateStr Date string (ISO format or YYYY-MM-DD)
+ * @returns Days held from purchase to today (IST)
+ */
+export const calculateDaysHeld = (dateStr: string): number => {
+  const purchaseDate = new Date(dateStr);
+  const today = getISTDate();
+  const diff = Math.abs(today.getTime() - purchaseDate.getTime());
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
 // --- Fiscal Year Utilities (Compliance) ---

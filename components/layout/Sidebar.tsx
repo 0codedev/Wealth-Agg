@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { TrendingUp, LayoutDashboard, Wallet, Globe, Bot, Settings, X, Target, Zap, Brain } from 'lucide-react';
-
+import React, { useEffect, useState } from 'react';
+import { TrendingUp, LayoutDashboard, Wallet, Globe, Bot, Settings, X, Target, Zap, Brain, Users, User, Baby, Building2, Lightbulb, Layers } from 'lucide-react';
+import { useFamily } from '../../contexts/FamilyContext';
 
 interface SidebarProps {
     activeCategory: string;
@@ -21,7 +21,9 @@ const CATEGORIES = [
     { id: 'ipo', icon: Zap, label: 'IPO' },
     { id: 'journal', icon: Brain, label: 'Trading Journal' },
     { id: 'growth', icon: Bot, label: 'Growth Engine' },
-    { id: 'planning', icon: Target, label: 'Life Planner' }
+    { id: 'planning', icon: Target, label: 'Life Planner' },
+    { id: 'innovation', icon: Lightbulb, label: 'Moonshot Lab' },
+    { id: 'analytics', icon: Layers, label: 'Analytics' }
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -35,6 +37,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     isCollapsed,
     onToggleCollapse
 }) => {
+    // const { activeEntity, setActiveEntity, getEntityName } = useFamily(); // Access from ProfileMenu now
+    // const [isFamilyMenuOpen, setIsFamilyMenuOpen] = useState(false);
 
     // Close mobile menu on route change
     useEffect(() => {
@@ -58,8 +62,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                         </h1>
                     )}
                 </div>
-                {/* Mobile Close Button - Only show if NO toggle logic or handles separately. Actually mobile drawer shouldn't collapse like this. */}
-                {/* For mobile, we just close. The collapse prop is mainly for desktop. */}
                 <button
                     onClick={(e) => { e.stopPropagation(); setIsMobileMenuOpen(false); }}
                     className="md:hidden p-2 text-slate-400 hover:text-rose-500 transition-colors"
@@ -68,7 +70,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </button>
             </div>
 
-            <nav className="flex-1 px-4 space-y-2 mt-4">
+            {/* Entity Switcher Removed */}
+
+            <nav className="flex-1 px-4 space-y-2 mt-2">
                 {CATEGORIES.map((cat) => (
                     <button
                         key={cat.id}

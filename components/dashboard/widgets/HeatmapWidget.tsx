@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Flame } from 'lucide-react';
 
 interface HeatmapWidgetProps {
@@ -6,15 +6,33 @@ interface HeatmapWidgetProps {
     isDarkMode: boolean;
 }
 
-const HeatmapWidget: React.FC<HeatmapWidgetProps> = ({ history, isDarkMode }) => {
+const HeatmapWidgetBase: React.FC<HeatmapWidgetProps> = ({ history, isDarkMode }) => {
     // Generate last 14 days of data (or use history)
     // For visual appeal, if history is small, we mock or pad
-    const dataPoints = history.slice(-14).map((h, i, arr) => {
-        const prev = arr[i - 1]?.value || h.value;
-        const change = h.value - prev;
-        const percent = prev !== 0 ? (change / prev) * 100 : 0;
-        return { ...h, change, percent };
-    }).reverse(); // Newest first
+    const dataPoints = useMemo(() => {
+        if (!history || history.length === 0) {
+            // Return 14 days of flatline 0 change if no data
+            return Array.from({ length: 14 }).map((_, i) => ({
+                date: new Date(Date.now() - (i * 86400000)).toISOString(),
+                value: 0,
+                change: 0,
+                percent: 0
+            })).reverse();
+        }
+
+        const paddedHistory = [...history]; // Clone
+        // Ensure at least 2 points for change calc
+        if (paddedHistory.length < 2) {
+            paddedHistory.unshift({ date: 'Start', value: paddedHistory[0]?.value || 0 });
+        }
+
+        return paddedHistory.slice(-14).map((h, i, arr) => {
+            const prev = arr[i - 1]?.value || h.value;
+            const change = h.value - prev;
+            const percent = prev !== 0 ? (change / prev) * 100 : 0;
+            return { ...h, change, percent };
+        }).slice(-14); // Ensure max 14
+    }, [history]); // Wrap in useMemo for perf
 
     const getColor = (percent: number) => {
         if (percent > 0.5) return 'bg-emerald-500';
@@ -54,4 +72,5 @@ const HeatmapWidget: React.FC<HeatmapWidgetProps> = ({ history, isDarkMode }) =>
     );
 };
 
-export default HeatmapWidget;
+// Wrap with React.memo to prevent unnecessary re-renders on parent state changes
+export default React.memo(HeatmapWidgetBase);

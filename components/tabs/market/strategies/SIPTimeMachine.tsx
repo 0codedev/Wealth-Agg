@@ -3,6 +3,7 @@ import { TrendingUp, Clock, ArrowRight } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { formatCurrencyCompact as formatCurrency } from '../../../../utils/helpers';
 
 const SIPTimeMachine: React.FC = () => {
     // State
@@ -46,11 +47,7 @@ const SIPTimeMachine: React.FC = () => {
         return { chartData: results, finalNow: wealthNow, finalDelayed: wealthDelayed, costOfDelay: wealthNow - wealthDelayed };
     }, [monthlyInvestment, expectedReturn, durationYears, delayYears]);
 
-    const formatCurrency = (val: number) => {
-        if (val >= 10000000) return `₹${(val / 10000000).toFixed(2)}Cr`;
-        if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
-        return `₹${val.toLocaleString()}`;
-    };
+
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 h-full flex flex-col">

@@ -2,6 +2,7 @@ import React from 'react';
 
 interface SkeletonProps {
     className?: string;
+    style?: React.CSSProperties;
 }
 
 /**
@@ -12,7 +13,7 @@ export const Skeleton: React.FC<SkeletonProps> & {
     Text: React.FC<{ lines?: number; className?: string }>;
     Circle: React.FC<{ size?: number; className?: string }>;
     Chart: React.FC<{ className?: string }>;
-} = ({ className = '' }) => {
+} = ({ className = '', style }) => {
     return (
         <div
             className={`animate-pulse bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200 
@@ -20,6 +21,7 @@ export const Skeleton: React.FC<SkeletonProps> & {
             bg-[length:200%_100%] animate-shimmer rounded ${className}`}
             style={{
                 animation: 'shimmer 1.5s ease-in-out infinite',
+                ...style,
             }}
         />
     );

@@ -115,22 +115,23 @@ export class PortfolioExportService {
         ];
 
         const rows = investments.map(inv => {
+            const i = inv as any; // Cast to any to access potentially missing fields or legacy fields
             const pnl = inv.currentValue - inv.investedAmount;
             const pnlPercent = inv.investedAmount > 0 ? (pnl / inv.investedAmount) * 100 : 0;
             return [
                 `"${inv.name}"`,
                 inv.type,
                 inv.platform || '',
-                inv.units.toString(),
-                inv.avgBuyPrice.toFixed(2),
-                inv.currentPrice?.toFixed(2) || '',
+                (i.units || 0).toString(),
+                (i.avgBuyPrice || 0).toFixed(2),
+                (i.currentPrice || 0).toFixed(2) || '',
                 inv.investedAmount.toFixed(2),
                 inv.currentValue.toFixed(2),
                 pnl.toFixed(2),
                 pnlPercent.toFixed(2) + '%',
                 inv.sector || '',
                 inv.country || '',
-                inv.addedAt || ''
+                (i.addedAt || '')
             ];
         });
 
@@ -244,12 +245,13 @@ export class PortfolioExportService {
             ${investments.map(inv => {
             const pnl = inv.currentValue - inv.investedAmount;
             const pnlPercent = inv.investedAmount > 0 ? (pnl / inv.investedAmount) * 100 : 0;
+            const i = inv as any;
             return `
                 <tr>
                     <td><strong>${inv.name}</strong></td>
                     <td>${inv.type}</td>
                     <td>${inv.platform || '-'}</td>
-                    <td class="text-right">${inv.units.toFixed(2)}</td>
+                    <td class="text-right">${(i.units || 0).toFixed(2)}</td>
                     <td class="text-right">${formatCurrency(inv.investedAmount)}</td>
                     <td class="text-right">${formatCurrency(inv.currentValue)}</td>
                     <td class="text-right ${pnl >= 0 ? 'green' : 'red'}">${formatCurrency(pnl)}</td>

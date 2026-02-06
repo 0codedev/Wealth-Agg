@@ -7,6 +7,7 @@ export type JarvisActionType =
     | 'REFRESH_DATA'
     | 'OPEN_MODAL'
     | 'QUERY_DATA'
+    | 'SWITCH_PROFILE'
     | 'NONE';
 
 export interface JarvisAction {
@@ -53,12 +54,33 @@ class JarvisCommandService {
     processCommand(transcript: string): JarvisAction {
         const lower = transcript.toLowerCase().trim();
 
-        // ==================== NAVIGATION COMMANDS ====================
+        // ==================== PROFILE COMMANDS ====================
+        if (fuzzyMatch(lower, ['switch to mom', 'show mom', 'moms account', 'mother'])) {
+            return { type: 'SWITCH_PROFILE', payload: 'MOM', response: "Switching to Mom's profile." };
+        }
+        if (fuzzyMatch(lower, ['switch to spouse', 'wife', 'husband', 'partner', 'spouse account'])) {
+            return { type: 'SWITCH_PROFILE', payload: 'SPOUSE', response: "Switching to Spouse's profile." };
+        }
+        if (fuzzyMatch(lower, ['switch to kids', 'kids trust', 'children', 'child account'])) {
+            return { type: 'SWITCH_PROFILE', payload: 'KIDS', response: "Switching to Kids Trust." };
+        }
+        if (fuzzyMatch(lower, ['switch to huf', 'huf account', 'huf', 'family trust'])) {
+            return { type: 'SWITCH_PROFILE', payload: 'HUF', response: "Switching to HUF Account." };
+        }
+        if (fuzzyMatch(lower, ['switch to my portfolio', 'my account', 'self', 'personal', 'back to me'])) {
+            return { type: 'SWITCH_PROFILE', payload: 'SELF', response: "Switching to your personal portfolio." };
+        }
+        if (fuzzyMatch(lower, ['switch to family office', 'all accounts', 'family view', 'aggregated view'])) {
+            return { type: 'SWITCH_PROFILE', payload: 'ALL', response: "Switching to Family Office view." };
+        }
 
+        // ==================== NAVIGATION COMMANDS ====================
+        // ... (existing navigation code)
         // Dashboard
         if (fuzzyMatch(lower, ['dashboard', 'home', 'main screen', 'overview'])) {
             return { type: 'NAVIGATE', payload: 'dashboard', response: "Opening Dashboard." };
         }
+        // ... (Rest of the file continues matching)
 
         // Portfolio
         if (fuzzyMatch(lower, ['portfolio', 'investments', 'holdings', 'my stocks', 'my assets'])) {

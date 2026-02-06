@@ -1,8 +1,8 @@
 
 import https from 'https';
 
-const API_KEY = "AIzaSyCLOar4MBIcCQsRfEJxW6JFMYdP2OdEqRw";
-const MODELS_TO_TEST = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
+const API_KEY = process.env.GEMINI_API_KEY || "YOUR_API_KEY_HERE";
+const MODELS_TO_TEST = ["gemini-1.5-flash", "gemini-flash-latest", "gemini-1.5-pro"];
 
 async function testModel(model) {
     return new Promise((resolve) => {

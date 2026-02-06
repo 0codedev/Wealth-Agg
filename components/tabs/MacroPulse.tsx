@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { CustomTooltip } from '../shared/CustomTooltip';
 import {
     Globe, TrendingUp, TrendingDown, Activity,
     DollarSign, Droplets, Zap, AlertTriangle, Info,
-    Coins, Scale, Calendar, BarChart3, Clock
+    Coins, Scale, Calendar, BarChart3, Clock, RefreshCw, Loader2
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
-import { IPOCalendarWidget } from '../market/IPOCalendarWidget';
+import { marketDataService } from '../../services/MarketDataService';
 
-// --- MOCK DATA GENERATORS ---
+// --- INITIAL STATE (Skeleton) ---
 const generateTrendData = (startVal: number, volatility: number) => {
     let current = startVal;
     return Array.from({ length: 30 }, (_, i) => {
@@ -106,31 +106,46 @@ const INITIAL_GLOBAL_INDICES = [
 
 const IMPACT_RULES = [
     {
-        condition: (indicators: any) => indicators.find((i: any) => i.id === 'crude').change > 1,
+        condition: (indicators: any) => {
+            const i = indicators.find((x: any) => x.id === 'crude');
+            return i ? i.change > 1 : false;
+        },
         impact: 'NEGATIVE',
         sectors: ['Paints', 'Tyres', 'Aviation'],
         reason: 'Rising Crude Oil prices increase input costs for these sectors.'
     },
     {
-        condition: (indicators: any) => indicators.find((i: any) => i.id === 'usdinr').change > 0.2,
+        condition: (indicators: any) => {
+            const i = indicators.find((x: any) => x.id === 'usdinr');
+            return i ? i.change > 0.2 : false;
+        },
         impact: 'POSITIVE',
         sectors: ['IT Services', 'Pharma'],
         reason: 'Weaker Rupee increases export earnings for IT and Pharma companies.'
     },
     {
-        condition: (indicators: any) => indicators.find((i: any) => i.id === 'us10y').value > 4.5,
+        condition: (indicators: any) => {
+            const i = indicators.find((x: any) => x.id === 'us10y');
+            return i ? i.value > 4.5 : false;
+        },
         impact: 'NEGATIVE',
         sectors: ['Banking', 'NBFCs'],
         reason: 'High US Yields trigger FII selling in financial stocks.'
     },
     {
-        condition: (indicators: any) => indicators.find((i: any) => i.id === 'vix').value < 12,
+        condition: (indicators: any) => {
+            const i = indicators.find((x: any) => x.id === 'vix');
+            return i ? i.value < 12 : false;
+        },
         impact: 'POSITIVE',
         sectors: ['High Beta', 'Midcaps'],
         reason: 'Low volatility environment encourages risk-taking in mid/small caps.'
     },
     {
-        condition: (indicators: any) => indicators.find((i: any) => i.id === 'gold').change > 1,
+        condition: (indicators: any) => {
+            const i = indicators.find((x: any) => x.id === 'gold');
+            return i ? i.change > 1 : false;
+        },
         impact: 'POSITIVE',
         sectors: ['Gold Loan NBFCs', 'Jewellery'],
         reason: 'Rising Gold prices increase collateral value and inventory value.'
@@ -223,47 +238,105 @@ const EARNINGS_CALENDAR = [
     { company: 'Reliance', ticker: 'RELIANCE', date: 'Dec 18', estimate: '₹42.5', sector: 'Energy' },
 ];
 
-
-
 const MacroPulse: React.FC = () => {
     const [macroIndicators, setMacroIndicators] = useState(INITIAL_MACRO_INDICATORS);
     const [globalIndices, setGlobalIndices] = useState(INITIAL_GLOBAL_INDICES);
     const [selectedIndicatorId, setSelectedIndicatorId] = useState(INITIAL_MACRO_INDICATORS[0].id);
 
-    // Live Data Simulation Effect
+    // Loading and Error states
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+    // Configurable refresh interval (in ms) - default 30 seconds for live noise
+    const REFRESH_INTERVAL = 30000;
+
+    // Load data function (extracted for manual refresh)
+    const loadData = useCallback(async (showLoading = true) => {
+        if (showLoading) setIsLoading(true);
+        setError(null);
+
+        try {
+            const { macro, global } = await marketDataService.fetchMacroAndGlobal();
+
+            setMacroIndicators(prev => {
+                return prev.map(p => {
+                    const fetched = macro.find(m => m.id === p.id);
+                    if (fetched) {
+                        const noise = (Math.random() - 0.5) * (fetched.value * 0.0002);
+                        const newVal = fetched.value + noise;
+                        const newData = [...p.data];
+                        newData.shift();
+                        newData.push({ day: 30, value: newVal });
+                        return { ...p, value: newVal, change: fetched.change, data: newData };
+                    }
+                    return p;
+                });
+            });
+
+            setGlobalIndices(prev => {
+                return prev.map(p => {
+                    const mapId = p.name === 'S&P 500' ? 'sp500' :
+                        p.name === 'NASDAQ' ? 'nasdaq' :
+                            p.name === 'FTSE 100' ? 'ftse' :
+                                p.name === 'NIKKEI 225' ? 'nikkei' :
+                                    p.name === 'BITCOIN' ? 'btc' : '';
+                    const found = global.find(g => g.id === mapId);
+                    if (found) {
+                        return { ...p, value: found.value, change: found.change };
+                    }
+                    return p;
+                });
+            });
+
+            setLastRefresh(new Date());
+        } catch (err: any) {
+            console.error("MacroPulse: Data Load Failed", err);
+            setError(err.message || 'Failed to load market data');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // Initial load and interval setup
     useEffect(() => {
-        const interval = setInterval(() => {
-            // Update Global Indices
+        let isMounted = true;
+
+        // Initial load (with loading indicator)
+        loadData(true);
+
+        // Live noise animation interval
+        const noiseInterval = setInterval(() => {
+            if (!isMounted) return;
+
             setGlobalIndices(prev => prev.map(idx => {
-                const noise = (Math.random() - 0.5) * (idx.value * 0.0005); // 0.05% fluctuation
-                const newVal = idx.value + noise;
-                const changeDiff = (Math.random() - 0.5) * 0.02;
-                return {
-                    ...idx,
-                    value: newVal,
-                    change: parseFloat((idx.change + changeDiff).toFixed(2))
-                };
+                const noise = (Math.random() - 0.5) * (idx.value * 0.0005);
+                return { ...idx, value: idx.value + noise };
             }));
 
-            // Update Macro Indicators
             setMacroIndicators(prev => prev.map(ind => {
                 const noise = (Math.random() - 0.5) * (ind.value * 0.0002);
                 const newVal = ind.value + noise;
-                // Also update the last data point of the chart for "real-time" feel
                 const newData = [...ind.data];
                 newData[newData.length - 1] = { ...newData[newData.length - 1], value: newVal };
-
-                return {
-                    ...ind,
-                    value: parseFloat(newVal.toFixed(2)),
-                    data: newData
-                };
+                return { ...ind, value: newVal, data: newData };
             }));
+        }, 3000);
 
-        }, 3000); // Update every 3 seconds
+        // Background refresh interval (no loading spinner)
+        const refreshInterval = setInterval(() => {
+            if (isMounted) loadData(false);
+        }, REFRESH_INTERVAL);
 
-        return () => clearInterval(interval);
-    }, []);
+        return () => {
+            isMounted = false;
+            clearInterval(noiseInterval);
+            clearInterval(refreshInterval);
+        };
+    }, [loadData]);
+
+
+
 
     const selectedIndicator = useMemo(() =>
         macroIndicators.find(i => i.id === selectedIndicatorId) || macroIndicators[0],
@@ -294,16 +367,48 @@ const MacroPulse: React.FC = () => {
             {/* Header */}
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="relative z-10">
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                        <Globe className="text-blue-400" size={28} />
-                        Macro Pulse
-                    </h2>
-                    <p className="text-slate-400 mt-1">
-                        Global economic indicators and their impact on your portfolio.
-                    </p>
+                <div className="relative z-10 flex items-start justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                            <Globe className="text-blue-400" size={28} />
+                            Macro Pulse
+                        </h2>
+                        <p className="text-slate-400 mt-1">
+                            Global economic indicators and their impact on your portfolio.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {lastRefresh && (
+                            <span className="text-xs text-slate-500 hidden md:block">
+                                Updated: {lastRefresh.toLocaleTimeString()}
+                            </span>
+                        )}
+                        <button
+                            onClick={() => loadData(true)}
+                            disabled={isLoading}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors"
+                        >
+                            {isLoading ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                                <RefreshCw size={14} />
+                            )}
+                            {isLoading ? 'Loading...' : 'Refresh'}
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Error Banner */}
+            {error && (
+                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 flex items-center gap-3">
+                    <AlertTriangle size={20} className="text-rose-500" />
+                    <div className="flex-1">
+                        <p className="text-rose-600 dark:text-rose-400 font-medium text-sm">{error}</p>
+                        <p className="text-rose-500/70 text-xs">Showing cached data. Click Refresh to retry.</p>
+                    </div>
+                </div>
+            )}
 
             {/* Indicators Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -557,10 +662,10 @@ const MacroPulse: React.FC = () => {
                 </div>
 
                 {/* IPO Calendar (P2 Enhancement) */}
-                <IPOCalendarWidget />
             </div>
         </div>
     );
 };
 
-export default MacroPulse;
+// Wrap with React.memo to prevent unnecessary re-renders
+export default React.memo(MacroPulse);

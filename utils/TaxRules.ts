@@ -2,7 +2,7 @@
 import { Investment } from '../types';
 
 export interface TaxOpportunity {
-    investmentId: number;
+    investmentId: string;
     name: string;
     ticker: string;
     unrealizedLoss: number;

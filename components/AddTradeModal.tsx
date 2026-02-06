@@ -2,11 +2,13 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Save, Upload, Target, ShieldAlert, ListChecks, CheckSquare, Award, Clock, AlertTriangle, Loader2, Plus } from 'lucide-react';
 import { useTradeForm } from '../hooks/useTradeForm';
+import { Trade } from '../database';
 
 interface AddTradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
+  tradeToEdit?: Trade | null; // Added prop
 }
 
 const MOODS_ENTRY = [
@@ -20,12 +22,12 @@ const MOODS_ENTRY = [
 const MISTAKE_TAGS = ['FOMO', 'Chasing', 'No Stop Loss', 'Overleveraged', 'Early Exit', 'Hesitation', 'Revenge Trade', 'News Trading'];
 const GRADES = ['A+', 'A', 'B', 'C', 'D'];
 
-const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, onSave, tradeToEdit }) => {
   const {
     step, formData, strategies, selectedStrategy, checkedRules, totalCapital, riskData, isCompressing, previewUrl, newMistake,
     setNewMistake, setTotalCapital, updateField, toggleMistake, handleAddMistake, handleRuleToggle, handleFileChange, handleSubmit,
     nextStep, prevStep, fileInputRef
-  } = useTradeForm(isOpen, onSave, onClose);
+  } = useTradeForm(isOpen, onSave, onClose, tradeToEdit);
 
   if (!isOpen) return null;
 
@@ -49,7 +51,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, onSave }
             </div>
             <div>
               <h2 className={`text-xl font-bold tracking-wide ${riskData.isViolation ? 'text-rose-500' : 'text-white'}`}>
-                {riskData.isViolation ? 'HARD DECK BREACHED' : 'Log New Trade'}
+                {riskData.isViolation ? 'HARD DECK BREACHED' : tradeToEdit ? 'Edit Trade Log' : 'Log New Trade'}
               </h2>
               <p className="text-xs text-slate-500 font-mono uppercase tracking-wider">
                 Step {step} / 4
@@ -337,7 +339,7 @@ const AddTradeModal: React.FC<AddTradeModalProps> = ({ isOpen, onClose, onSave }
           ) : (
             <button onClick={handleSubmit} disabled={riskData.isViolation || isCompressing} className={`px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${riskData.isViolation ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'}`}>
               {riskData.isViolation ? <AlertTriangle size={18} /> : <Save size={18} />}
-              {riskData.isViolation ? 'Risk Error' : 'Log Trade'}
+              {riskData.isViolation ? 'Risk Error' : tradeToEdit ? 'Update Trade' : 'Log Trade'}
             </button>
           )}
         </div>

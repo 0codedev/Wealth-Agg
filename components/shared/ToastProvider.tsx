@@ -5,20 +5,26 @@ import { X, CheckCircle, AlertTriangle, Info, XCircle } from 'lucide-react';
 // --- Types ---
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
+interface ToastAction {
+    label: string;
+    onClick: () => void;
+}
+
 interface Toast {
     id: string;
     message: string;
     type: ToastType;
     duration?: number;
+    action?: ToastAction;
 }
 
 interface ToastContextValue {
     toasts: Toast[];
     toast: {
-        success: (message: string, duration?: number) => void;
-        error: (message: string, duration?: number) => void;
-        warning: (message: string, duration?: number) => void;
-        info: (message: string, duration?: number) => void;
+        success: (message: string, options?: { duration?: number; action?: ToastAction }) => void;
+        error: (message: string, options?: { duration?: number; action?: ToastAction }) => void;
+        warning: (message: string, options?: { duration?: number; action?: ToastAction }) => void;
+        info: (message: string, options?: { duration?: number; action?: ToastAction }) => void;
     };
     removeToast: (id: string) => void;
 }
@@ -77,6 +83,17 @@ const ToastItem: React.FC<{ toast: Toast; onClose: () => void }> = ({ toast, onC
             >
                 <X size={16} className="text-slate-400" />
             </button>
+            {toast.action && (
+                <button
+                    onClick={() => {
+                        toast.action?.onClick();
+                        onClose();
+                    }}
+                    className="ml-2 px-3 py-1 bg-slate-800 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                >
+                    {toast.action.label}
+                </button>
+            )}
         </motion.div>
     );
 };
@@ -93,9 +110,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
-    const addToast = useCallback((message: string, type: ToastType, duration: number = 4000) => {
+    const addToast = useCallback((message: string, type: ToastType, options?: { duration?: number; action?: ToastAction }) => {
         const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const newToast: Toast = { id, message, type, duration };
+        const duration = options?.duration ?? 4000;
+        const newToast: Toast = { id, message, type, duration, action: options?.action };
 
         setToasts(prev => [...prev, newToast]);
 
@@ -106,10 +124,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     }, [removeToast]);
 
     const toast = {
-        success: (message: string, duration?: number) => addToast(message, 'success', duration),
-        error: (message: string, duration?: number) => addToast(message, 'error', duration),
-        warning: (message: string, duration?: number) => addToast(message, 'warning', duration),
-        info: (message: string, duration?: number) => addToast(message, 'info', duration),
+        success: (message: string, options?: { duration?: number; action?: ToastAction }) => addToast(message, 'success', options),
+        error: (message: string, options?: { duration?: number; action?: ToastAction }) => addToast(message, 'error', options),
+        warning: (message: string, options?: { duration?: number; action?: ToastAction }) => addToast(message, 'warning', options),
+        info: (message: string, options?: { duration?: number; action?: ToastAction }) => addToast(message, 'info', options),
     };
 
     return (

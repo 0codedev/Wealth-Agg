@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Milestone, Trash2, TrendingUp, Shield, Target, Droplets, Sparkles, PartyPopper } from 'lucide-react';
-import { LifeEvent } from '../../database';
+import { Trash2, TrendingUp, TrendingDown, Shield, Target, Droplets, Sparkles, PartyPopper } from 'lucide-react';
+import { formatCurrency } from '../../utils/helpers';
 
 interface HeroSectionProps {
     stats: any;
     isPrivacyMode: boolean;
     dynamicHealthScore: number;
     formatCurrency: (val: number) => string;
-    lifeEvents: LifeEvent[];
-    addLifeEvent: (event: Omit<LifeEvent, 'id'>) => Promise<void>;
-    deleteLifeEvent: (id: number) => Promise<void>;
-    showLiabilityProp?: boolean;
+    lifeEvents?: any[];
+    addLifeEvent?: any;
+    deleteLifeEvent?: any;
+    // Global Toggle Props
+    showLiability: boolean;
+    setShowLiability: (val: boolean) => void;
 }
 
 // ===================== COUNT-UP ANIMATION HOOK =====================
@@ -136,18 +138,20 @@ const CelebrationOverlay: React.FC<{ show: boolean; milestone: string }> = ({ sh
 
 const HeroSection: React.FC<HeroSectionProps> = ({
     stats, isPrivacyMode, dynamicHealthScore, formatCurrency,
-    lifeEvents, addLifeEvent, deleteLifeEvent
+    showLiability, setShowLiability
 }) => {
-    const [showLiability, setShowLiability] = useState(false);
-    const [newEventName, setNewEventName] = useState('');
-    const [newEventAmount, setNewEventAmount] = useState('');
-    const [newEventDate, setNewEventDate] = useState('');
+    const [isExpanded, setIsExpanded] = useState(false);
     const [showCelebration, setShowCelebration] = useState(false);
     const [celebrationMilestone, setCelebrationMilestone] = useState('');
     const previousMilestone = useRef(0);
 
     // Animated Net Worth Display
-    const displayAmount = showLiability ? (stats?.totalCurrent || 0) : (stats?.totalAssets || 0);
+    // usePortfolio now returns Net Worth in totalValues/totalCurrent and Gross in totalAssets
+    // But we still toggle between them manually here based on showLiability
+    const displayAmount = showLiability
+        ? (stats?.totalValue || 0) // Net Worth (Assets - Liabilities)
+        : (stats?.totalAssets || 0); // Gross Assets
+
     const animatedAmount = useCountUp(displayAmount);
 
     // Multi-factor Health Scores
@@ -179,23 +183,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         previousMilestone.current = currentValue;
     }, [stats?.totalAssets]);
 
-    const handleAddEvent = () => {
-        if (!newEventName || !newEventAmount || !newEventDate) return;
-        addLifeEvent({
-            name: newEventName,
-            amount: parseFloat(newEventAmount),
-            date: newEventDate,
-            type: 'EXPENSE'
-        });
-        setNewEventName('');
-        setNewEventAmount('');
-        setNewEventDate('');
-    };
-
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-            {/* MAIN NET WORTH CARD */}
-            <div className={`lg:col-span-8 bg-gradient-to-br ${getGradientClass()} bg-white dark:bg-slate-900 rounded-2xl p-8 relative overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-500`}>
+        <div className="mb-8">
+            {/* NET WORTH CARD (Full Width) */}
+            <div className={`bg-gradient-to-br ${getGradientClass()} bg-white dark:bg-slate-900 rounded-2xl p-6 relative overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-500`}>
+
                 {/* Celebration Overlay */}
                 <CelebrationOverlay show={showCelebration} milestone={celebrationMilestone} />
 
@@ -205,11 +197,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     <div className="absolute bottom-10 left-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl animate-pulse delay-700" />
                 </div>
 
-                <div className="flex flex-col h-full justify-between relative z-10">
-                    {/* Header with Toggle */}
-                    <div className="flex items-start justify-between mb-6">
-                        <div>
-                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                <div className="relative z-10">
+                    {/* Header Row: Title & Top Right Controls */}
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 {showLiability ? 'Real-Time Net Worth' : 'Gross Asset Value'}
                             </p>
                             {stats?.totalPLPercent && (
@@ -222,184 +214,121 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                 </div>
                             )}
                         </div>
-                        <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
-                            <button
-                                onClick={() => setShowLiability(false)}
-                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${!showLiability
-                                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
-                            >
-                                Gross
-                            </button>
-                            <button
-                                onClick={() => setShowLiability(true)}
-                                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${showLiability
-                                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
-                            >
-                                Net
-                            </button>
-                        </div>
-                    </div>
 
-                    {/* Animated Net Worth Display */}
-                    <div className="flex items-baseline gap-3 mb-6">
-                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 dark:text-white font-mono tabular-nums transition-all duration-300">
-                            {isPrivacyMode ? '••••••' : formatCurrency(animatedAmount)}
-                        </h1>
-                        {!isPrivacyMode && healthScores.overall > 75 && (
-                            <Sparkles className="w-6 h-6 text-amber-500 animate-pulse" />
-                        )}
-                    </div>
-
-                    {/* Multi-Factor Health Scores */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 mb-6">
-                        <ScoreRing
-                            score={healthScores.liquidity}
-                            label="Liquidity"
-                            icon={<Droplets size={12} className="text-blue-500" />}
-                            color="stroke-blue-500"
-                        />
-                        <ScoreRing
-                            score={healthScores.growth}
-                            label="Growth"
-                            icon={<TrendingUp size={12} className="text-emerald-500" />}
-                            color="stroke-emerald-500"
-                        />
-                        <ScoreRing
-                            score={healthScores.risk}
-                            label="Risk"
-                            icon={<Shield size={12} className="text-amber-500" />}
-                            color="stroke-amber-500"
-                        />
-                        <ScoreRing
-                            score={healthScores.goal}
-                            label="Goal"
-                            icon={<Target size={12} className="text-indigo-500" />}
-                            color="stroke-indigo-500"
-                        />
-                    </div>
-
-                    {/* Bottom Stats Row */}
-                    <div className="grid grid-cols-3 gap-8 border-t border-slate-100 dark:border-slate-800 pt-6">
-                        <div>
-                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Total Assets</p>
-                            <p className="text-slate-700 dark:text-slate-200 font-mono text-lg font-semibold tabular-nums">
-                                {isPrivacyMode ? '••••' : formatCurrency(stats?.totalAssets || 0)}
-                            </p>
-                        </div>
-                        <div className={`transition-opacity duration-300 ${!showLiability ? 'opacity-40 grayscale' : 'opacity-100'}`}>
-                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Liabilities</p>
-                            <p className="text-rose-500 font-mono text-lg font-semibold tabular-nums">
-                                -{isPrivacyMode ? '••••' : formatCurrency(stats?.totalLiability || 0)}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Overall Score</p>
-                            <div className="flex items-center gap-2">
-                                <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden w-24">
-                                    <div
-                                        className={`h-full transition-all duration-1000 ${healthScores.overall > 75 ? 'bg-emerald-500' :
-                                            healthScores.overall > 50 ? 'bg-amber-500' : 'bg-rose-500'
-                                            }`}
-                                        style={{ width: `${healthScores.overall}%` }}
-                                    />
-                                </div>
-                                <span className={`font-mono text-sm font-bold ${healthScores.overall > 75 ? 'text-emerald-500' :
-                                    healthScores.overall > 50 ? 'text-amber-500' : 'text-rose-500'
-                                    }`}>
-                                    {healthScores.overall}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* MILESTONE TIMELINE */}
-            <div className="lg:col-span-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col relative overflow-hidden">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2 text-sm uppercase tracking-wide">
-                        <Milestone size={16} className="text-indigo-500" />
-                        Milestone Timeline
-                    </h3>
-                    {lifeEvents.length > 0 && (
-                        <span className="text-[10px] px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full font-bold">
-                            {lifeEvents.length} events
-                        </span>
-                    )}
-                </div>
-
-                <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-2 max-h-[150px] scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
-                    {lifeEvents.length === 0 && (
-                        <div className="text-center py-6">
-                            <Milestone className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-                            <p className="text-xs text-slate-400 italic">No future events logged.</p>
-                            <p className="text-[10px] text-slate-300 dark:text-slate-600">Add weddings, vacations, or big purchases</p>
-                        </div>
-                    )}
-                    {lifeEvents.map((evt, idx) => (
-                        <div
-                            key={evt.id}
-                            className="flex justify-between items-center bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-800 transition-all group"
-                            style={{ animationDelay: `${idx * 100}ms` }}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                                <div>
-                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{evt.name}</p>
-                                    <p className="text-[10px] text-slate-500">{evt.date}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-mono font-bold text-rose-500">-{formatCurrency(evt.amount)}</span>
+                        {/* Top Right Controls: Toggle & Expand */}
+                        <div className="flex items-center gap-3">
+                            <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
                                 <button
-                                    onClick={() => evt.id && deleteLifeEvent(evt.id)}
-                                    className="text-slate-400 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => setShowLiability(false)}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${!showLiability
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        }`}
                                 >
-                                    <Trash2 size={12} />
+                                    Gross
+                                </button>
+                                <button
+                                    onClick={() => setShowLiability(true)}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${showLiability
+                                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                        }`}
+                                >
+                                    Net
                                 </button>
                             </div>
-                        </div>
-                    ))}
-                </div>
 
-                <div className="mt-auto bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Add Life Event</p>
-                    <div className="space-y-2">
-                        <input
-                            value={newEventName}
-                            onChange={e => setNewEventName(e.target.value)}
-                            placeholder="e.g. Wedding, Vacation, Car"
-                            className="w-full p-2 text-xs rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:border-indigo-500 transition-colors"
-                        />
-                        <div className="flex gap-2">
-                            <input
-                                type="number"
-                                value={newEventAmount}
-                                onChange={e => setNewEventAmount(e.target.value)}
-                                placeholder="₹ Amount"
-                                className="flex-1 p-2 text-xs rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:border-indigo-500 transition-colors"
-                            />
-                            <input
-                                type="date"
-                                value={newEventDate}
-                                onChange={e => setNewEventDate(e.target.value)}
-                                className="flex-1 p-2 text-xs rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:border-indigo-500 transition-colors"
-                            />
+                            <button
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                className="p-2 text-slate-400 hover:text-indigo-500 transition-colors rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+                                title={isExpanded ? "Collapse" : "Expand Details"}
+                            >
+                                <TrendingDown size={16} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                            </button>
                         </div>
-                        <button
-                            onClick={handleAddEvent}
-                            disabled={!newEventName || !newEventAmount || !newEventDate}
-                            className="w-full bg-indigo-600 text-white text-xs font-bold py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30"
-                        >
-                            Add Milestone
-                        </button>
                     </div>
+
+                    {/* Centered Amount */}
+                    <div className="flex justify-center items-center py-6 md:py-10">
+                        <div className="flex items-baseline gap-3">
+                            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 dark:text-white font-mono tabular-nums transition-all duration-300 text-center">
+                                {isPrivacyMode ? '••••••' : formatCurrency(animatedAmount)}
+                            </h1>
+                            {!isPrivacyMode && healthScores.overall > 75 && (
+                                <Sparkles className="w-8 h-8 text-amber-500 animate-pulse" />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Expandable Section */}
+                    {isExpanded && (
+                        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 animate-in slide-in-from-top-2 fade-in duration-300">
+                            {/* Multi-Factor Health Scores */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 mb-6">
+                                <ScoreRing
+                                    score={healthScores.liquidity}
+                                    label="Liquidity"
+                                    icon={<Droplets size={12} className="text-blue-500" />}
+                                    color="stroke-blue-500"
+                                />
+                                <ScoreRing
+                                    score={healthScores.growth}
+                                    label="Growth"
+                                    icon={<TrendingUp size={12} className="text-emerald-500" />}
+                                    color="stroke-emerald-500"
+                                />
+                                <ScoreRing
+                                    score={healthScores.risk}
+                                    label="Risk"
+                                    icon={<Shield size={12} className="text-amber-500" />}
+                                    color="stroke-amber-500"
+                                />
+                                <ScoreRing
+                                    score={healthScores.goal}
+                                    label="Goal"
+                                    icon={<Target size={12} className="text-indigo-500" />}
+                                    color="stroke-indigo-500"
+                                />
+                            </div>
+
+                            {/* Bottom Stats Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                                <div>
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Total Assets</p>
+                                    <p className="text-slate-700 dark:text-slate-200 font-mono text-lg font-semibold tabular-nums">
+                                        {isPrivacyMode ? '••••' : formatCurrency(stats?.totalAssets || 0)}
+                                    </p>
+                                </div>
+                                <div className={`transition-opacity duration-300 ${!showLiability ? 'opacity-40 grayscale' : 'opacity-100'}`}>
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Liabilities</p>
+                                    <p className="text-rose-500 font-mono text-lg font-semibold tabular-nums">
+                                        -{isPrivacyMode ? '••••' : formatCurrency(stats?.totalLiability || 0)}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Overall Score</p>
+                                    <div className="flex items-center gap-2 justify-center md:justify-start">
+                                        <div className="flex-1 max-w-[100px] h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full transition-all duration-1000 ${healthScores.overall > 75 ? 'bg-emerald-500' :
+                                                    healthScores.overall > 50 ? 'bg-amber-500' : 'bg-rose-500'
+                                                    }`}
+                                                style={{ width: `${healthScores.overall}%` }}
+                                            />
+                                        </div>
+                                        <span className={`font-mono text-sm font-bold ${healthScores.overall > 75 ? 'text-emerald-500' :
+                                            healthScores.overall > 50 ? 'text-amber-500' : 'text-rose-500'
+                                            }`}>
+                                            {healthScores.overall}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
+            {/* NO Timeline Here */}
         </div>
     );
 };

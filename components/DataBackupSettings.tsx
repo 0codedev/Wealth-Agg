@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { HardDrive, Download, Upload, Loader2, CheckCircle, AlertTriangle, RefreshCw, X, ShieldAlert } from 'lucide-react';
 import * as BackupService from '../services/BackupService';
 import CloudSyncPanel from './settings/CloudSyncPanel';
+import { logger } from '../services/Logger';
 
 interface DataBackupSettingsProps {
   onDataRestored?: () => void;
@@ -50,22 +51,22 @@ const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored,
     setShowConfirmModal(false);
     setStatus('PROCESSING');
     setMessage('Restoring...');
-    console.log("[RESTORE UI] Starting restore process for:", restoreFile.name);
+    logger.info('Starting restore process', { fileName: restoreFile.name }, 'Backup');
 
     try {
       const text = await restoreFile.text();
       const json = JSON.parse(text);
-      console.log("[RESTORE UI] JSON parsed successfully");
+      logger.debug('JSON parsed successfully', undefined, 'Backup');
 
       if (onImport) {
-        console.log("[RESTORE UI] Using onImport strategy");
+        logger.debug('Using onImport strategy', undefined, 'Backup');
         await onImport(json);
       } else {
-        console.log("[RESTORE UI] Using BackupService strategy");
+        logger.debug('Using BackupService strategy', undefined, 'Backup');
         await BackupService.restoreFromJSON(json);
       }
 
-      console.log("[RESTORE UI] Restore complete");
+      logger.info('Restore complete', undefined, 'Backup');
       setStatus('SUCCESS');
       setMessage('Reloading...');
 
@@ -76,8 +77,8 @@ const DataBackupSettings: React.FC<DataBackupSettingsProps> = ({ onDataRestored,
         window.location.reload();
       }, 2000);
 
-    } catch (err: any) {
-      console.error("[RESTORE UI] Restore Error:", err);
+    } catch (err: unknown) {
+      logger.error('Restore failed', err, 'Backup');
       setStatus('ERROR');
       setMessage('Failed');
 

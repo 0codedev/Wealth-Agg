@@ -11,6 +11,7 @@ interface JournalCalendarViewProps {
     setSelectedCalendarDate: (date: string | null) => void;
     selectedDayReview: DailyReview | null;
     onOpenDailyReviewModal: () => void;
+    onTradeClick?: (trade: Trade) => void;
 }
 
 const JournalCalendarView: React.FC<JournalCalendarViewProps> = ({
@@ -19,7 +20,8 @@ const JournalCalendarView: React.FC<JournalCalendarViewProps> = ({
     selectedCalendarDate,
     setSelectedCalendarDate,
     selectedDayReview,
-    onOpenDailyReviewModal
+    onOpenDailyReviewModal,
+    onTradeClick
 }) => {
     return (
         <div className="space-y-8 animate-in slide-in-from-bottom-4">
@@ -91,7 +93,7 @@ const JournalCalendarView: React.FC<JournalCalendarViewProps> = ({
                         </button>
                     )}
                 </div>
-                <TradeHistoryTable trades={trades} />
+                <TradeHistoryTable trades={trades} onTradeClick={onTradeClick} />
             </div>
         </div>
     );

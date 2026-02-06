@@ -4,8 +4,8 @@ import {
     Bell, Plus, Trash2, Target, TrendingDown, Calendar,
     AlertCircle, Check, X, ChevronDown, ChevronUp, Settings
 } from 'lucide-react';
-import { db, Alert } from '../../database';
-import { formatCurrency } from '../../utils/helpers';
+import { db, Alert } from '../../../database';
+import { formatCurrency } from '../../../utils/helpers';
 
 type AlertType = Alert['type'];
 
@@ -122,8 +122,8 @@ export const SmartAlertsManager: React.FC<SmartAlertsManagerProps> = ({ investme
                                 key={t.id}
                                 onClick={() => setNewAlert({ ...newAlert, type: t.id })}
                                 className={`flex-1 p-2 rounded-lg text-[10px] font-bold flex flex-col items-center gap-1 transition-all border ${newAlert.type === t.id
-                                        ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600'
-                                        : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600'
+                                    : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                     }`}
                                 style={{ color: newAlert.type === t.id ? t.color : undefined }}
                             >
@@ -201,8 +201,8 @@ export const SmartAlertsManager: React.FC<SmartAlertsManagerProps> = ({ investme
                                 <div
                                     key={alert.id}
                                     className={`p-3 rounded-xl border transition-all ${alert.isActive
-                                            ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700'
-                                            : 'bg-slate-100 dark:bg-slate-800/50 border-transparent opacity-60'
+                                        ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700'
+                                        : 'bg-slate-100 dark:bg-slate-800/50 border-transparent opacity-60'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between">

@@ -2,10 +2,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Trade, SetupGrade, TradeSetup } from '../../database';
 import { formatCurrency } from '../../utils/helpers';
-import { Filter, Image as ImageIcon, Maximize2, X } from 'lucide-react';
+import { Filter, Image as ImageIcon, Maximize2, X, Edit2 } from 'lucide-react';
 
 interface PlaybookGalleryProps {
     trades: Trade[];
+    onEditTrade?: (trade: Trade) => void;
 }
 
 interface TradeCardProps {
@@ -74,9 +75,10 @@ const TradeCard: React.FC<TradeCardProps> = ({ trade, onClick }) => {
 interface ModalDetailProps {
     trade: Trade;
     onClose: () => void;
+    onEditTrade?: (trade: Trade) => void;
 }
 
-const ModalDetail: React.FC<ModalDetailProps> = ({ trade, onClose }) => {
+const ModalDetail: React.FC<ModalDetailProps> = ({ trade, onClose, onEditTrade }) => {
     const [imgUrl, setImgUrl] = useState<string | null>(null);
     const isWin = (trade.pnl || 0) >= 0;
 
@@ -93,9 +95,20 @@ const ModalDetail: React.FC<ModalDetailProps> = ({ trade, onClose }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
             <div className="w-full max-w-5xl h-[85vh] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col md:flex-row relative">
-                <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 bg-black/50 text-white rounded-full hover:bg-rose-600 transition-colors">
-                    <X size={20} />
-                </button>
+                <div className="absolute top-4 right-4 z-10 flex gap-2">
+                    {onEditTrade && (
+                        <button
+                            onClick={() => onEditTrade(trade)}
+                            className="p-2 bg-black/50 text-white rounded-full hover:bg-indigo-600 transition-colors"
+                            title="Edit Trade"
+                        >
+                            <Edit2 size={20} />
+                        </button>
+                    )}
+                    <button onClick={onClose} className="p-2 bg-black/50 text-white rounded-full hover:bg-rose-600 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
 
                 {/* Image Side */}
                 <div className="flex-1 bg-black flex items-center justify-center overflow-hidden relative group">
@@ -172,7 +185,7 @@ const ModalDetail: React.FC<ModalDetailProps> = ({ trade, onClose }) => {
     );
 };
 
-const PlaybookGallery: React.FC<PlaybookGalleryProps> = ({ trades }) => {
+const PlaybookGallery: React.FC<PlaybookGalleryProps> = ({ trades, onEditTrade }) => {
     const [filterSetup, setFilterSetup] = useState<TradeSetup | 'ALL'>('ALL');
     const [filterGrade, setFilterGrade] = useState<SetupGrade | 'ALL'>('ALL');
     const [filterOutcome, setFilterOutcome] = useState<'ALL' | 'WIN' | 'LOSS'>('ALL');
@@ -258,7 +271,7 @@ const PlaybookGallery: React.FC<PlaybookGalleryProps> = ({ trades }) => {
 
             {/* Detail Modal */}
             {selectedTrade && (
-                <ModalDetail trade={selectedTrade} onClose={() => setSelectedTrade(null)} />
+                <ModalDetail trade={selectedTrade} onClose={() => setSelectedTrade(null)} onEditTrade={onEditTrade} />
             )}
         </div>
     );

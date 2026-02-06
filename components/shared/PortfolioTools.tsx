@@ -62,8 +62,8 @@ export const AssetComparisonTool: React.FC<AssetComparisonProps> = ({ investment
                             key={inv.id}
                             onClick={() => toggleAsset(inv.id!)}
                             className={`px-3 py-1.5 rounded-full text-sm transition-all ${selectedAssets.includes(inv.id!)
-                                    ? 'bg-indigo-500 text-white'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                                ? 'bg-indigo-500 text-white'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
                                 }`}
                         >
                             {inv.name}
@@ -118,8 +118,8 @@ export const AssetComparisonTool: React.FC<AssetComparisonProps> = ({ investment
                                 {comparison.comparison.map(asset => (
                                     <td key={asset.name} className="text-right py-3 px-4">
                                         <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${asset.healthScore >= 70 ? 'bg-emerald-100 text-emerald-700' :
-                                                asset.healthScore >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                                                    'bg-red-100 text-red-700'
+                                            asset.healthScore >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-red-100 text-red-700'
                                             }`}>
                                             {asset.healthScore >= 70 ? <CheckCircle size={12} /> :
                                                 asset.healthScore >= 50 ? <AlertTriangle size={12} /> :
@@ -193,8 +193,8 @@ export const HealthScoreCard: React.FC<HealthScoreCardProps> = ({ investment }) 
 
             {/* Recommendation */}
             <div className={`mt-3 text-xs font-medium px-2 py-1 rounded-full text-center ${health.recommendation.includes('Strong') ? 'bg-emerald-100 text-emerald-700' :
-                    health.recommendation.includes('Monitor') ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
+                health.recommendation.includes('Monitor') ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
                 }`}>
                 {health.recommendation}
             </div>
@@ -250,8 +250,8 @@ export const SmartRebalance: React.FC<SmartRebalanceProps> = ({ investments, onE
                             </div>
                         </div>
                         <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${action.action === 'BUY' ? 'bg-emerald-100 text-emerald-700' :
-                                action.action === 'SELL' ? 'bg-red-100 text-red-700' :
-                                    'bg-slate-100 text-slate-600'
+                            action.action === 'SELL' ? 'bg-red-100 text-red-700' :
+                                'bg-slate-100 text-slate-600'
                             }`}>
                             {action.action === 'BUY' && <TrendingUp size={14} />}
                             {action.action === 'SELL' && <TrendingDown size={14} />}
@@ -310,8 +310,9 @@ export const BulkEditMode: React.FC<BulkEditProps> = ({ investments, onBulkUpdat
                     clearSelection();
                 }
                 break;
-            case 'update-risk':
-                onBulkUpdate(selectedIds, { riskLevel: 'Medium' });
+            case 'update-type':
+                // Update category to PORTFOLIO
+                onBulkUpdate(selectedIds, { category: 'PORTFOLIO' });
                 clearSelection();
                 break;
         }
@@ -348,7 +349,7 @@ export const BulkEditMode: React.FC<BulkEditProps> = ({ investments, onBulkUpdat
                         >
                             <option value="">Select action...</option>
                             <option value="delete">Delete Selected</option>
-                            <option value="update-risk">Set Risk: Medium</option>
+                            <option value="update-type">Set Category: Portfolio</option>
                         </select>
                         <button
                             onClick={executeBulkAction}
@@ -368,13 +369,13 @@ export const BulkEditMode: React.FC<BulkEditProps> = ({ investments, onBulkUpdat
                         key={inv.id}
                         onClick={() => toggleSelect(inv.id!)}
                         className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${selectedIds.includes(inv.id!)
-                                ? 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800'
-                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                             }`}
                     >
                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selectedIds.includes(inv.id!)
-                                ? 'bg-indigo-500 border-indigo-500'
-                                : 'border-slate-300'
+                            ? 'bg-indigo-500 border-indigo-500'
+                            : 'border-slate-300'
                             }`}>
                             {selectedIds.includes(inv.id!) && <Check size={12} className="text-white" />}
                         </div>

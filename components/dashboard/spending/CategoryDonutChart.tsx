@@ -8,7 +8,7 @@ interface CategoryDonutChartProps {
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
-export const CategoryDonutChart: React.FC<CategoryDonutChartProps> = ({ formatCurrency }) => {
+const CategoryDonutChartBase: React.FC<CategoryDonutChartProps> = ({ formatCurrency }) => {
     const { spendingByCategory } = useTransactions();
 
     const data = useMemo(() => {
@@ -66,3 +66,6 @@ export const CategoryDonutChart: React.FC<CategoryDonutChartProps> = ({ formatCu
         </div>
     );
 };
+
+// Wrap with React.memo to prevent unnecessary re-renders
+export const CategoryDonutChart = React.memo(CategoryDonutChartBase);

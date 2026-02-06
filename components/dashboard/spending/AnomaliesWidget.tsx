@@ -50,22 +50,22 @@ export const AnomaliesWidget: React.FC = () => {
                 {/* Trends Section */}
                 <div className="space-y-2">
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Category Shifts</h4>
-                    {Array.from(trends.entries())
-                        .filter(([_, trend]) => Math.abs(trend.changePercent) > 10)
-                        .sort(([_, a], [__, b]) => b.current - a.current)
+                    {trends
+                        .filter(trend => Math.abs(trend.changePercent) > 10)
+                        .sort((a, b) => b.currentAmount - a.currentAmount)
                         .slice(0, 5)
-                        .map(([category, trend]) => (
-                            <div key={category} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+                        .map((trend) => (
+                            <div key={trend.category} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
                                 <div className="flex-1">
-                                    <div className="text-xs font-medium text-slate-900 dark:text-white">{category}</div>
+                                    <div className="text-xs font-medium text-slate-900 dark:text-white">{trend.category}</div>
                                     <div className="text-[10px] text-slate-500">
-                                        ₹{trend.current?.toLocaleString() || '0'}
+                                        ₹{trend.currentAmount?.toLocaleString() || '0'}
                                     </div>
                                 </div>
                                 <div className={`flex items-center gap-1 text-xs font-medium ${trend.change > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
                                     }`}>
                                     {trend.change > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                                    {Math.abs(trend.changePercent)}%
+                                    {Math.abs(trend.changePercent).toFixed(1)}%
                                 </div>
                             </div>
                         ))}

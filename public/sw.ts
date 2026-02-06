@@ -142,6 +142,7 @@ self.addEventListener('push', (event: PushEvent) => {
         body: data.body,
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-72.png',
+        // @ts-ignore
         vibrate: [100, 50, 100],
         data: data.data,
         actions: data.actions || [],

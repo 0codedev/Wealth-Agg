@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { db, Transaction } from '../database';
+import { logger } from '../services/Logger';
+export type { Transaction };
 
 // ============================================================================
 // TYPES
@@ -244,7 +246,7 @@ function parseGenericCSV(content: string): Transaction[] {
     const refIdx = headers.findIndex(h => h.includes('ref') || h.includes('id'));
 
     if (dateIdx === -1 || amountIdx === -1) {
-        console.warn('[TransactionContext] Generic parser: Missing required date/amount columns');
+        logger.warn('Generic parser: Missing required date/amount columns', undefined, 'TransactionContext');
         return [];
     }
 
@@ -358,7 +360,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
                 const txns = await db.transactions.toArray();
                 setTransactions(txns);
             } catch (e) {
-                console.error('[TransactionContext] Failed to load from DB:', e);
+                logger.error('Failed to load from DB', e, 'TransactionContext');
             }
         };
         load();
@@ -396,7 +398,7 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
         const newTxn = { ...txn, id: txn.id || crypto.randomUUID() };
         setTransactions(prev => [...prev, newTxn]);
         // Async persist
-        db.transactions.add(newTxn).catch(e => console.error('DB Add Error', e));
+        db.transactions.add(newTxn).catch(e => logger.error('DB Add Error', e, 'TransactionContext'));
     }, []);
 
     const updateTransaction = useCallback((id: string, updates: Partial<Transaction>) => {
@@ -404,13 +406,13 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
             txn.id === id ? { ...txn, ...updates } : txn
         ));
         // Async persist
-        db.transactions.update(id, updates).catch(e => console.error('DB Update Error', e));
+        db.transactions.update(id, updates).catch(e => logger.error('DB Update Error', e, 'TransactionContext'));
     }, []);
 
     const deleteTransaction = useCallback((id: string) => {
         setTransactions(prev => prev.filter(txn => txn.id !== id));
         // Async persist
-        db.transactions.delete(id).catch(e => console.error('DB Delete Error', e));
+        db.transactions.delete(id).catch(e => logger.error('DB Delete Error', e, 'TransactionContext'));
     }, []);
 
     const smartImport = useCallback((incoming: Transaction[]): ImportResult => {
@@ -418,13 +420,13 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
         setTransactions(merged);
         setLastImportResult(result);
         // Async persist
-        db.transactions.bulkPut(merged).catch(e => console.error('DB BulkPut Error', e));
+        db.transactions.bulkPut(merged).catch(e => logger.error('DB BulkPut Error', e, 'TransactionContext'));
         return result;
     }, [transactions]);
 
     const parseAndAddFromFile = useCallback((content: string, fileType: 'csv' | 'text'): number => {
         if (fileType !== 'csv') {
-            console.warn('[TransactionContext] Only CSV format is supported');
+            logger.warn('Only CSV format is supported', undefined, 'TransactionContext');
             return 0;
         }
 
@@ -444,21 +446,21 @@ export const TransactionProvider: React.FC<{ children: ReactNode }> = ({ childre
                 parsed = parsePaytmCSV(content);
                 break;
             default:
-                console.log('[TransactionContext] Unknown format, using generic parser');
+                logger.debug('Unknown format, using generic parser', undefined, 'TransactionContext');
                 parsed = parseGenericCSV(content);
         }
 
         if (parsed.length === 0) return 0;
 
         const result = smartImport(parsed);
-        console.log(`[TransactionContext] Import complete: ${result.added} new, ${result.updated} updated, ${result.skipped} skipped`);
+        logger.info('Import complete', { added: result.added, updated: result.updated, skipped: result.skipped }, 'TransactionContext');
 
         return result.added + result.updated;
     }, [smartImport]);
 
     const clearTransactions = useCallback(() => {
         setTransactions([]);
-        db.transactions.clear().catch(e => console.error('DB Clear Error', e));
+        db.transactions.clear().catch(e => logger.error('DB Clear Error', e, 'TransactionContext'));
     }, []);
 
     const value: TransactionContextType = {

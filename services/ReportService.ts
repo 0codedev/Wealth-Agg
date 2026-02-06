@@ -1,13 +1,39 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Investment, AggregatedData } from '../types';
+import { formatCurrency } from '../utils/helpers';
+
+import { askGemini } from './aiService';
 
 interface ReportData {
     investments: Investment[];
     stats: any;
     allocationData: AggregatedData[];
     userName?: string;
+    aiAnalysis?: string; // New field
 }
+
+export const generateAIAnalysis = async (data: ReportData): Promise<string> => {
+    const prompt = `
+    Act as a professional Wealth Manager for a High Net Worth Individual. 
+    Analyze the following portfolio snapshot and write a concise, professional "Monthly Performance Commentary" (approx 150 words).
+    
+    Data:
+    - Total Net Worth: ${formatCurrency(data.stats.totalCurrent)}
+    - Total P/L: ${data.stats.totalPL >= 0 ? '+' : ''}${formatCurrency(data.stats.totalPL)} (${data.stats.totalPLPercent}%)
+    - Top Holding: ${data.investments.sort((a, b) => b.currentValue - a.currentValue)[0]?.name || 'N/A'}
+    - Asset Allocation: ${data.allocationData.map(d => `${d.name}: ${Math.round((d.value / data.stats.totalAssets) * 100)}%`).join(', ')}
+
+    Structure your response in markdown (bolding key figures):
+    1. **Executive Summary**: Overall health and major moves.
+    2. **Risk & Opportunity**: One key risk (e.g. concentration) and one opportunity.
+    3. **Outlook**: A generic but professional forward-looking sentence based on general market principles (do not hallucinate specific future news).
+    
+    Tone: Professional, Objective, Insightful. No financial advice disclaimers needed in the text itself.
+    `;
+
+    return await askGemini(prompt, true); // Use Pro for better writing
+};
 
 export const generateMonthlyReport = async (data: ReportData) => {
     const doc = new jsPDF();
@@ -154,7 +180,7 @@ export const generateMonthlyReport = async (data: ReportData) => {
     autoTable(doc, {
         startY: yPos + 5,
         head: [['Asset', 'Type', 'Invested', 'Current', 'Return']],
-        body: holdingsData,
+        body: holdingsData as any,
         headStyles: {
             fillColor: [51, 65, 85], // Slate 700
             fontSize: 9,
@@ -165,7 +191,32 @@ export const generateMonthlyReport = async (data: ReportData) => {
         theme: 'striped'
     });
 
-    // --- Footer ---
+    // --- Market Commentary (AI) ---
+    if (data.aiAnalysis) {
+        yPos += 15;
+
+        // Background box for AI Analysis
+        doc.setFillColor(240, 253, 244); // Green-50ish (Emerald-50) or Slate-50? Let's go Slate-50
+        doc.setFillColor(...BG_LIGHT);
+        doc.roundedRect(14, yPos, pageWidth - 28, 60, 2, 2, 'F');
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...BRAND_COLOR);
+        doc.text('Performance Commentary (AI Generated)', 19, yPos + 10);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...TEXT_COLOR);
+
+        // Split text to fit
+        const splitText = doc.splitTextToSize(data.aiAnalysis.replace(/\*\*/g, ''), pageWidth - 38); // Remove markdown bolding for PDF text
+        doc.text(splitText, 19, yPos + 20);
+
+        yPos += 70; // Move down past the box
+    }
+
+
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -179,11 +230,4 @@ export const generateMonthlyReport = async (data: ReportData) => {
     doc.save(`WealthReport_${new Date().toISOString().slice(0, 10)}.pdf`);
 };
 
-// Helper inside service to avoid circular deps if needed, or pass it in
-const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        maximumFractionDigits: 0
-    }).format(val);
-};
+
