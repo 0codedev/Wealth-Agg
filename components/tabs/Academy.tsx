@@ -316,3 +316,4 @@ const Academy: React.FC = () => {
 
 // Wrap with React.memo to prevent unnecessary re-renders
 export default React.memo(Academy);
+// Rebuild trigger: Fixed unterminated regex issue
